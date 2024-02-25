@@ -4,11 +4,16 @@ import (
 	"net/http"
 )
 
-func login(w http.ResponseWriter, r *http.Request) {}
+func login(w http.ResponseWriter, r *http.Request) {
+	//user := postgres.GetUserByEmail("email@email.com")
+}
 
 func logout(w http.ResponseWriter, r *http.Request) {}
 
-func register(w http.ResponseWriter, r *http.Request) {}
+func register(w http.ResponseWriter, r *http.Request) {
+	//postgres.RegisterUser("email@email.com", "superNick", "123pass")
+	//fmt.Print(user)
+}
 
 func pinsList(w http.ResponseWriter, r *http.Request) {}
 
