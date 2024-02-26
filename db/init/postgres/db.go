@@ -1,52 +1,60 @@
 package postgres
 
 import (
-	"database/sql"
 	"fmt"
-	"log"
+
+	"github.com/jmoiron/sqlx"
 
 	_ "github.com/lib/pq"
 )
 
-const (
-	host     = "localhost"
-	port     = 5432
-	user     = "postgres"
-	password = "postgres"
-	dbname   = "pinterest"
-)
-
-func Connect() (*sql.DB, error) {
-	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname)
-	return sql.Open("postgres", psqlconn)
+var DBConf = struct {
+	host     string
+	port     int
+	user     string
+	password string
+	dbname   string
+}{
+	host:     "localhost",
+	port:     5432,
+	user:     "postgres",
+	password: "postgres",
+	dbname:   "pinterest",
 }
 
-func Disconnect(db *sql.DB) {
-	db.Close()
+var SQLStatements = map[string]string{
+	"RegisterUser":   `INSERT INTO public.users ("email", "nickname", "password") VALUES($1, $2, $3)`,
+	"GetUserByEmail": `SELECT user_id, email, nickname, "password" FROM public.users WHERE email=$1`,
+	"GetAllPins":     `SELECT * FROM public.pins`,
+	"GetPinsOfUser":  `SELECT * FROM public.pins WHERE author_id=$1`,
 }
 
-func FatalIfError(err error) {
-	if err != nil {
-		log.Fatal(err)
+func getPinsByRows(rows *sqlx.Rows) (*[]Pin, error) {
+	var result []Pin
+	var pin = &Pin{}
+	for rows.Next() {
+		err := rows.StructScan(&pin)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, *pin)
 	}
+	return &result, nil
 }
 
-func RegisterUser(email, nickname, password string) {
-	sqlInsertRequest := `INSERT INTO public.Users ("email", "nickname", "password") VALUES($1, $2, $3)`
-	db, errConn := Connect()
-	FatalIfError(errConn)
-	defer Disconnect(db)
-	_, errWrite := db.Exec(sqlInsertRequest, email, nickname, password)
-	FatalIfError(errWrite)
+func (handler *APIHandler) GetAllPins() (*[]Pin, error) {
+	rows, err := handler.db.Queryx(SQLStatements["GetAllPins"])
+	fmt.Println(rows)
+	if err != nil {
+		return nil, err
+	}
+	return getPinsByRows(rows)
 }
 
-func GetUserByEmail(email string) *User {
-	sqlSelectQuery := `SELECT user_id, email, nickname, "password" FROM public.Users WHERE email=$1`
-	db, errConn := Connect()
-	FatalIfError(errConn)
-	defer Disconnect(db)
-	var user = &User{}
-	db.QueryRow(sqlSelectQuery, email).Scan(&user.User_id, &user.Email, &user.Nickname, &user.Password)
-	return user
+func (handler *APIHandler) GetPinsOfUser(userId int) (*[]Pin, error) {
+	rows, err := handler.db.Queryx(SQLStatements["GetPinsOfUser"], userId)
+	if err != nil {
+		return nil, err
+	}
+	return getPinsByRows(rows)
 }
