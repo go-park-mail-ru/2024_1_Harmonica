@@ -1,25 +1,21 @@
 package main
 
 import (
-	pq "harmonica/db/init/postgres"
-	"harmonica/pins"
+	h "harmonica/handler"
+	"log"
 	"net/http"
 )
 
-func login(w http.ResponseWriter, r *http.Request) {}
-
-func logout(w http.ResponseWriter, r *http.Request) {}
-
-func register(w http.ResponseWriter, r *http.Request) {}
-
 func runServer(addr string) {
-	handler, _ := pq.NewAPIHandler() // Надо что-то делать, если мы не смогли в connect к БД
-	mux := http.NewServeMux()
+	handler, err := h.NewAPIHandler()
+	if err != nil {
+		log.Print(err)
+		return
+	}
+	defer handler.CloseAPIHandler()
 
-	mux.HandleFunc("POST /login", login)
-	mux.HandleFunc("POST /register", register)
-	mux.HandleFunc("GET /logout", logout)
-	mux.HandleFunc("GET /pinsList", pins.PinsList(handler))
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /pinsList", handler.PinsList)
 
 	server := http.Server{
 		Addr:    addr,
