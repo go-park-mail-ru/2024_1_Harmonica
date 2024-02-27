@@ -29,7 +29,7 @@ func getPinsByRows(rows *sqlx.Rows) ([]Pin, error) {
 	return result, nil
 }
 
-func (handler *Connector) GetAllPins() ([]Pin, error) {
+func (handler *DBConnector) GetAllPins() ([]Pin, error) {
 	rows, err := handler.db.Queryx(SQLStatements["GetAllPins"])
 	fmt.Println(rows)
 	if err != nil {
@@ -38,7 +38,7 @@ func (handler *Connector) GetAllPins() ([]Pin, error) {
 	return getPinsByRows(rows)
 }
 
-func (handler *Connector) GetPinsOfUser(userId int) ([]Pin, error) {
+func (handler *DBConnector) GetPinsOfUser(userId int) ([]Pin, error) {
 	rows, err := handler.db.Queryx(SQLStatements["GetPinsOfUser"], userId)
 	if err != nil {
 		return nil, err
