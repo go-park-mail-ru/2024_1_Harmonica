@@ -16,7 +16,8 @@ func runServer(addr string) {
 	defer dbConn.Disconnect()
 	handler := h.NewAPIHandler(dbConn)
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /pinsList", handler.PinsList)
+	mux.HandleFunc("GET /api/v1/pins_list", handler.PinsList)
+	mux.Handle("GET /api/v1/img/", http.StripPrefix("/api/v1/img/", http.FileServer(http.Dir("./static/img"))))
 	server := http.Server{
 		Addr:    addr,
 		Handler: mux,
