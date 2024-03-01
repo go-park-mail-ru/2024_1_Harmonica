@@ -5,14 +5,9 @@ import (
 )
 
 type APIHandler struct {
-	connector *db.Connector
+	connector *db.DBConnector
 }
 
-func NewAPIHandler() (*APIHandler, error) {
-	conn, err := db.NewConnector()
-	return &APIHandler{connector: conn}, err
-}
-
-func (handler *APIHandler) CloseAPIHandler() {
-	handler.connector.Disconnect()
+func NewAPIHandler(dbConn *db.DBConnector) *APIHandler {
+	return &APIHandler{connector: dbConn}
 }

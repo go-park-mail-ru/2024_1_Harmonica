@@ -7,31 +7,25 @@ import (
 	_ "github.com/lib/pq"
 )
 
-var DBConf = struct {
-	host     string
-	port     int
-	user     string
-	password string
-	dbname   string
-}{
-	host:     "localhost",
-	port:     5432,
-	user:     "postgres",
-	password: "postgres",
-	dbname:   "pinterest",
+type DBConf struct {
+	Host     string
+	Port     int
+	User     string
+	Password string
+	Dbname   string
 }
 
-type Connector struct {
+type DBConnector struct {
 	db *sqlx.DB
 }
 
-func NewConnector() (*Connector, error) {
+func NewConnector(conf DBConf) (*DBConnector, error) {
 	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		DBConf.host, DBConf.port, DBConf.user, DBConf.password, DBConf.dbname)
+		conf.Host, conf.Port, conf.User, conf.Password, conf.Dbname)
 	db, err := sqlx.Open("postgres", psqlconn)
-	return &Connector{db: db}, err
+	return &DBConnector{db: db}, err
 }
 
-func (handler *Connector) Disconnect() error {
+func (handler *DBConnector) Disconnect() error {
 	return handler.db.Close()
 }
