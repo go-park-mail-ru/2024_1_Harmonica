@@ -7,11 +7,6 @@ import (
 	"net/http"
 )
 
-//type HttpError struct {
-//	err    error
-//	status int
-//}
-
 var (
 	ErrReadingRequestBody   = errors.New("error reading request body")
 	ErrUnmarshalRequestBody = errors.New("error unmarshal request body")
@@ -27,8 +22,14 @@ var HttpStatusByErr = map[error]int{
 	ErrDB:                 500,
 }
 
-func SetHttpError(w http.ResponseWriter, serverErr error, status int) {
-	fmtMessage := fmt.Sprintf("ERROR %s", serverErr.Error())
-	log.Println(fmtMessage)
+func SetHttpError(w http.ResponseWriter, serverErr error, localErr error, status int) {
+	fmtMessage := ""
+	switch {
+	case localErr == nil:
+		fmtMessage = fmt.Sprintf("ERROR %s", serverErr.Error())
+	default:
+		fmtMessage = fmt.Sprintf("ERROR %s: %s", serverErr.Error(), localErr.Error())
+	}
+	log.Print(fmtMessage)
 	http.Error(w, fmtMessage, status)
 }

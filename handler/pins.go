@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"harmonica/db"
 	"log"
 	"net/http"
 	"strconv"
@@ -21,29 +20,22 @@ func PageToLimitAndOffset(page int) (int, int) {
 }
 
 func (handler *APIHandler) PinsList(w http.ResponseWriter, r *http.Request) {
-
 	pageString := r.URL.Query().Get("page")
 	if pageString == "" {
 		pageString = "0"
 	}
 	page, err := strconv.Atoi(pageString)
 	if err != nil {
-		log.Print(err)
-		SetHttpError(w, ErrReadingRequestBody, 400)
+		SetHttpError(w, ErrReadingRequestBody, err, 400)
 		return
 	}
-
 	limit, offset := PageToLimitAndOffset(page)
 	pins, err := handler.connector.GetPins(limit, offset)
 	if err != nil {
-		log.Print(err)
-		SetHttpError(w, ErrDB, 500)
+		SetHttpError(w, ErrDB, err, 500)
 		return
 	}
-
 	w.Header().Set("Content-Type", "application/json")
-	response, _ := json.Marshal(struct {
-		Pins []db.Pin `json:"pins"`
-	}{Pins: pins})
+	response, _ := json.Marshal(pins)
 	w.Write(response)
 }
