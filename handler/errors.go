@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -26,5 +27,9 @@ func SetHttpError(w http.ResponseWriter, serverErr error, localErr error, status
 		fmtMessage = fmt.Sprintf("ERROR %s: %s", serverErr.Error(), localErr.Error())
 	}
 	log.Print(fmtMessage)
-	http.Error(w, fmtMessage, status)
+	w.WriteHeader(HttpStatusByErr[serverErr])
+	response, _ := json.Marshal(struct {
+		Message string `json:"message"`
+	}{Message: serverErr.Error()})
+	w.Write(response)
 }
