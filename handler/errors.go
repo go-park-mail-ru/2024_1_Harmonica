@@ -8,13 +8,8 @@ import (
 )
 
 var (
-	ErrReadingRequestBody   = errors.New("error reading request body")
-	ErrUnmarshalRequestBody = errors.New("error unmarshal request body")
-	ErrInvalidRegisterInput = errors.New("failed to register because of invalid input format")
-	ErrInvalidLoginInput    = errors.New("failed to log in because of incorrect email or password")
-	ErrHashingPassword      = errors.New("error hashing password")
-	ErrUserExist            = errors.New("user already exists")
-	ErrDB                   = errors.New("db error")
+	ErrReadingRequestBody = errors.New("error reading request body")
+	ErrDB                 = errors.New("db error")
 )
 
 var HttpStatusByErr = map[error]int{

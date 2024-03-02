@@ -2,18 +2,11 @@ package handler
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"strconv"
 )
 
 const Limit = 10
-
-func LogIfError(err error) {
-	if err != nil {
-		log.Print(err)
-	}
-}
 
 func PageToLimitAndOffset(page int) (int, int) {
 	return Limit, page * Limit
