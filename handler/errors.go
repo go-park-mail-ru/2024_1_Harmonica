@@ -13,23 +13,36 @@ import (
 //}
 
 var (
-	ErrReadingRequestBody   = errors.New("error reading request body")
-	ErrUnmarshalRequestBody = errors.New("error unmarshal request body")
+	ErrCheckSession         = errors.New("checking session")
+	ErrAlreadyAuthorized    = errors.New("already authorized")
+	ErrUnauthorized         = errors.New("unauthorized")
+	ErrReadingRequestBody   = errors.New("can't read request body")
+	ErrUnmarshalRequestBody = errors.New("can't unmarshal request body")
 	ErrInvalidRegisterInput = errors.New("failed to register because of invalid input format")
 	ErrInvalidLoginInput    = errors.New("failed to log in because of incorrect email or password")
-	ErrHashingPassword      = errors.New("error hashing password")
+	ErrHashingPassword      = errors.New("hashing password")
 	ErrUserExist            = errors.New("user already exists")
-	ErrDB                   = errors.New("db error")
+	ErrUserNotExist         = errors.New("user with this email does not exist")
+	ErrWrongPassword        = errors.New("wrong password")
+	ErrDBUnique             = errors.New("uniqueness error in DB")
+	ErrDBInternal           = errors.New("internal db error")
 )
 
-var HttpStatusByErr = map[error]int{
+// коды ошибок - супер сомнения (мб где-то не 400)
+var HttpStatus = map[error]int{
+	ErrCheckSession:         400,
+	ErrAlreadyAuthorized:    403, // или 405?
+	ErrUnauthorized:         401,
 	ErrReadingRequestBody:   400,
 	ErrUnmarshalRequestBody: 400,
 	ErrInvalidRegisterInput: 400,
 	ErrInvalidLoginInput:    400,
 	ErrHashingPassword:      400,
-	ErrUserExist:            400,
-	ErrDB:                   400,
+	ErrUserExist:            400, // мб тоже 401 (после реги мы же автоматом авторизуем)
+	ErrUserNotExist:         401,
+	ErrWrongPassword:        401,
+	ErrDBUnique:             409, // Conflict норм???
+	ErrDBInternal:           500,
 }
 
 func SetHttpError(w http.ResponseWriter, serverErr error, localErr error, status int) {
