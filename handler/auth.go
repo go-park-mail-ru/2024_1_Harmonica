@@ -200,7 +200,22 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	log.Println("INFO Successful registration")
+	// после регистрации сразу же авторизуем ?
+	sessionToken := uuid.NewString()
+	expiresAt := time.Now().Add(24 * time.Hour)
+	s := session{
+		userId: foundUser.UserID,
+		expiry: expiresAt,
+	}
+	sessions.Store(sessionToken, s)
+
+	http.SetCookie(w, &http.Cookie{
+		Name:    "session_token",
+		Value:   sessionToken,
+		Expires: expiresAt,
+	})
+
+	log.Println("INFO Successful registration and auth with session-token:", sessionToken)
 }
 
 func (s session) IsExpired() bool {
