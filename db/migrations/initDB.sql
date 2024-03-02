@@ -16,8 +16,8 @@ CREATE TABLE public.pins (
 	pin_id bigint NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	author_id bigint NOT NULL,
 	created_at timestamptz NULL DEFAULT CURRENT_TIMESTAMP,
-	caption TEXT,
-	click_url TEXT,
-	content_url TEXT,
+	caption TEXT NOT NULL DEFAULT '',
+	click_url TEXT NOT NULL DEFAULT '',
+	content_url TEXT NOT NULL DEFAULT '',
 	CONSTRAINT fk_author FOREIGN KEY(author_id) REFERENCES public.users(user_id)
 );
