@@ -26,6 +26,6 @@ func NewConnector(conf DBConf) (*DBConnector, error) {
 	return &DBConnector{db: db}, err
 }
 
-func (handler *DBConnector) Disconnect() error {
-	return handler.db.Close()
+func (connector *DBConnector) Disconnect() error {
+	return connector.db.Close()
 }
