@@ -25,7 +25,7 @@ CREATE USER postgres;
 ALTER ROLE postgres SUPERUSER PASSWORD "postgres";
 ```
 
-В любом доступном интерфейсе (например, [PgAdmin](https://www.pgadmin.org/download/) или [DBevear](https://dbeaver.io/download/)) подключитесь к созданной базе и выполните SQL скрипты, описанные в [файле](../db/migrations/initDB.sql).
+В любом доступном интерфейсе (например, [PgAdmin](https://www.pgadmin.org/download/) или [DBevear](https://dbeaver.io/download/)) подключитесь к созданной базе и выполните SQL скрипты, описанные в [файле](../main/db/migrations/initDB.sql).
 #### 2. Подъем сервера.
 В корень проекта поместите файл **conf.go**, скопировав туда содержимое: 
 ```go
