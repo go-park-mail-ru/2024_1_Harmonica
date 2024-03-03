@@ -27,19 +27,14 @@ ALTER ROLE postgres SUPERUSER PASSWORD "postgres";
 
 В любом доступном интерфейсе (например, [PgAdmin](https://www.pgadmin.org/download/) или [DBevear](https://dbeaver.io/download/)) подключитесь к созданной базе и выполните SQL скрипты, описанные в [файле](../main/db/migrations/initDB.sql).
 #### 2. Подъем сервера.
-В корень проекта поместите файл **conf.go**, скопировав туда содержимое: 
-```go
-package main
-
-import "harmonica/db"
-
-var Conf = db.DBConf{
-	Host:     "localhost",
-	Port:     5432,
-	User:     "postgres",
-	Password: "postgres",
-	Dbname:   "pinterest",
-}
+В корень проекта поместите файл **conf.env**, скопировав туда содержимое: 
+```env
+# DB Config
+DBHost=localhost
+DBPort=5432
+DBUser=postgres
+DBPassword=postgres
+DBname=harmonica
 ```
 Чтобы запустить сервер в консоли, перейдите в корень проекта и запустите следующую команду:
 

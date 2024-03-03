@@ -1,14 +1,19 @@
 package main
 
 import (
+	"harmonica/config"
 	"harmonica/db"
 	h "harmonica/handler"
 	"log"
 	"net/http"
+
+	"github.com/joho/godotenv"
 )
 
 func runServer(addr string) {
-	dbConn, err := db.NewConnector(Conf)
+	conf := config.New()
+
+	dbConn, err := db.NewConnector(conf.DB)
 	if err != nil {
 		log.Print(err)
 		return
@@ -23,6 +28,12 @@ func runServer(addr string) {
 		Handler: mux,
 	}
 	server.ListenAndServe()
+}
+
+func init() {
+	if err := godotenv.Load("conf.env"); err != nil {
+		log.Print("No .env file found")
+	}
 }
 
 func main() {
