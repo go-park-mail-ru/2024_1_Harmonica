@@ -17,7 +17,7 @@ func runServer(addr string) {
 	handler := h.NewAPIHandler(dbConn)
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /login", handler.Login)
-	mux.HandleFunc("POST /logout", handler.Logout) // POST или GET все-таки?
+	mux.HandleFunc("GET /logout", handler.Logout)
 	mux.HandleFunc("POST /register", handler.Register)
 	mux.HandleFunc("GET /pinsList", handler.PinsList)
 	server := http.Server{

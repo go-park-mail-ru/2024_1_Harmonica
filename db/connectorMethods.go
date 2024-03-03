@@ -12,11 +12,13 @@ var SQLStatements = map[string]string{
 	"GetPinsOfUser":  `SELECT * FROM public.pins WHERE author_id=$1`,
 }
 
-// GetUserByEmail ------------ Users ------------
+// ------------ Users ------------
+
 func (handler *DBConnector) GetUserByEmail(email string) (User, error) {
 	rows, err := handler.db.Queryx(SQLStatements["GetUserByEmail"], email)
+	emptyUser := User{}
 	if err != nil {
-		return User{}, err
+		return emptyUser, err
 	}
 
 	var user User
@@ -24,22 +26,19 @@ func (handler *DBConnector) GetUserByEmail(email string) (User, error) {
 	for rows.Next() {
 		err = rows.StructScan(&user)
 		if err != nil {
-			return User{}, err
+			return emptyUser, err
 		}
 	}
 	return user, nil
 }
 
-// RegisterUser ------------ Users ------------
 func (handler *DBConnector) RegisterUser(user User) error {
 	_, err := handler.db.Exec(SQLStatements["RegisterUser"], user.Email, user.Nickname, user.Password)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 // ------------ Pins ------------
+
 func getPinsByRows(rows *sqlx.Rows) ([]Pin, error) {
 	var result []Pin
 	var pin = &Pin{}
