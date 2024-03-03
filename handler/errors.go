@@ -17,7 +17,8 @@ var (
 	ErrUserExist          = errors.New("user with this email already exists")
 	ErrUserNotExist       = errors.New("user with this email does not exist")
 	ErrWrongPassword      = errors.New("wrong password")
-	ErrDBUnique           = errors.New("user with this nickname or email already exists")
+	ErrDBUniqueEmail      = errors.New("user with this email already exists")
+	ErrDBUniqueNickname   = errors.New("user with this nickname already exists")
 	ErrDBInternal         = errors.New("internal db error")
 )
 
@@ -31,7 +32,8 @@ var HttpStatus = map[error]int{
 	ErrUserExist:          400,
 	ErrUserNotExist:       401,
 	ErrWrongPassword:      401,
-	ErrDBUnique:           500,
+	ErrDBUniqueEmail:      500,
+	ErrDBUniqueNickname:   500,
 	ErrDBInternal:         500,
 }
 
@@ -40,7 +42,7 @@ type errorResponse struct {
 }
 
 func WriteErrorResponse(w http.ResponseWriter, err error) {
-	log.Print(err.Error())
+	log.Print("ERROR ", err.Error())
 	w.WriteHeader(HttpStatus[err])
 	response, _ := json.Marshal(errorResponse{Message: err.Error()})
 	w.Write(response) // Unhandled error - наверное тут без разницы

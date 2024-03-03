@@ -3,6 +3,7 @@ package utils
 import (
 	"net/mail"
 	"regexp"
+	"unicode"
 )
 
 func ValidateEmail(email string) bool {
@@ -11,13 +12,9 @@ func ValidateEmail(email string) bool {
 }
 
 func ValidateNickname(nickname string) bool {
-	if len(nickname) < 3 || len(nickname) > 20 {
-		return false
-	}
-	// вроде так:
 	// можно - цифры, латинские буквы и (!!!) знак нижнего подчеркивания _
 	// обязательно - длина от 3 до 20
-	match, _ := regexp.MatchString("^[a-zA-Z0-9_]*$", nickname)
+	match, _ := regexp.MatchString("^[a-zA-Z0-9_]{3,20}$", nickname)
 	if !match {
 		return false
 	}
@@ -25,16 +22,27 @@ func ValidateNickname(nickname string) bool {
 }
 
 func ValidatePassword(password string) bool {
-	if len(password) < 8 || len(password) > 15 {
-		return false
-	}
-	// вроде так:
 	// можно - цифры и латинские буквы
-	// обязательно - длина от 8 до 15, наличие хотя бы 1 заглавной буквы
-	//match, _ := regexp.MatchString("^(?=.*[A-Z])[A-Za-z0-9]*$", password)
-	match, _ := regexp.MatchString("^[A-Za-z0-9]*$", password) // это мое для тестов
-	if !match {
+	// обязательно - длина от 8 до 24, наличие хотя бы 1 заглавной буквы, наличие хотя бы 1 цифры
+	if len(password) < 8 || len(password) > 24 {
 		return false
 	}
-	return true
+	hasUppercase, hasDigit := false, false
+	for _, char := range password {
+		if unicode.IsUpper(char) {
+			hasUppercase = true
+		}
+		if unicode.IsDigit(char) {
+			hasDigit = true
+		}
+		if !unicode.IsLetter(char) && !unicode.IsDigit(char) {
+			return false
+		}
+		if unicode.IsLetter(char) {
+			if !unicode.Is(unicode.Latin, char) {
+				return false
+			}
+		}
+	}
+	return hasUppercase && hasDigit
 }
