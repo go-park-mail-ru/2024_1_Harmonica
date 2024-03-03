@@ -1,6 +1,7 @@
 package main
 
 import (
+	"harmonica/config"
 	"harmonica/db"
 	h "harmonica/handler"
 	"log"
@@ -8,7 +9,9 @@ import (
 )
 
 func runServer(addr string) {
-	dbConn, err := db.NewConnector(Conf)
+	conf := config.New()
+
+	dbConn, err := db.NewConnector(conf.DB)
 	if err != nil {
 		log.Print(err)
 		return
