@@ -21,18 +21,23 @@ func runServer(addr string) {
 	defer dbConn.Disconnect()
 	handler := h.NewAPIHandler(dbConn)
 	mux := http.NewServeMux()
+	mux.HandleFunc("POST /api/v1/login", handler.Login)
+	mux.HandleFunc("POST /api/v1/register", handler.Register)
+	mux.HandleFunc("GET /api/v1/logout", handler.Logout)
+	mux.HandleFunc("GET /api/v1/is_auth", handler.IsAuth)
 	mux.HandleFunc("GET /api/v1/pins_list", handler.PinsList)
 	mux.Handle("GET /api/v1/img/", http.StripPrefix("/api/v1/img/", http.FileServer(http.Dir("./static/img"))))
 	server := http.Server{
 		Addr:    addr,
 		Handler: mux,
 	}
+
 	server.ListenAndServe()
 }
 
 func init() {
 	if err := godotenv.Load("conf.env"); err != nil {
-		log.Print("No .env file found")
+		log.Print("No conf.env file found")
 	}
 }
 

@@ -19,13 +19,13 @@ func (handler *APIHandler) PinsList(w http.ResponseWriter, r *http.Request) {
 	}
 	page, err := strconv.Atoi(pageString)
 	if err != nil {
-		SetHttpError(w, ErrReadingRequestBody, err, 400)
+		WriteErrorResponse(w, ErrReadingRequestBody)
 		return
 	}
 	limit, offset := PageToLimitAndOffset(page)
 	pins, err := handler.connector.GetPins(limit, offset)
 	if err != nil {
-		SetHttpError(w, ErrDB, err, 500)
+		WriteErrorResponse(w, ErrDBInternal)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

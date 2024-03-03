@@ -3,33 +3,47 @@ package handler
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 )
 
 var (
+	ErrReadCookie         = errors.New("error reading cookie")
+	ErrAlreadyAuthorized  = errors.New("already authorized")
+	ErrUnauthorized       = errors.New("unauthorized")
 	ErrReadingRequestBody = errors.New("error reading request body")
-	ErrDB                 = errors.New("db error")
+	ErrInvalidInputFormat = errors.New("failed to login/register because of invalid input format")
+	ErrHashingPassword    = errors.New("error hashing password")
+	ErrUserExist          = errors.New("user with this email already exists")
+	ErrUserNotExist       = errors.New("user with this email does not exist")
+	ErrWrongPassword      = errors.New("wrong password")
+	ErrDBUniqueEmail      = errors.New("user with this email already exists")
+	ErrDBUniqueNickname   = errors.New("user with this nickname already exists")
+	ErrDBInternal         = errors.New("internal db error")
 )
 
-var HttpStatusByErr = map[error]int{
+var HttpStatus = map[error]int{
+	ErrReadCookie:         400,
+	ErrAlreadyAuthorized:  403,
+	ErrUnauthorized:       401,
 	ErrReadingRequestBody: 400,
-	ErrDB:                 500,
+	ErrInvalidInputFormat: 400,
+	ErrHashingPassword:    400,
+	ErrUserExist:          400,
+	ErrUserNotExist:       401,
+	ErrWrongPassword:      401,
+	ErrDBUniqueEmail:      500,
+	ErrDBUniqueNickname:   500,
+	ErrDBInternal:         500,
 }
 
-func SetHttpError(w http.ResponseWriter, serverErr error, localErr error, status int) {
-	fmtMessage := ""
-	switch {
-	case localErr == nil:
-		fmtMessage = fmt.Sprintf("ERROR %s", serverErr.Error())
-	default:
-		fmtMessage = fmt.Sprintf("ERROR %s: %s", serverErr.Error(), localErr.Error())
-	}
-	log.Print(fmtMessage)
-	w.WriteHeader(HttpStatusByErr[serverErr])
-	response, _ := json.Marshal(struct {
-		Message string `json:"message"`
-	}{Message: serverErr.Error()})
-	w.Write(response)
+type errorResponse struct {
+	Message string `json:"message"`
+}
+
+func WriteErrorResponse(w http.ResponseWriter, err error) {
+	log.Println("ERROR ", err.Error())
+	w.WriteHeader(HttpStatus[err])
+	response, _ := json.Marshal(errorResponse{Message: err.Error()})
+	w.Write(response) // Unhandled error - наверное тут без разницы
 }
