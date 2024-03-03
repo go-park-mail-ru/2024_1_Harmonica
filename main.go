@@ -6,6 +6,8 @@ import (
 	h "harmonica/handler"
 	"log"
 	"net/http"
+
+	"github.com/joho/godotenv"
 )
 
 func runServer(addr string) {
@@ -26,6 +28,12 @@ func runServer(addr string) {
 		Handler: mux,
 	}
 	server.ListenAndServe()
+}
+
+func init() {
+	if err := godotenv.Load("conf.env"); err != nil {
+		log.Print("No .env file found")
+	}
 }
 
 func main() {
