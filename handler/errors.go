@@ -42,7 +42,7 @@ type errorResponse struct {
 }
 
 func WriteErrorResponse(w http.ResponseWriter, err error) {
-	log.Print("ERROR ", err.Error())
+	log.Println("ERROR ", err.Error())
 	w.WriteHeader(HttpStatus[err])
 	response, _ := json.Marshal(errorResponse{Message: err.Error()})
 	w.Write(response) // Unhandled error - наверное тут без разницы

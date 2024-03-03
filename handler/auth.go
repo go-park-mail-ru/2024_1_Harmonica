@@ -60,8 +60,7 @@ func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, ErrDBInternal)
 		return
 	}
-	emptyUser := db.User{}
-	if user == emptyUser {
+	if user == (db.User{}) {
 		WriteErrorResponse(w, ErrUserNotExist)
 		return
 	}
@@ -85,8 +84,6 @@ func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 	// Writing cookie & response
 	SetSessionTokenCookie(w, sessionToken, expiresAt)
 	WriteUserResponse(w, user)
-
-	log.Println("INFO Successful login with session-token:", sessionToken)
 }
 
 func (handler *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
@@ -112,8 +109,6 @@ func (handler *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	// Writing cookie & response
 	SetSessionTokenCookie(w, "", time.Now())
 	w.WriteHeader(http.StatusOK)
-
-	log.Println("INFO Successful logout")
 }
 
 func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
@@ -182,8 +177,6 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 	// Writing response
 	// решили, что не авторизуем после реги, а возвращаем 200 просто
 	w.WriteHeader(http.StatusOK)
-
-	log.Println("INFO Successful registration")
 }
 
 func (handler *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
@@ -209,16 +202,13 @@ func (handler *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, ErrDBInternal)
 		return
 	}
-	emptyUser := db.User{}
-	if user == emptyUser {
+	if user == (db.User{}) {
 		WriteErrorResponse(w, ErrUnauthorized)
 		return
 	}
 
 	// Writing response
 	WriteUserResponse(w, user)
-
-	log.Println("INFO Authorized user response successfully sent")
 }
 
 func CheckAuth(r *http.Request) (string, error) {
