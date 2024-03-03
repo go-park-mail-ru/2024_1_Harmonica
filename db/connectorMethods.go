@@ -1,16 +1,16 @@
 package db
 
 import (
-	"fmt"
-	"github.com/jmoiron/sqlx"
+	"harmonica/models"
+
+	"github.com/jackskj/carta"
 )
 
 var SQLStatements = map[string]string{
 	"RegisterUser":   `INSERT INTO public.users ("email", "nickname", "password") VALUES($1, $2, $3)`,
 	"GetUserByEmail": `SELECT user_id, email, nickname, "password" FROM public.users WHERE email=$1`,
+	"GetPins":        `SELECT user_id, nickname, pin_id, caption, content_url, click_url, created_at FROM public.pins INNER JOIN public.users ON public.pins.author_id=public.users.user_id ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
 	"GetUserById":    `SELECT user_id, email, nickname, "password" FROM public.users WHERE user_id=$1`,
-	"GetAllPins":     `SELECT * FROM public.pins`,
-	"GetPinsOfUser":  `SELECT * FROM public.pins WHERE author_id=$1`,
 }
 
 // ------------ Users ------------
@@ -56,33 +56,15 @@ func (handler *DBConnector) RegisterUser(user User) error {
 }
 
 // ------------ Pins ------------
-
-func getPinsByRows(rows *sqlx.Rows) ([]Pin, error) {
-	var result []Pin
-	var pin = &Pin{}
-	for rows.Next() {
-		err := rows.StructScan(&pin)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, *pin)
+func (connector *DBConnector) GetPins(limit, offset int) (models.Pins, error) {
+	result := models.Pins{}
+	rows, err := connector.db.Query(SQLStatements["GetPins"], limit, offset)
+	if err != nil {
+		return models.Pins{}, err
+	}
+	err = carta.Map(rows, &result.Pins)
+	if err != nil {
+		return models.Pins{}, err
 	}
 	return result, nil
-}
-
-func (handler *DBConnector) GetAllPins() ([]Pin, error) {
-	rows, err := handler.db.Queryx(SQLStatements["GetAllPins"])
-	fmt.Println(rows)
-	if err != nil {
-		return nil, err
-	}
-	return getPinsByRows(rows)
-}
-
-func (handler *DBConnector) GetPinsOfUser(userId int) ([]Pin, error) {
-	rows, err := handler.db.Queryx(SQLStatements["GetPinsOfUser"], userId)
-	if err != nil {
-		return nil, err
-	}
-	return getPinsByRows(rows)
 }
