@@ -1,7 +1,3 @@
-CREATE DATABASE pinterest;
-CREATE USER postgres;
-ALTER ROLE postgres SUPERUSER PASSWORD "postgres";
-
 DROP TABLE IF EXISTS public.users;
 CREATE TABLE public.users (
 	user_id bigint NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
