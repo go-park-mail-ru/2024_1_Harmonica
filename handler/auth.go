@@ -20,12 +20,12 @@ var sessions sync.Map
 func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 	log.Println("INFO receive POST request by /login")
 
-	isAuthorized, err := IsAuthorized(r)
+	isAuth, err := CheckAuth(r)
 	if err != nil {
 		WriteErrorResponse(w, ErrReadCookie)
 		return
 	}
-	if isAuthorized {
+	if isAuth {
 		WriteErrorResponse(w, ErrAlreadyAuthorized)
 		return
 	}
@@ -36,30 +36,31 @@ func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := new(db.User)
-	err = json.Unmarshal(bodyBytes, user)
+	userRequest := new(db.User)
+	err = json.Unmarshal(bodyBytes, userRequest)
 	if err != nil {
 		WriteErrorResponse(w, ErrReadingRequestBody)
 		return
 	}
 
-	if !utils.ValidateEmail(user.Email) || !utils.ValidatePassword(user.Password) {
+	if !utils.ValidateEmail(userRequest.Email) ||
+		!utils.ValidatePassword(userRequest.Password) {
 		WriteErrorResponse(w, ErrInvalidInputFormat)
 		return
 	}
 
-	foundUser, err := handler.connector.GetUserByEmail(user.Email)
+	user, err := handler.connector.GetUserByEmail(userRequest.Email)
 	if err != nil {
 		WriteErrorResponse(w, ErrDBInternal)
 		return
 	}
 	emptyUser := db.User{}
-	if foundUser == emptyUser {
+	if user == emptyUser {
 		WriteErrorResponse(w, ErrUserNotExist)
 		return
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(foundUser.Password), []byte(user.Password))
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(userRequest.Password))
 	if err != nil {
 		WriteErrorResponse(w, ErrWrongPassword)
 		return
@@ -68,25 +69,21 @@ func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 	sessionToken := uuid.NewString()
 	expiresAt := time.Now().Add(24 * time.Hour)
 	s := session{
-		userId: foundUser.UserID,
+		userId: user.UserID,
 		expiry: expiresAt,
 	}
 	sessions.Store(sessionToken, s)
 
 	http.SetCookie(w, &http.Cookie{
-		Name:    "session_token",
-		Value:   sessionToken,
-		Expires: expiresAt,
+		Name:     "session_token",
+		Value:    sessionToken,
+		Expires:  expiresAt,
+		HttpOnly: true,
 	})
 
 	w.Header().Set("Content-Type", "application/json")
-	userResponse := UserResponse{
-		UserId:   foundUser.UserID,
-		Email:    foundUser.Email,
-		Nickname: foundUser.Nickname,
-	}
-	response, _ := json.Marshal(userResponse)
-	w.Write(response)
+	w.WriteHeader(http.StatusOK)
+	WriteUserResponse(w, user)
 
 	log.Println("INFO Successful login with session-token:", sessionToken)
 }
@@ -123,9 +120,10 @@ func (handler *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	})
 
 	http.SetCookie(w, &http.Cookie{
-		Name:    "session_token",
-		Value:   "",
-		Expires: time.Now(),
+		Name:     "session_token",
+		Value:    "",
+		Expires:  time.Now(),
+		HttpOnly: true,
 	})
 
 	w.WriteHeader(http.StatusOK)
@@ -136,12 +134,12 @@ func (handler *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
 func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 	log.Println("INFO Receive POST request by /register")
 
-	isAuthorized, err := IsAuthorized(r)
+	isAuth, err := CheckAuth(r)
 	if err != nil {
 		WriteErrorResponse(w, ErrReadCookie)
 		return
 	}
-	if isAuthorized {
+	if isAuth {
 		WriteErrorResponse(w, ErrAlreadyAuthorized)
 		return
 	}
@@ -159,7 +157,9 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !utils.ValidateEmail(user.Email) || !utils.ValidateNickname(user.Nickname) || !utils.ValidatePassword(user.Password) {
+	if !utils.ValidateEmail(user.Email) ||
+		!utils.ValidateNickname(user.Nickname) ||
+		!utils.ValidatePassword(user.Password) {
 		WriteErrorResponse(w, ErrInvalidInputFormat)
 		return
 	}
@@ -199,7 +199,7 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 	// решили, что не авторизуем после реги, а возвращаем 200 просто
 	w.WriteHeader(http.StatusOK)
 
-	log.Println("INFO Successful registration")
+	log.Println("INFO Successful response about authorized user")
 }
 
 type session struct {
@@ -207,11 +207,47 @@ type session struct {
 	expiry time.Time
 }
 
+func (handler *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
+	log.Println("INFO Receive GET request by /register")
+	isAuth, err := CheckAuth(r)
+	if err != nil {
+		WriteErrorResponse(w, ErrReadCookie)
+		return
+	}
+	if !isAuth {
+		WriteErrorResponse(w, ErrUnauthorized)
+		return
+	}
+
+	c, _ := r.Cookie("session_token")
+	// ошибку не проверяю, потому что она уже была бы обработана в CheckAuth
+	sessionToken := c.Value
+	s, _ := sessions.Load(sessionToken)
+	// не проверяю существование ключа, потому что это было обработано в CheckAuth
+
+	user, err := handler.connector.GetUserById(s.(session).userId)
+	if err != nil {
+		WriteErrorResponse(w, ErrDBInternal)
+		return
+	}
+	emptyUser := db.User{}
+	if user == emptyUser {
+		WriteErrorResponse(w, ErrUnauthorized)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	WriteUserResponse(w, user)
+
+	log.Println("INFO Authorized user response successfully sent")
+}
+
 func (s session) IsExpired() bool {
 	return s.expiry.Before(time.Now())
 }
 
-func IsAuthorized(r *http.Request) (bool, error) {
+func CheckAuth(r *http.Request) (bool, error) {
 	c, err := r.Cookie("session_token")
 	if err != nil {
 		if errors.Is(err, http.ErrNoCookie) {
@@ -221,13 +257,23 @@ func IsAuthorized(r *http.Request) (bool, error) {
 	}
 
 	sessionToken := c.Value
-	userSession, exists := sessions.Load(sessionToken)
+	s, exists := sessions.Load(sessionToken)
 	if !exists {
 		return false, nil
 	}
-	if userSession.(session).IsExpired() {
+	if s.(session).IsExpired() {
 		sessions.Delete(sessionToken)
 		return false, nil
 	}
 	return true, nil
+}
+
+func WriteUserResponse(w http.ResponseWriter, user db.User) {
+	userResponse := UserResponse{
+		UserId:   user.UserID,
+		Email:    user.Email,
+		Nickname: user.Nickname,
+	}
+	response, _ := json.Marshal(userResponse)
+	w.Write(response)
 }

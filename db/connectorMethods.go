@@ -8,6 +8,7 @@ import (
 var SQLStatements = map[string]string{
 	"RegisterUser":   `INSERT INTO public.users ("email", "nickname", "password") VALUES($1, $2, $3)`,
 	"GetUserByEmail": `SELECT user_id, email, nickname, "password" FROM public.users WHERE email=$1`,
+	"GetUserById":    `SELECT user_id, email, nickname, "password" FROM public.users WHERE user_id=$1`,
 	"GetAllPins":     `SELECT * FROM public.pins`,
 	"GetPinsOfUser":  `SELECT * FROM public.pins WHERE author_id=$1`,
 }
@@ -22,7 +23,24 @@ func (handler *DBConnector) GetUserByEmail(email string) (User, error) {
 	}
 
 	var user User
+	for rows.Next() {
+		err = rows.StructScan(&user)
+		if err != nil {
+			return emptyUser, err
+		}
+	}
+	return user, nil
+}
 
+// дублирование кода, но мне кажется, что так лучше для понятности (?)
+func (handler *DBConnector) GetUserById(id int64) (User, error) {
+	rows, err := handler.db.Queryx(SQLStatements["GetUserById"], id)
+	emptyUser := User{}
+	if err != nil {
+		return emptyUser, err
+	}
+
+	var user User
 	for rows.Next() {
 		err = rows.StructScan(&user)
 		if err != nil {

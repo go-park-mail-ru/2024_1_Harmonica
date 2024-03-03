@@ -16,10 +16,11 @@ func runServer(addr string) {
 	defer dbConn.Disconnect()
 	handler := h.NewAPIHandler(dbConn)
 	mux := http.NewServeMux()
-	mux.HandleFunc("POST /login", handler.Login)
-	mux.HandleFunc("GET /logout", handler.Logout)
-	mux.HandleFunc("POST /register", handler.Register)
-	mux.HandleFunc("GET /pinsList", handler.PinsList)
+	mux.HandleFunc("POST /api/v1/login", handler.Login)
+	mux.HandleFunc("POST /api/v1/register", handler.Register)
+	mux.HandleFunc("GET /api/v1/logout", handler.Logout)
+	mux.HandleFunc("GET /api/v1/is_auth", handler.IsAuth)
+	mux.HandleFunc("GET /api/v1/pins_list", handler.PinsList)
 	server := http.Server{
 		Addr:    addr,
 		Handler: mux,
