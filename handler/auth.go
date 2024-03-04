@@ -3,16 +3,18 @@ package handler
 import (
 	"encoding/json"
 	"errors"
-	"github.com/google/uuid"
-	"github.com/lib/pq"
-	"golang.org/x/crypto/bcrypt"
 	"harmonica/db"
+	"harmonica/models"
 	"harmonica/utils"
 	"io"
 	"log"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/lib/pq"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var sessions sync.Map
@@ -212,7 +214,7 @@ func (handler *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
 }
 
 func CheckAuth(r *http.Request) (string, error) {
-	c, err := r.Cookie("session_token")
+	c, err := r.Cookie("session-token")
 	if err != nil {
 		if errors.Is(err, http.ErrNoCookie) {
 			return "", nil
@@ -233,7 +235,7 @@ func CheckAuth(r *http.Request) (string, error) {
 
 func WriteUserResponse(w http.ResponseWriter, user db.User) {
 	w.Header().Set("Content-Type", "application/json")
-	userResponse := UserResponse{
+	userResponse := models.UserResponse{
 		UserId:   user.UserID,
 		Email:    user.Email,
 		Nickname: user.Nickname,
@@ -247,9 +249,11 @@ func WriteUserResponse(w http.ResponseWriter, user db.User) {
 
 func SetSessionTokenCookie(w http.ResponseWriter, sessionToken string, expiresAt time.Time) {
 	http.SetCookie(w, &http.Cookie{
-		Name:     "session_token",
+		Name:     "session-token",
 		Value:    sessionToken,
 		Expires:  expiresAt,
 		HttpOnly: true,
+		SameSite: http.SameSiteNoneMode,
+		Secure:   true,
 	})
 }

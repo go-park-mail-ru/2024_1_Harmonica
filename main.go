@@ -33,7 +33,7 @@ func runServer(addr string) {
 		AllowedOrigins:     []string{"http://localhost:8000"},
 		AllowCredentials:   true,
 		AllowedMethods:     []string{"GET", "POST", "OPTIONS"},
-		AllowedHeaders:     []string{"Content-Type", "Origin", "Accept", "token", "Method", "X-Requested-With"},
+		AllowedHeaders:     []string{"Content-Type", "Origin", "Accept", "token", "Method", "Access-Control-Allow-Credentials"},
 		OptionsPassthrough: false,
 	})
 

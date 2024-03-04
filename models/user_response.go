@@ -1,4 +1,4 @@
-package handler
+package models
 
 type UserResponse struct {
 	UserId   int64  `json:"user_id"`
