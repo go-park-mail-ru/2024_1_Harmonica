@@ -18,8 +18,8 @@ import (
 
 var (
 	sessions            sync.Map
-	sessionLifetime     = 24 * time.Second
-	sessionsCleanupTime = 10 * time.Minute
+	sessionTTL          = 24 * time.Hour
+	sessionsCleanupTime = 6 * time.Hour
 )
 
 func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
@@ -79,7 +79,7 @@ func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	// Session creating
 	sessionToken := uuid.NewString()
-	expiresAt := time.Now().Add(sessionLifetime)
+	expiresAt := time.Now().Add(sessionTTL)
 	s := utils.Session{
 		UserId: user.UserID,
 		Expiry: expiresAt,
@@ -192,7 +192,7 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	// Session creating
 	sessionToken := uuid.NewString()
-	expiresAt := time.Now().Add(sessionLifetime)
+	expiresAt := time.Now().Add(sessionTTL)
 	s := utils.Session{
 		UserId: registeredUser.UserID,
 		Expiry: expiresAt,

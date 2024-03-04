@@ -15,8 +15,8 @@ var SQLStatements = map[string]string{
 
 // ------------ Users ------------
 
-func (handler *DBConnector) GetUserByEmail(email string) (User, error) {
-	rows, err := handler.db.Queryx(SQLStatements["GetUserByEmail"], email)
+func (connector *DBConnector) GetUserByEmail(email string) (User, error) {
+	rows, err := connector.db.Queryx(SQLStatements["GetUserByEmail"], email)
 	emptyUser := User{}
 	if err != nil {
 		return emptyUser, err
@@ -33,8 +33,8 @@ func (handler *DBConnector) GetUserByEmail(email string) (User, error) {
 }
 
 // дублирование кода, но мне кажется, что так лучше для понятности (?)
-func (handler *DBConnector) GetUserById(id int64) (User, error) {
-	rows, err := handler.db.Queryx(SQLStatements["GetUserById"], id)
+func (connector *DBConnector) GetUserById(id int64) (User, error) {
+	rows, err := connector.db.Queryx(SQLStatements["GetUserById"], id)
 	emptyUser := User{}
 	if err != nil {
 		return emptyUser, err
@@ -50,8 +50,8 @@ func (handler *DBConnector) GetUserById(id int64) (User, error) {
 	return user, nil
 }
 
-func (handler *DBConnector) RegisterUser(user User) error {
-	_, err := handler.db.Exec(SQLStatements["RegisterUser"], user.Email, user.Nickname, user.Password)
+func (connector *DBConnector) RegisterUser(user User) error {
+	_, err := connector.db.Exec(SQLStatements["RegisterUser"], user.Email, user.Nickname, user.Password)
 	return err
 }
 

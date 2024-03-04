@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 )
@@ -30,5 +31,8 @@ func (handler *APIHandler) PinsList(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	response, _ := json.Marshal(pins)
-	w.Write(response)
+	_, err = w.Write(response)
+	if err != nil {
+		log.Println(err)
+	}
 }
