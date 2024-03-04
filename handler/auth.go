@@ -252,8 +252,7 @@ func SetSessionTokenCookie(w http.ResponseWriter, sessionToken string, expiresAt
 		Name:     "session-token",
 		Value:    sessionToken,
 		Expires:  expiresAt,
-		HttpOnly: true,
-		SameSite: http.SameSiteNoneMode,
-		Secure:   true,
+		HttpOnly: false,
+		Secure:   false,
 	})
 }

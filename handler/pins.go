@@ -13,6 +13,10 @@ func PageToLimitAndOffset(page int) (int, int) {
 }
 
 func (handler *APIHandler) PinsList(w http.ResponseWriter, r *http.Request) {
+	if curSessionToken, err := CheckAuth(r); err != nil || curSessionToken == "" {
+		WriteErrorResponse(w, ErrUnauthorized)
+		return
+	}
 	pageString := r.URL.Query().Get("page")
 	if pageString == "" {
 		pageString = "0"

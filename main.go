@@ -30,10 +30,10 @@ func runServer(addr string) {
 	mux.Handle("GET /api/v1/img/", http.StripPrefix("/api/v1/img/", http.FileServer(http.Dir("./static/img"))))
 
 	c := cors.New(cors.Options{
-		AllowedOrigins:     []string{"http://localhost:8000"},
+		AllowedOrigins:     []string{"http://localhost:8000", "http://89.111.174.111:8000"},
 		AllowCredentials:   true,
 		AllowedMethods:     []string{"GET", "POST", "OPTIONS"},
-		AllowedHeaders:     []string{"Content-Type", "Origin", "Accept", "token", "Method", "Access-Control-Allow-Credentials"},
+		AllowedHeaders:     []string{"*"},
 		OptionsPassthrough: false,
 	})
 
