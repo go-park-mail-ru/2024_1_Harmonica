@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/joho/godotenv"
+	"github.com/rs/cors"
 )
 
 func runServer(addr string) {
@@ -27,11 +28,19 @@ func runServer(addr string) {
 	mux.HandleFunc("GET /api/v1/is_auth", handler.IsAuth)
 	mux.HandleFunc("GET /api/v1/pins_list", handler.PinsList)
 	mux.Handle("GET /api/v1/img/", http.StripPrefix("/api/v1/img/", http.FileServer(http.Dir("./static/img"))))
+
+	c := cors.New(cors.Options{
+		AllowedOrigins:     []string{"http://localhost:8000"},
+		AllowCredentials:   true,
+		AllowedMethods:     []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders:     []string{"Content-Type", "Origin", "Accept", "token", "Method", "X-Requested-With"},
+		OptionsPassthrough: false,
+	})
+
 	server := http.Server{
 		Addr:    addr,
-		Handler: mux,
+		Handler: c.Handler(mux),
 	}
-
 	server.ListenAndServe()
 }
 
