@@ -7,6 +7,7 @@ import (
 	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 	"harmonica/db"
+	"harmonica/models"
 	"harmonica/utils"
 	"io"
 	"log"
@@ -15,7 +16,11 @@ import (
 	"time"
 )
 
-var sessions sync.Map
+var (
+	sessions            sync.Map
+	sessionLifetime     = 24 * time.Second
+	sessionsCleanupTime = 10 * time.Minute
+)
 
 func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 	log.Println("INFO receive POST request by /login")
@@ -74,7 +79,7 @@ func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	// Session creating
 	sessionToken := uuid.NewString()
-	expiresAt := time.Now().Add(24 * time.Hour)
+	expiresAt := time.Now().Add(sessionLifetime)
 	s := utils.Session{
 		UserId: user.UserID,
 		Expiry: expiresAt,
@@ -174,13 +179,40 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Writing response
-	// решили, что не авторизуем после реги, а возвращаем 200 просто
-	w.WriteHeader(http.StatusOK)
+	// Search for user by email (to get user id)
+	registeredUser, err := handler.connector.GetUserByEmail(user.Email)
+	if err != nil {
+		WriteErrorResponse(w, ErrDBInternal)
+		return
+	}
+	if registeredUser == (db.User{}) {
+		WriteErrorResponse(w, ErrUserNotExist)
+		return
+	}
+
+	// Session creating
+	sessionToken := uuid.NewString()
+	expiresAt := time.Now().Add(sessionLifetime)
+	s := utils.Session{
+		UserId: registeredUser.UserID,
+		Expiry: expiresAt,
+	}
+	sessions.Store(sessionToken, s)
+
+	// Writing cookie & response
+	SetSessionTokenCookie(w, sessionToken, expiresAt)
+	WriteUserResponse(w, registeredUser)
 }
 
 func (handler *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
-	log.Println("INFO Receive GET request by /register")
+	log.Println("INFO Receive GET request by /is_auth")
+
+	sessions.Range(func(key, value interface{}) bool {
+		if session, ok := value.(utils.Session); ok {
+			log.Println(session)
+		}
+		return true
+	})
 
 	// Checking existing authorization
 	curSessionToken, err := CheckAuth(r)
@@ -233,7 +265,7 @@ func CheckAuth(r *http.Request) (string, error) {
 
 func WriteUserResponse(w http.ResponseWriter, user db.User) {
 	w.Header().Set("Content-Type", "application/json")
-	userResponse := UserResponse{
+	userResponse := models.UserResponse{
 		UserId:   user.UserID,
 		Email:    user.Email,
 		Nickname: user.Nickname,
@@ -252,4 +284,19 @@ func SetSessionTokenCookie(w http.ResponseWriter, sessionToken string, expiresAt
 		Expires:  expiresAt,
 		HttpOnly: true,
 	})
+}
+
+func CleanupSessions() {
+	ticker := time.NewTicker(sessionsCleanupTime)
+	for {
+		<-ticker.C
+		sessions.Range(func(key, value interface{}) bool {
+			if session, ok := value.(utils.Session); ok {
+				if time.Now().After(session.Expiry) {
+					sessions.Delete(key)
+				}
+			}
+			return true
+		})
+	}
 }
