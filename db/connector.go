@@ -8,7 +8,8 @@ import (
 )
 
 type Connector struct {
-	db *sqlx.DB
+	db      *sqlx.DB
+	Methods Methods // new!!!
 }
 
 func NewConnector(conf config.DBConf) (*Connector, error) {
