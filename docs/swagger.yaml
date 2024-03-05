@@ -1,0 +1,209 @@
+basePath: api/v1
+definitions:
+  db.User:
+    properties:
+      email:
+        type: string
+      nickname:
+        type: string
+      password:
+        type: string
+    type: object
+  handler.errorResponse:
+    properties:
+      code:
+        type: integer
+      message:
+        type: string
+    type: object
+  models.Pin:
+    description: Pin information with author, pin id, created date, caption, click
+      and content URLs.
+    properties:
+      author:
+        $ref: '#/definitions/models.PinAuthor'
+      caption:
+        type: string
+      click_url:
+        type: string
+      content_url:
+        type: string
+      created_at:
+        type: string
+      pin_id:
+        type: integer
+    type: object
+  models.PinAuthor:
+    description: User-author information with user id and nickname
+    properties:
+      nickname:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  models.Pins:
+    description: Pins array of Pin
+    properties:
+      pins:
+        items:
+          $ref: '#/definitions/models.Pin'
+        type: array
+    type: object
+  models.UserResponse:
+    description: User information with user id, email and nickname
+    properties:
+      email:
+        type: string
+      nickname:
+        type: string
+      user_id:
+        type: integer
+    type: object
+host: http://89.111.174.111:8080/
+info:
+  contact: {}
+  description: This is a backend server of Harmonica team.
+  title: Harmonium backend API
+  version: "1.0"
+paths:
+  /is_auth:
+    get:
+      description: Get user by request cookie
+      parameters:
+      - description: session-token
+        in: header
+        name: string
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      summary: Get auth status
+      tags:
+      - Authorization
+  /login:
+    post:
+      description: Login user by request.body json
+      responses:
+        "200":
+          description: OK
+          headers:
+            Set-Cookie:
+              description: session-token
+              type: string
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      summary: Login user
+      tags:
+      - Authorization
+  /logout:
+    get:
+      description: Logout user by their session cookie
+      parameters:
+      - description: session-token
+        in: header
+        name: string
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          headers:
+            Set-Cookie:
+              description: session-token
+              type: string
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      summary: Logout user
+      tags:
+      - Authorization
+  /pins_list:
+    get:
+      description: Get pins by page
+      parameters:
+      - description: Page num from 0
+        in: query
+        name: page
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Pins'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      summary: Pins list
+      tags:
+      - Pins
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Register user by POST request and add them to DB
+      parameters:
+      - description: json
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/db.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      summary: Register user
+      tags:
+      - Registration
+swagger: "2.0"

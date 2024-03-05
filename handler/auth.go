@@ -3,20 +3,37 @@ package handler
 import (
 	"encoding/json"
 	"errors"
-	"github.com/google/uuid"
-	"github.com/lib/pq"
-	"golang.org/x/crypto/bcrypt"
 	"harmonica/db"
+	"harmonica/models"
 	"harmonica/utils"
 	"io"
 	"log"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/lib/pq"
+	"golang.org/x/crypto/bcrypt"
 )
 
-var sessions sync.Map
+var (
+	sessions            sync.Map
+	sessionTTL          = 24 * time.Hour
+	sessionsCleanupTime = 6 * time.Hour
+)
 
+// Login
+//	@Summary		Login user
+//	@Description	Login user by request.body json
+//	@Tags			Authorization
+//	@Success		200	{object}	interface{}
+//	@Failure		400	{object}	errorResponse
+//	@Failure		401	{object}	errorResponse
+//	@Failure		403	{object}	errorResponse
+//	@Failure		500	{object}	errorResponse
+//	@Header			200	{string}	Set-Cookie	"session-token"
+//	@Router			/login [post]
 func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 	log.Println("INFO receive POST request by /login")
 
@@ -74,7 +91,7 @@ func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	// Session creating
 	sessionToken := uuid.NewString()
-	expiresAt := time.Now().Add(24 * time.Hour)
+	expiresAt := time.Now().Add(sessionTTL)
 	s := utils.Session{
 		UserId: user.UserID,
 		Expiry: expiresAt,
@@ -86,6 +103,15 @@ func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 	WriteUserResponse(w, user)
 }
 
+// Logout
+//	@Summary		Logout user
+//	@Description	Logout user by their session cookie
+//	@Tags			Authorization
+//	@Param			string	header		string	true	"session-token"
+//	@Success		200		{object}	interface{}
+//	@Failure		400		{object}	errorResponse
+//	@Header			200		{string}	Set-Cookie	"session-token"
+//	@Router			/logout [get]
 func (handler *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	log.Println("INFO Receive GET request by /logout")
 
@@ -111,6 +137,18 @@ func (handler *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// Registration
+//	@Summary		Register user
+//	@Description	Register user by POST request and add them to DB
+//	@Tags			Registration
+//	@Produce		json
+//	@Accept			json
+//	@Param			request	body		db.User	true	"json"
+//	@Success		200		{object}	models.UserResponse
+//	@Failure		400		{object}	errorResponse
+//	@Failure		403		{object}	errorResponse
+//	@Failure		500		{object}	errorResponse
+//	@Router			/register [post]
 func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 	log.Println("INFO Receive POST request by /register")
 
@@ -174,13 +212,51 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Writing response
-	// решили, что не авторизуем после реги, а возвращаем 200 просто
-	w.WriteHeader(http.StatusOK)
+	// Search for user by email (to get user id)
+	registeredUser, err := handler.connector.GetUserByEmail(user.Email)
+	if err != nil {
+		WriteErrorResponse(w, ErrDBInternal)
+		return
+	}
+	if registeredUser == (db.User{}) {
+		WriteErrorResponse(w, ErrUserNotExist)
+		return
+	}
+
+	// Session creating
+	sessionToken := uuid.NewString()
+	expiresAt := time.Now().Add(sessionTTL)
+	s := utils.Session{
+		UserId: registeredUser.UserID,
+		Expiry: expiresAt,
+	}
+	sessions.Store(sessionToken, s)
+
+	// Writing cookie & response
+	SetSessionTokenCookie(w, sessionToken, expiresAt)
+	WriteUserResponse(w, registeredUser)
 }
 
+// Check if user is authorized
+//	@Summary		Get auth status
+//	@Description	Get user by request cookie
+//	@Tags			Authorization
+//	@Param			string	header	string	false	"session-token"
+//	@Produce		json
+//	@Success		200	{object}	models.UserResponse
+//	@Failure		400	{object}	errorResponse
+//	@Failure		401	{object}	errorResponse
+//	@Failure		500	{object}	errorResponse
+//	@Router			/is_auth [get]
 func (handler *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
-	log.Println("INFO Receive GET request by /register")
+	log.Println("INFO Receive GET request by /is_auth")
+
+	sessions.Range(func(key, value interface{}) bool {
+		if session, ok := value.(utils.Session); ok {
+			log.Println(session)
+		}
+		return true
+	})
 
 	// Checking existing authorization
 	curSessionToken, err := CheckAuth(r)
@@ -233,7 +309,7 @@ func CheckAuth(r *http.Request) (string, error) {
 
 func WriteUserResponse(w http.ResponseWriter, user db.User) {
 	w.Header().Set("Content-Type", "application/json")
-	userResponse := UserResponse{
+	userResponse := models.UserResponse{
 		UserId:   user.UserID,
 		Email:    user.Email,
 		Nickname: user.Nickname,
@@ -252,4 +328,19 @@ func SetSessionTokenCookie(w http.ResponseWriter, sessionToken string, expiresAt
 		Expires:  expiresAt,
 		HttpOnly: true,
 	})
+}
+
+func CleanupSessions() {
+	ticker := time.NewTicker(sessionsCleanupTime)
+	for {
+		<-ticker.C
+		sessions.Range(func(key, value interface{}) bool {
+			if session, ok := value.(utils.Session); ok {
+				if time.Now().After(session.Expiry) {
+					sessions.Delete(key)
+				}
+			}
+			return true
+		})
+	}
 }

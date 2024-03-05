@@ -12,9 +12,9 @@ type Pin struct {
 }
 
 type User struct {
-	UserID     int64     `db:"user_id" json:"user_id"`
+	UserID     int64     `db:"user_id" json:"user_id" swaggerignore:"true"`
 	Email      string    `db:"email" json:"email"`
 	Nickname   string    `db:"nickname" json:"nickname"`
 	Password   string    `db:"password" json:"password"`
-	RegisterAt time.Time `db:"register_at" json:"register_at"`
+	RegisterAt time.Time `db:"register_at" json:"register_at" swaggerignore:"true"`
 }
