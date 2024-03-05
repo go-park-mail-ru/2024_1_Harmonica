@@ -207,13 +207,6 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 func (handler *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
 	log.Println("INFO Receive GET request by /is_auth")
 
-	sessions.Range(func(key, value interface{}) bool {
-		if session, ok := value.(utils.Session); ok {
-			log.Println(session)
-		}
-		return true
-	})
-
 	// Checking existing authorization
 	curSessionToken, err := CheckAuth(r)
 	if err != nil {

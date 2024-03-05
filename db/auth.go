@@ -6,7 +6,7 @@ var sqlAuthStatements = map[string]string{
 	"RegisterUser":   `INSERT INTO public.users ("email", "nickname", "password") VALUES($1, $2, $3)`,
 }
 
-func (connector *DBConnector) GetUserByEmail(email string) (User, error) {
+func (connector *Connector) GetUserByEmail(email string) (User, error) {
 	rows, err := connector.db.Queryx(sqlAuthStatements["GetUserByEmail"], email)
 	emptyUser := User{}
 	if err != nil {
@@ -23,7 +23,7 @@ func (connector *DBConnector) GetUserByEmail(email string) (User, error) {
 	return user, nil
 }
 
-func (connector *DBConnector) GetUserById(id int64) (User, error) {
+func (connector *Connector) GetUserById(id int64) (User, error) {
 	rows, err := connector.db.Queryx(sqlAuthStatements["GetUserById"], id)
 	emptyUser := User{}
 	if err != nil {
@@ -40,7 +40,7 @@ func (connector *DBConnector) GetUserById(id int64) (User, error) {
 	return user, nil
 }
 
-func (connector *DBConnector) RegisterUser(user User) error {
+func (connector *Connector) RegisterUser(user User) error {
 	_, err := connector.db.Exec(sqlAuthStatements["RegisterUser"], user.Email, user.Nickname, user.Password)
 	return err
 }

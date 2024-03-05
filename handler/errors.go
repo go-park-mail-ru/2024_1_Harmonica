@@ -30,7 +30,7 @@ var ErrorCodes = map[error]struct {
 	ErrReadCookie:         {HttpCode: 400, LocalCode: 3},
 	ErrReadingRequestBody: {HttpCode: 400, LocalCode: 4},
 	ErrInvalidInputFormat: {HttpCode: 400, LocalCode: 5},
-	ErrHashingPassword:    {HttpCode: 400, LocalCode: 6},
+	ErrHashingPassword:    {HttpCode: 500, LocalCode: 6}, // 400 -> 500
 	ErrUserNotExist:       {HttpCode: 401, LocalCode: 7},
 	ErrWrongPassword:      {HttpCode: 401, LocalCode: 8},
 	ErrDBUniqueEmail:      {HttpCode: 500, LocalCode: 9},
