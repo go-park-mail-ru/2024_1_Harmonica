@@ -54,10 +54,10 @@ func init() {
 
 //	@title			Harmonium backend API
 //	@version		1.0
-//	@description	This is a backend server of Harmonica team.
+//	@description	This is API-docs of backend server of Harmonica team.
 
-//	@host		http://89.111.174.111:8080/
-//	@BasePath	api/v1
+// @host		http://89.111.174.111:8080/
+// @BasePath	api/v1
 func main() {
 	runServer(":8080")
 }

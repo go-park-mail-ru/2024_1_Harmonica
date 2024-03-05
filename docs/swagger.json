@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "This is a backend server of Harmonica team.",
+        "description": "This is API-docs of backend server of Harmonica team.",
         "title": "Harmonium backend API",
         "contact": {},
         "version": "1.0"
@@ -24,7 +24,8 @@
                         "type": "string",
                         "description": "session-token",
                         "name": "string",
-                        "in": "header"
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -62,6 +63,15 @@
                     "Authorization"
                 ],
                 "summary": "Login user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "session-token",
+                        "name": "string",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -181,7 +191,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Registration"
+                    "Authorization"
                 ],
                 "summary": "Register user",
                 "parameters": [

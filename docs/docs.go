@@ -30,7 +30,8 @@ const docTemplate = `{
                         "type": "string",
                         "description": "session-token",
                         "name": "string",
-                        "in": "header"
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -68,6 +69,15 @@ const docTemplate = `{
                     "Authorization"
                 ],
                 "summary": "Login user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "session-token",
+                        "name": "string",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -187,7 +197,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Registration"
+                    "Authorization"
                 ],
                 "summary": "Register user",
                 "parameters": [
@@ -329,7 +339,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "api/v1",
 	Schemes:          []string{},
 	Title:            "Harmonium backend API",
-	Description:      "This is a backend server of Harmonica team.",
+	Description:      "This is API-docs of backend server of Harmonica team.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",
