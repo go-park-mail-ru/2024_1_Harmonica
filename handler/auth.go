@@ -60,7 +60,7 @@ func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Search for user by email
-	user, err := handler.connector.GetUserByEmail(userRequest.Email)
+	user, err := handler.Connector.GetUserByEmail(userRequest.Email)
 	if err != nil {
 		WriteErrorResponse(w, ErrDBInternal)
 		return
@@ -163,7 +163,7 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	// User registration
 	user.Password = string(hashPassword)
-	err = handler.connector.RegisterUser(*user)
+	err = handler.Connector.RegisterUser(*user)
 	var pqErr *pq.Error
 	if err != nil && errors.As(err, &pqErr) {
 		log.Println(err)
@@ -180,7 +180,7 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Search for user by email (to get user id)
-	registeredUser, err := handler.connector.GetUserByEmail(user.Email)
+	registeredUser, err := handler.Connector.GetUserByEmail(user.Email)
 	if err != nil {
 		WriteErrorResponse(w, ErrDBInternal)
 		return
@@ -222,7 +222,7 @@ func (handler *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
 	// Checking the existence of user with userId associated with session
 	s, _ := sessions.Load(curSessionToken)
 	// не проверяю существование ключа в мапе, потому что это было обработано в CheckAuth
-	user, err := handler.connector.GetUserById(s.(utils.Session).UserId)
+	user, err := handler.Connector.GetUserById(s.(utils.Session).UserId)
 	if err != nil {
 		WriteErrorResponse(w, ErrDBInternal)
 		return

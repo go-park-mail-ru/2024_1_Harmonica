@@ -5,21 +5,9 @@ import (
 )
 
 type APIHandler struct {
-	connector *db.Connector
+	Connector db.IConnector
 }
 
-func NewAPIHandler(dbConn *db.Connector) *APIHandler {
-	return &APIHandler{connector: dbConn}
+func NewAPIHandler(dbConn db.IConnector) *APIHandler {
+	return &APIHandler{Connector: dbConn}
 }
-
-//type Handler struct {
-//	Auth db.Auth
-//	Pins db.Pins
-//}
-
-//func NewHandler(auth db.Auth, pins db.Pins) *Handler {
-//	return &Handler{
-//		Auth: auth,
-//		Pins: pins,
-//	}
-//}

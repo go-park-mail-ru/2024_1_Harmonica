@@ -24,7 +24,7 @@ func (handler *APIHandler) PinsList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	limit, offset := PageToLimitAndOffset(page)
-	pins, err := handler.connector.GetPins(limit, offset)
+	pins, err := handler.Connector.GetPins(limit, offset)
 	if err != nil {
 		WriteErrorResponse(w, ErrDBInternal)
 		return
