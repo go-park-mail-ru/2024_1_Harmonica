@@ -4,6 +4,7 @@
 * Костин Глеб
 * Амирова Лилиана
 ### [Frontend repository](https://github.com/frontend-park-mail-ru/2024_1_Harmonica)
+### [Deploy link](http://89.111.174.111:8000)
 ---
 ### Инструкция по локальной сборке
 #### 1. Установка БД PostgreSQL

@@ -24,15 +24,17 @@ var (
 )
 
 // Login
+//
 //	@Summary		Login user
 //	@Description	Login user by request.body json
 //	@Tags			Authorization
-//	@Success		200	{object}	interface{}
-//	@Failure		400	{object}	errorResponse
-//	@Failure		401	{object}	errorResponse
-//	@Failure		403	{object}	errorResponse
-//	@Failure		500	{object}	errorResponse
-//	@Header			200	{string}	Set-Cookie	"session-token"
+//	@Param			string	header		string	true	"session-token"
+//	@Success		200		{object}	interface{}
+//	@Failure		400		{object}	errorResponse
+//	@Failure		401		{object}	errorResponse
+//	@Failure		403		{object}	errorResponse
+//	@Failure		500		{object}	errorResponse
+//	@Header			200		{string}	Set-Cookie	"session-token"
 //	@Router			/login [post]
 func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 	log.Println("INFO receive POST request by /login")
@@ -104,6 +106,7 @@ func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 // Logout
+//
 //	@Summary		Logout user
 //	@Description	Logout user by their session cookie
 //	@Tags			Authorization
@@ -138,9 +141,10 @@ func (handler *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 // Registration
+//
 //	@Summary		Register user
 //	@Description	Register user by POST request and add them to DB
-//	@Tags			Registration
+//	@Tags			Authorization
 //	@Produce		json
 //	@Accept			json
 //	@Param			request	body		db.User	true	"json"
@@ -238,10 +242,11 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 // Check if user is authorized
+//
 //	@Summary		Get auth status
 //	@Description	Get user by request cookie
 //	@Tags			Authorization
-//	@Param			string	header	string	false	"session-token"
+//	@Param			string	header	string	true	"session-token"
 //	@Produce		json
 //	@Success		200	{object}	models.UserResponse
 //	@Failure		400	{object}	errorResponse
