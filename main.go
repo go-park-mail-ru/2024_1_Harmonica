@@ -8,6 +8,8 @@ import (
 	"net/http"
 
 	"github.com/joho/godotenv"
+	"github.com/rs/cors"
+	v3 "github.com/swaggest/swgui/v3"
 )
 
 func runServer(addr string) {
@@ -29,12 +31,21 @@ func runServer(addr string) {
 	mux.HandleFunc("GET /api/v1/logout", handler.Logout)
 	mux.HandleFunc("GET /api/v1/is_auth", handler.IsAuth)
 	mux.HandleFunc("GET /api/v1/pins_list", handler.PinsList)
-	mux.Handle("GET /api/v1/img/", http.StripPrefix("/api/v1/img/", http.FileServer(http.Dir("./static/img"))))
+	mux.Handle("GET /img/", http.StripPrefix("/img/", http.FileServer(http.Dir("./static/img"))))
+	mux.Handle("GET /docs/swagger.json", http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))))
+	mux.Handle("GET /swagger/", v3.NewHandler("My API", "/docs/swagger.json", "/swagger"))
+	c := cors.New(cors.Options{
+		AllowedOrigins:     []string{"http://localhost:8000", "http://89.111.174.111:8000"},
+		AllowCredentials:   true,
+		AllowedMethods:     []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders:     []string{"*"},
+		OptionsPassthrough: false,
+	})
+
 	server := http.Server{
 		Addr:    addr,
-		Handler: mux,
+		Handler: c.Handler(mux),
 	}
-
 	server.ListenAndServe()
 }
 
@@ -44,6 +55,12 @@ func init() {
 	}
 }
 
+//	@title			Harmonium backend API
+//	@version		1.0
+//	@description	This is API-docs of backend server of Harmonica team.
+
+// @host		http://89.111.174.111:8080/
+// @BasePath	api/v1
 func main() {
 	runServer(":8080")
 }

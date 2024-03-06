@@ -22,6 +22,19 @@ var (
 	sessionsCleanupTime = 6 * time.Hour
 )
 
+// Login
+//
+//	@Summary		Login user
+//	@Description	Login user by request.body json
+//	@Tags			Authorization
+//	@Param			string	header		string	true	"session-token"
+//	@Success		200		{object}	interface{}
+//	@Failure		400		{object}	errorResponse
+//	@Failure		401		{object}	errorResponse
+//	@Failure		403		{object}	errorResponse
+//	@Failure		500		{object}	errorResponse
+//	@Header			200		{string}	Set-Cookie	"session-token"
+//	@Router			/login [post]
 func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 	log.Println("INFO receive POST request by /login")
 
@@ -91,6 +104,16 @@ func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 	WriteUserResponse(w, user)
 }
 
+// Logout
+//
+//	@Summary		Logout user
+//	@Description	Logout user by their session cookie
+//	@Tags			Authorization
+//	@Param			string	header		string	true	"session-token"
+//	@Success		200		{object}	interface{}
+//	@Failure		400		{object}	errorResponse
+//	@Header			200		{string}	Set-Cookie	"session-token"
+//	@Router			/logout [get]
 func (handler *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	log.Println("INFO Receive GET request by /logout")
 
@@ -116,6 +139,19 @@ func (handler *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// Registration
+//
+//	@Summary		Register user
+//	@Description	Register user by POST request and add them to DB
+//	@Tags			Authorization
+//	@Produce		json
+//	@Accept			json
+//	@Param			request	body		db.User	true	"json"
+//	@Success		200		{object}	models.UserResponse
+//	@Failure		400		{object}	errorResponse
+//	@Failure		403		{object}	errorResponse
+//	@Failure		500		{object}	errorResponse
+//	@Router			/register [post]
 func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 	log.Println("INFO Receive POST request by /register")
 
@@ -204,6 +240,18 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 	WriteUserResponse(w, registeredUser)
 }
 
+// Check if user is authorized
+//
+//	@Summary		Get auth status
+//	@Description	Get user by request cookie
+//	@Tags			Authorization
+//	@Param			string	header	string	true	"session-token"
+//	@Produce		json
+//	@Success		200	{object}	models.UserResponse
+//	@Failure		400	{object}	errorResponse
+//	@Failure		401	{object}	errorResponse
+//	@Failure		500	{object}	errorResponse
+//	@Router			/is_auth [get]
 func (handler *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
 	log.Println("INFO Receive GET request by /is_auth")
 
