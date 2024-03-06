@@ -248,7 +248,7 @@ func TestRegisterBad(t *testing.T) {
 func TestLogout(t *testing.T) {
 	var tests []test
 
-	for testName, _ := range users {
+	for testName := range users {
 		curTest := test{
 			name:               testName,
 			reqBody:            map[string]string{},
@@ -265,7 +265,7 @@ func TestLogout(t *testing.T) {
 func TestIsAuth(t *testing.T) {
 	var tests []test
 
-	for testName, _ := range users {
+	for testName := range users {
 		curTest := test{
 			name:               testName,
 			reqBody:            map[string]string{},
