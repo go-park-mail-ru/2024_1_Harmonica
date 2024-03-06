@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 )
@@ -13,6 +14,7 @@ func PageToLimitAndOffset(page int) (int, int) {
 }
 
 // Pins List
+//
 //	@Summary		Pins list
 //	@Description	Get pins by page
 //	@Tags			Pins
@@ -31,12 +33,15 @@ func (handler *APIHandler) PinsList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	limit, offset := PageToLimitAndOffset(page)
-	pins, err := handler.connector.GetPins(limit, offset)
+	pins, err := handler.Connector.GetPins(limit, offset)
 	if err != nil {
 		WriteErrorResponse(w, ErrDBInternal)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	response, _ := json.Marshal(pins)
-	w.Write(response)
+	_, err = w.Write(response)
+	if err != nil {
+		log.Println(err)
+	}
 }

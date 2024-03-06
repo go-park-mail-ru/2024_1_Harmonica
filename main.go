@@ -23,6 +23,9 @@ func runServer(addr string) {
 	defer dbConn.Disconnect()
 	handler := h.NewAPIHandler(dbConn)
 	mux := http.NewServeMux()
+
+	go h.CleanupSessions()
+
 	mux.HandleFunc("POST /api/v1/login", handler.Login)
 	mux.HandleFunc("POST /api/v1/register", handler.Register)
 	mux.HandleFunc("GET /api/v1/logout", handler.Logout)

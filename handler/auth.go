@@ -3,6 +3,9 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"github.com/google/uuid"
+	"github.com/lib/pq"
+	"golang.org/x/crypto/bcrypt"
 	"harmonica/db"
 	"harmonica/models"
 	"harmonica/utils"
@@ -11,10 +14,6 @@ import (
 	"net/http"
 	"sync"
 	"time"
-
-	"github.com/google/uuid"
-	"github.com/lib/pq"
-	"golang.org/x/crypto/bcrypt"
 )
 
 var (
@@ -74,7 +73,7 @@ func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Search for user by email
-	user, err := handler.connector.GetUserByEmail(userRequest.Email)
+	user, err := handler.Connector.GetUserByEmail(userRequest.Email)
 	if err != nil {
 		WriteErrorResponse(w, ErrDBInternal)
 		return
@@ -200,7 +199,7 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	// User registration
 	user.Password = string(hashPassword)
-	err = handler.connector.RegisterUser(*user)
+	err = handler.Connector.RegisterUser(*user)
 	var pqErr *pq.Error
 	if err != nil && errors.As(err, &pqErr) {
 		log.Println(err)
@@ -217,7 +216,7 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Search for user by email (to get user id)
-	registeredUser, err := handler.connector.GetUserByEmail(user.Email)
+	registeredUser, err := handler.Connector.GetUserByEmail(user.Email)
 	if err != nil {
 		WriteErrorResponse(w, ErrDBInternal)
 		return
@@ -256,13 +255,6 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 func (handler *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
 	log.Println("INFO Receive GET request by /is_auth")
 
-	sessions.Range(func(key, value interface{}) bool {
-		if session, ok := value.(utils.Session); ok {
-			log.Println(session)
-		}
-		return true
-	})
-
 	// Checking existing authorization
 	curSessionToken, err := CheckAuth(r)
 	if err != nil {
@@ -278,7 +270,7 @@ func (handler *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
 	// Checking the existence of user with userId associated with session
 	s, _ := sessions.Load(curSessionToken)
 	// не проверяю существование ключа в мапе, потому что это было обработано в CheckAuth
-	user, err := handler.connector.GetUserById(s.(utils.Session).UserId)
+	user, err := handler.Connector.GetUserById(s.(utils.Session).UserId)
 	if err != nil {
 		WriteErrorResponse(w, ErrDBInternal)
 		return
