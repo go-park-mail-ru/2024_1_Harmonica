@@ -65,10 +65,14 @@ func TestLoginSuccess(t *testing.T) {
 }
 
 func TestLoginBad(t *testing.T) {
-
 	var tests []test
 
 	for testName, user := range usersInvalidInput {
+		curHashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+		if err != nil {
+			t.Errorf("error hashng passwords: %v", err)
+			return
+		}
 		curTest := test{
 			name: testName,
 			reqBody: map[string]string{
@@ -77,7 +81,8 @@ func TestLoginBad(t *testing.T) {
 				"password": user.Password,
 			},
 			mockBehavior: func() {
-				mock.On("GetUserByEmail", user.Email).Return(user, nil)
+				user.Password = string(curHashedPassword)
+				mock.On("GetUserByEmail", user.Email).Return(user, nil).Once()
 			},
 			expectedStatusCode: ErrorCodes[ErrInvalidInputFormat].HttpCode,
 			expectedRespBody: fmt.Sprintf(`{"code":%d,"message":"%s"}`,
@@ -85,6 +90,7 @@ func TestLoginBad(t *testing.T) {
 		}
 		tests = append(tests, curTest)
 	}
+
 	tests = append(tests, test{
 		name:    "Error reading request body",
 		reqBody: test{},
@@ -95,18 +101,57 @@ func TestLoginBad(t *testing.T) {
 		expectedRespBody: fmt.Sprintf(`{"code":%d,"message":"%s"}`,
 			ErrorCodes[ErrInvalidInputFormat].LocalCode, ErrInvalidInputFormat.Error()),
 	})
+
 	tests = append(tests, test{
 		name:    "Error unmarshalling request body",
 		reqBody: `"email":"a@b.c,"password":"Test5Name"}`,
 		mockBehavior: func() {
-			mock.On("RegisterUser", mock2.AnythingOfType("db.User")).Return(nil)
+			mock.On("GetUserByEmail", "sth").Return(db.User{}, nil)
 		},
 		expectedStatusCode: ErrorCodes[ErrReadingRequestBody].HttpCode,
 		expectedRespBody: fmt.Sprintf(`{"code":%d,"message":"%s"}`,
 			ErrorCodes[ErrReadingRequestBody].LocalCode, ErrReadingRequestBody.Error()),
 	})
 
-	PostTypeTestsExecution(t, registerPath, tests)
+	tests = append(tests, test{
+		name: "Error find user",
+		reqBody: db.User{
+			UserID:   3,
+			Email:    "Tes.her_e@sth.ru",
+			Nickname: "Michael",
+			Password: "1918Michael",
+		},
+		mockBehavior: func() {
+			mock.On("GetUserByEmail", "Tes.her_e@sth.ru").Return(db.User{}, nil)
+		},
+		expectedStatusCode: ErrorCodes[ErrUserNotExist].HttpCode,
+		expectedRespBody: fmt.Sprintf(`{"code":%d,"message":"%s"}`,
+			ErrorCodes[ErrUserNotExist].LocalCode, ErrUserNotExist.Error()),
+	})
+
+	wrongHashedPassword, _ := bcrypt.GenerateFromPassword([]byte("WrongPassword"), bcrypt.DefaultCost)
+	tests = append(tests, test{
+		name: "Error wrong password",
+		reqBody: db.User{
+			UserID:   3,
+			Email:    "Tes.her_e@sth.ru",
+			Nickname: "Michael",
+			Password: "1918Michael",
+		},
+		mockBehavior: func() {
+			mock.On("GetUserByEmail", "Tes.her_e@sth.ru").Return(db.User{
+				UserID:   3,
+				Email:    "Tes.her_e@sth.ru",
+				Nickname: "Michael",
+				Password: string(wrongHashedPassword),
+			}, nil)
+		},
+		expectedStatusCode: ErrorCodes[ErrUserNotExist].HttpCode,
+		expectedRespBody: fmt.Sprintf(`{"code":%d,"message":"%s"}`,
+			ErrorCodes[ErrUserNotExist].LocalCode, ErrUserNotExist.Error()),
+	})
+
+	PostTypeTestsExecution(t, loginPath, tests)
 }
 
 func TestRegisterSuccess(t *testing.T) {
@@ -155,6 +200,24 @@ func TestRegisterBad(t *testing.T) {
 		}
 		tests = append(tests, curTest)
 	}
+
+	tests = append(tests, test{
+		name: "Invalid characters in nickname",
+		reqBody: db.User{
+			UserID:   3,
+			Email:    "Tes.her_e@sth.ru",
+			Nickname: "Micha'[el#",
+			Password: "1918Michael",
+		},
+		mockBehavior: func() {
+			mock.On("RegisterUser", mock2.AnythingOfType("db.User")).Return(nil)
+			mock.On("GetUserByEmail", "sth").Return(db.User{}, nil)
+		},
+		expectedStatusCode: ErrorCodes[ErrInvalidInputFormat].HttpCode,
+		expectedRespBody: fmt.Sprintf(`{"code":%d,"message":"%s"}`,
+			ErrorCodes[ErrInvalidInputFormat].LocalCode, ErrInvalidInputFormat.Error()),
+	})
+
 	tests = append(tests, test{
 		name:    "Error reading request body",
 		reqBody: true,
@@ -166,6 +229,7 @@ func TestRegisterBad(t *testing.T) {
 		expectedRespBody: fmt.Sprintf(`{"code":%d,"message":"%s"}`,
 			ErrorCodes[ErrReadingRequestBody].LocalCode, ErrReadingRequestBody.Error()),
 	})
+
 	tests = append(tests, test{
 		name:    "Error unmarshalling request body",
 		reqBody: `{"email":"a@b.c,"nickname":"sss","password":"Test5Name"}`,
@@ -294,12 +358,6 @@ var (
 			Email:    "москва..тут@москва.рф",
 			Nickname: "Moscow",
 			Password: "MoscowTest1",
-		},
-		"400 Invalid characters in nickname": {
-			UserID:   3,
-			Email:    "Tes.her_e@sth.ru",
-			Nickname: "Michael?",
-			Password: "1918Michael",
 		},
 		"400 Invalid Password": {
 			UserID:   4,
