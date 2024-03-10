@@ -9,12 +9,19 @@ definitions:
       password:
         type: string
     type: object
-  handler.errorResponse:
+  models.ErrorResponse:
     properties:
       code:
         type: integer
       message:
         type: string
+    type: object
+  models.ErrorsListResponse:
+    properties:
+      errors:
+        items:
+          $ref: '#/definitions/models.ErrorResponse'
+        type: array
     type: object
   models.Pin:
     description: Pin information with author, pin id, created date, caption, click
@@ -70,10 +77,10 @@ paths:
     get:
       description: Get user by request cookie
       parameters:
-      - description: session-token
+      - default: session-token=
+        description: session-token
         in: header
-        name: string
-        required: true
+        name: Cookie
         type: string
       produces:
       - application/json
@@ -85,15 +92,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handler.errorResponse'
+            $ref: '#/definitions/models.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/handler.errorResponse'
+            $ref: '#/definitions/models.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handler.errorResponse'
+            $ref: '#/definitions/models.ErrorResponse'
       summary: Get auth status
       tags:
       - Authorization
@@ -101,10 +108,10 @@ paths:
     post:
       description: Login user by request.body json
       parameters:
-      - description: session-token
+      - default: session-token=
+        description: session-token
         in: header
-        name: string
-        required: true
+        name: Cookie
         type: string
       responses:
         "200":
@@ -118,19 +125,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handler.errorResponse'
+            $ref: '#/definitions/models.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/handler.errorResponse'
+            $ref: '#/definitions/models.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/handler.errorResponse'
+            $ref: '#/definitions/models.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handler.errorResponse'
+            $ref: '#/definitions/models.ErrorResponse'
       summary: Login user
       tags:
       - Authorization
@@ -138,9 +145,10 @@ paths:
     get:
       description: Logout user by their session cookie
       parameters:
-      - description: session-token
+      - default: session-token=
+        description: session-token
         in: header
-        name: string
+        name: Cookie
         required: true
         type: string
       responses:
@@ -155,7 +163,7 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handler.errorResponse'
+            $ref: '#/definitions/models.ErrorResponse'
       summary: Logout user
       tags:
       - Authorization
@@ -175,7 +183,7 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handler.errorResponse'
+            $ref: '#/definitions/models.ErrorResponse'
       summary: Pins list
       tags:
       - Pins
@@ -201,15 +209,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handler.errorResponse'
+            $ref: '#/definitions/models.ErrorsListResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/handler.errorResponse'
+            $ref: '#/definitions/models.ErrorsListResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handler.errorResponse'
+            $ref: '#/definitions/models.ErrorsListResponse'
       summary: Register user
       tags:
       - Authorization
