@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	//"github.com/stretchr/testify/assert"
 	"harmonica/db"
 	"harmonica/db/mocks"
 	"testing"
@@ -27,7 +26,7 @@ type test struct {
 type mockBehavior func()
 
 var (
-	mock         = &mocks.Methods{}
+	mock         = &mocks.IConnector{}
 	handler      = APIHandler{Connector: mock}
 	loginPath    = "/api/v1/login"
 	registerPath = "/api/v1/register"

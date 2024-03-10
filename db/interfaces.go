@@ -4,7 +4,7 @@ import (
 	"harmonica/models"
 )
 
-//go:generate mockery --name Methods
+//go:generate mockery --name IConnector
 type IConnector interface {
 	GetUserByEmail(email string) (User, error)
 	GetUserByNickname(nickname string) (User, error)

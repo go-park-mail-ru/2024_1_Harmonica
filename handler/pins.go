@@ -20,7 +20,7 @@ func PageToLimitAndOffset(page int) (int, int) {
 //	@Tags			Pins
 //	@Param			page	query		int	false	"Page num from 0"
 //	@Success		200		{object}	models.Pins
-//	@Failure		400		{object}	errorResponse
+//	@Failure		400		{object}	models.ErrorResponse
 //	@Router			/pins_list [get]
 func (handler *APIHandler) PinsList(w http.ResponseWriter, r *http.Request) {
 	pageString := r.URL.Query().Get("page")
