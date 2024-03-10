@@ -3,8 +3,6 @@ package handler
 import (
 	"encoding/json"
 	"errors"
-	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
 	"harmonica/db"
 	"harmonica/models"
 	"harmonica/utils"
@@ -13,6 +11,9 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var (
@@ -26,14 +27,15 @@ var (
 //	@Summary		Login user
 //	@Description	Login user by request.body json
 //	@Tags			Authorization
-//	@Param			string	header		string	true	"session-token"
-//	@Success		200		{object}	interface{}
-//	@Failure		400		{object}	models.ErrorResponse
-//	@Failure		401		{object}	models.ErrorResponse
-//	@Failure		403		{object}	models.ErrorResponse
-//	@Failure		500		{object}	models.ErrorResponse
-//	@Header			200		{string}	Set-Cookie	"session-token"
-//	@Router			/login [post]
+//
+// @Param 		 Cookie header string  false "session-token"     default(session-token=)
+// @Success		200		{object}	interface{}
+// @Failure		400		{object}	models.ErrorResponse
+// @Failure		401		{object}	models.ErrorResponse
+// @Failure		403		{object}	models.ErrorResponse
+// @Failure		500		{object}	models.ErrorResponse
+// @Header			200		{string}	Set-Cookie	"session-token"
+// @Router			/login [post]
 func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 	log.Println("INFO receive POST request by /login")
 
@@ -108,7 +110,9 @@ func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 //	@Summary		Logout user
 //	@Description	Logout user by their session cookie
 //	@Tags			Authorization
-//	@Param			string	header		string	true	"session-token"
+//
+// @Param 		 Cookie header string  true "session-token"     default(session-token=)
+//
 //	@Success		200		{object}	interface{}
 //	@Failure		400		{object}	models.ErrorResponse
 //	@Header			200		{string}	Set-Cookie	"session-token"
@@ -250,7 +254,9 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 //	@Summary		Get auth status
 //	@Description	Get user by request cookie
 //	@Tags			Authorization
-//	@Param			string	header	string	true	"session-token"
+//
+// @Param 		 Cookie header string  false "session-token"     default(session-token=)
+//
 //	@Produce		json
 //	@Success		200	{object}	models.UserResponse
 //	@Failure		400	{object}	models.ErrorResponse

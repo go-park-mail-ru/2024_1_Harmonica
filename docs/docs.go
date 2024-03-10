@@ -28,10 +28,10 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "default": "session-token=",
                         "description": "session-token",
-                        "name": "string",
-                        "in": "header",
-                        "required": true
+                        "name": "Cookie",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -44,19 +44,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorResponse"
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorResponse"
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorResponse"
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     }
                 }
@@ -72,10 +72,10 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "default": "session-token=",
                         "description": "session-token",
-                        "name": "string",
-                        "in": "header",
-                        "required": true
+                        "name": "Cookie",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -94,25 +94,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorResponse"
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorResponse"
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorResponse"
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorResponse"
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     }
                 }
@@ -128,8 +128,9 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "default": "session-token=",
                         "description": "session-token",
-                        "name": "string",
+                        "name": "Cookie",
                         "in": "header",
                         "required": true
                     }
@@ -150,7 +151,7 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorResponse"
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     }
                 }
@@ -181,7 +182,7 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorResponse"
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     }
                 }
@@ -221,19 +222,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorResponse"
+                            "$ref": "#/definitions/models.ErrorsListResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorResponse"
+                            "$ref": "#/definitions/models.ErrorsListResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorResponse"
+                            "$ref": "#/definitions/models.ErrorsListResponse"
                         }
                     }
                 }
@@ -255,7 +256,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.errorResponse": {
+        "models.ErrorResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -263,6 +264,17 @@ const docTemplate = `{
                 },
                 "message": {
                     "type": "string"
+                }
+            }
+        },
+        "models.ErrorsListResponse": {
+            "type": "object",
+            "properties": {
+                "errors": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ErrorResponse"
+                    }
                 }
             }
         },

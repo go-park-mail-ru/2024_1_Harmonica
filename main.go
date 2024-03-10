@@ -35,7 +35,7 @@ func runServer(addr string) {
 	mux.Handle("GET /docs/swagger.json", http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))))
 	mux.Handle("GET /swagger/", v3.NewHandler("My API", "/docs/swagger.json", "/swagger"))
 	c := cors.New(cors.Options{
-		AllowedOrigins:     []string{"http://localhost:8000", "http://89.111.174.111:8000"},
+		AllowedOrigins:     []string{"http://localhost:8000", "http://85.192.35.36:8000"},
 		AllowCredentials:   true,
 		AllowedMethods:     []string{"GET", "POST", "OPTIONS"},
 		AllowedHeaders:     []string{"*"},
@@ -59,7 +59,7 @@ func init() {
 //	@version		1.0
 //	@description	This is API-docs of backend server of Harmonica team.
 
-// @host		http://89.111.174.111:8080/
+// @host		http://85.192.35.36:8080
 // @BasePath	api/v1
 func main() {
 	runServer(":8080")

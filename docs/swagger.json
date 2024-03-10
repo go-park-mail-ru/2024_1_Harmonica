@@ -22,10 +22,10 @@
                 "parameters": [
                     {
                         "type": "string",
+                        "default": "session-token=",
                         "description": "session-token",
-                        "name": "string",
-                        "in": "header",
-                        "required": true
+                        "name": "Cookie",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -38,19 +38,19 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorResponse"
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorResponse"
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorResponse"
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     }
                 }
@@ -66,10 +66,10 @@
                 "parameters": [
                     {
                         "type": "string",
+                        "default": "session-token=",
                         "description": "session-token",
-                        "name": "string",
-                        "in": "header",
-                        "required": true
+                        "name": "Cookie",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -88,25 +88,25 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorResponse"
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorResponse"
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorResponse"
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorResponse"
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     }
                 }
@@ -122,8 +122,9 @@
                 "parameters": [
                     {
                         "type": "string",
+                        "default": "session-token=",
                         "description": "session-token",
-                        "name": "string",
+                        "name": "Cookie",
                         "in": "header",
                         "required": true
                     }
@@ -144,7 +145,7 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorResponse"
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     }
                 }
@@ -175,7 +176,7 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorResponse"
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     }
                 }
@@ -215,19 +216,19 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorResponse"
+                            "$ref": "#/definitions/models.ErrorsListResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorResponse"
+                            "$ref": "#/definitions/models.ErrorsListResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorResponse"
+                            "$ref": "#/definitions/models.ErrorsListResponse"
                         }
                     }
                 }
@@ -249,7 +250,7 @@
                 }
             }
         },
-        "handler.errorResponse": {
+        "models.ErrorResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -257,6 +258,17 @@
                 },
                 "message": {
                     "type": "string"
+                }
+            }
+        },
+        "models.ErrorsListResponse": {
+            "type": "object",
+            "properties": {
+                "errors": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ErrorResponse"
+                    }
                 }
             }
         },
