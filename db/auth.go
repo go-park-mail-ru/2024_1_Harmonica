@@ -1,13 +1,31 @@
 package db
 
 var sqlAuthStatements = map[string]string{
-	"GetUserByEmail": `SELECT user_id, email, nickname, "password" FROM public.users WHERE email=$1`,
-	"GetUserById":    `SELECT user_id, email, nickname, "password" FROM public.users WHERE user_id=$1`,
-	"RegisterUser":   `INSERT INTO public.users ("email", "nickname", "password") VALUES($1, $2, $3)`,
+	"GetUserByEmail":    `SELECT user_id, email, nickname, "password" FROM public.users WHERE email=$1`,
+	"GetUserByNickname": `SELECT user_id, email, nickname, "password" FROM public.users WHERE nickname=$1`,
+	"GetUserById":       `SELECT user_id, email, nickname, "password" FROM public.users WHERE user_id=$1`,
+	"RegisterUser":      `INSERT INTO public.users ("email", "nickname", "password") VALUES($1, $2, $3)`,
 }
 
 func (connector *Connector) GetUserByEmail(email string) (User, error) {
 	rows, err := connector.db.Queryx(sqlAuthStatements["GetUserByEmail"], email)
+	emptyUser := User{}
+	if err != nil {
+		return emptyUser, err
+	}
+
+	var user User
+	for rows.Next() {
+		err = rows.StructScan(&user)
+		if err != nil {
+			return emptyUser, err
+		}
+	}
+	return user, nil
+}
+
+func (connector *Connector) GetUserByNickname(nickname string) (User, error) {
+	rows, err := connector.db.Queryx(sqlAuthStatements["GetUserByNickname"], nickname)
 	emptyUser := User{}
 	if err != nil {
 		return emptyUser, err
