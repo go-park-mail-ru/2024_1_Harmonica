@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/google/uuid"
-	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 	"harmonica/db"
 	"harmonica/models"
@@ -29,10 +28,10 @@ var (
 //	@Tags			Authorization
 //	@Param			string	header		string	true	"session-token"
 //	@Success		200		{object}	interface{}
-//	@Failure		400		{object}	errorResponse
-//	@Failure		401		{object}	errorResponse
-//	@Failure		403		{object}	errorResponse
-//	@Failure		500		{object}	errorResponse
+//	@Failure		400		{object}	models.ErrorResponse
+//	@Failure		401		{object}	models.ErrorResponse
+//	@Failure		403		{object}	models.ErrorResponse
+//	@Failure		500		{object}	models.ErrorResponse
 //	@Header			200		{string}	Set-Cookie	"session-token"
 //	@Router			/login [post]
 func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
@@ -111,7 +110,7 @@ func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 //	@Tags			Authorization
 //	@Param			string	header		string	true	"session-token"
 //	@Success		200		{object}	interface{}
-//	@Failure		400		{object}	errorResponse
+//	@Failure		400		{object}	models.ErrorResponse
 //	@Header			200		{string}	Set-Cookie	"session-token"
 //	@Router			/logout [get]
 func (handler *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
@@ -125,8 +124,6 @@ func (handler *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	}
 	isAuth := curSessionToken != ""
 	if !isAuth {
-		//WriteErrorResponse(w, ErrUnauthorized)
-		// решили, что тут обойдемся без ошибки
 		w.WriteHeader(http.StatusOK)
 		return
 	}
@@ -148,9 +145,9 @@ func (handler *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
 //	@Accept			json
 //	@Param			request	body		db.User	true	"json"
 //	@Success		200		{object}	models.UserResponse
-//	@Failure		400		{object}	errorResponse
-//	@Failure		403		{object}	errorResponse
-//	@Failure		500		{object}	errorResponse
+//	@Failure		400		{object}	models.ErrorsListResponse
+//	@Failure		403		{object}	models.ErrorsListResponse
+//	@Failure		500		{object}	models.ErrorsListResponse
 //	@Router			/register [post]
 func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 	log.Println("INFO Receive POST request by /register")
@@ -158,19 +155,19 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 	// Checking existing authorization
 	curSessionToken, err := CheckAuth(r)
 	if err != nil {
-		WriteErrorResponse(w, ErrReadCookie)
+		WriteErrorsListResponse(w, ErrReadCookie)
 		return
 	}
 	isAuth := curSessionToken != ""
 	if isAuth {
-		WriteErrorResponse(w, ErrAlreadyAuthorized)
+		WriteErrorsListResponse(w, ErrAlreadyAuthorized)
 		return
 	}
 
 	// Body reading
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
-		WriteErrorResponse(w, ErrReadingRequestBody)
+		WriteErrorsListResponse(w, ErrReadingRequestBody)
 		return
 	}
 
@@ -178,7 +175,7 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 	user := new(db.User)
 	err = json.Unmarshal(bodyBytes, user)
 	if err != nil {
-		WriteErrorResponse(w, ErrReadingRequestBody)
+		WriteErrorsListResponse(w, ErrReadingRequestBody)
 		return
 	}
 
@@ -186,43 +183,51 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 	if !utils.ValidateEmail(user.Email) ||
 		!utils.ValidateNickname(user.Nickname) ||
 		!utils.ValidatePassword(user.Password) {
-		WriteErrorResponse(w, ErrInvalidInputFormat)
+		WriteErrorsListResponse(w, ErrInvalidInputFormat)
+		return
+	}
+
+	// Checking for unique fields
+	isEmailUnique, isNicknameUnique, err := CheckUniqueFields(handler, user.Email, user.Nickname)
+	if err != nil {
+		WriteErrorsListResponse(w, ErrDBInternal)
+		return
+	}
+	var errs []error
+	if !isEmailUnique {
+		errs = append(errs, ErrDBUniqueEmail)
+	}
+	if !isNicknameUnique {
+		errs = append(errs, ErrDBUniqueNickname)
+	}
+	if len(errs) > 0 {
+		WriteErrorsListResponse(w, errs...)
 		return
 	}
 
 	// Password hashing
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
-		WriteErrorResponse(w, ErrHashingPassword)
+		WriteErrorsListResponse(w, ErrHashingPassword)
 		return
 	}
 
 	// User registration
 	user.Password = string(hashPassword)
 	err = handler.Connector.RegisterUser(*user)
-	var pqErr *pq.Error
-	if err != nil && errors.As(err, &pqErr) {
-		log.Println(err)
-		if pqErr.Code == "23505" && pqErr.Constraint == "users_email_key" {
-			WriteErrorResponse(w, ErrDBUniqueEmail)
-			return
-		}
-		if pqErr.Code == "23505" && pqErr.Constraint == "users_nickname_key" {
-			WriteErrorResponse(w, ErrDBUniqueNickname)
-			return
-		}
-		WriteErrorResponse(w, ErrDBInternal)
+	if err != nil {
+		WriteErrorsListResponse(w, ErrDBInternal)
 		return
 	}
 
 	// Search for user by email (to get user id)
 	registeredUser, err := handler.Connector.GetUserByEmail(user.Email)
 	if err != nil {
-		WriteErrorResponse(w, ErrDBInternal)
+		WriteErrorsListResponse(w, ErrDBInternal)
 		return
 	}
 	if registeredUser == (db.User{}) {
-		WriteErrorResponse(w, ErrUserNotExist)
+		WriteErrorsListResponse(w, ErrUserNotExist)
 		return
 	}
 
@@ -248,9 +253,9 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 //	@Param			string	header	string	true	"session-token"
 //	@Produce		json
 //	@Success		200	{object}	models.UserResponse
-//	@Failure		400	{object}	errorResponse
-//	@Failure		401	{object}	errorResponse
-//	@Failure		500	{object}	errorResponse
+//	@Failure		400	{object}	models.ErrorResponse
+//	@Failure		401	{object}	models.ErrorResponse
+//	@Failure		500	{object}	models.ErrorResponse
 //	@Router			/is_auth [get]
 func (handler *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
 	log.Println("INFO Receive GET request by /is_auth")
@@ -302,6 +307,28 @@ func CheckAuth(r *http.Request) (string, error) {
 		return "", nil
 	}
 	return sessionToken, nil
+}
+
+func CheckUniqueFields(handler *APIHandler, email, nickname string) (bool, bool, error) {
+	isEmailUnique, isNicknameUnique := false, false
+
+	user, err := handler.Connector.GetUserByEmail(email)
+	if err != nil {
+		return false, false, ErrDBInternal
+	}
+	if user == (db.User{}) {
+		isEmailUnique = true
+	}
+
+	user, err = handler.Connector.GetUserByNickname(nickname)
+	if err != nil {
+		return false, false, ErrDBInternal
+	}
+	if user == (db.User{}) {
+		isNicknameUnique = true
+	}
+
+	return isEmailUnique, isNicknameUnique, nil
 }
 
 func WriteUserResponse(w http.ResponseWriter, user db.User) {

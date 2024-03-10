@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"harmonica/models"
 	"log"
 	"net/http"
 )
@@ -30,7 +31,7 @@ var ErrorCodes = map[error]struct {
 	ErrReadCookie:         {HttpCode: 400, LocalCode: 3},
 	ErrReadingRequestBody: {HttpCode: 400, LocalCode: 4},
 	ErrInvalidInputFormat: {HttpCode: 400, LocalCode: 5},
-	ErrHashingPassword:    {HttpCode: 500, LocalCode: 6}, // 400 -> 500
+	ErrHashingPassword:    {HttpCode: 500, LocalCode: 6},
 	ErrUserNotExist:       {HttpCode: 401, LocalCode: 7},
 	ErrWrongPassword:      {HttpCode: 401, LocalCode: 8},
 	ErrDBUniqueEmail:      {HttpCode: 500, LocalCode: 9},
@@ -38,19 +39,37 @@ var ErrorCodes = map[error]struct {
 	ErrDBInternal:         {HttpCode: 500, LocalCode: 11},
 }
 
-type errorResponse struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
-}
-
 func WriteErrorResponse(w http.ResponseWriter, err error) {
 	log.Println("ERROR ", err.Error())
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(ErrorCodes[err].HttpCode)
-	response, _ := json.Marshal(errorResponse{
+	response, _ := json.Marshal(models.ErrorResponse{
 		Code:    ErrorCodes[err].LocalCode,
 		Message: err.Error(),
 	})
 	_, err = w.Write(response)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+func WriteErrorsListResponse(w http.ResponseWriter, errors ...error) {
+	var list []models.ErrorResponse
+	for _, err := range errors {
+		log.Println("ERROR ", err.Error())
+		list = append(list, models.ErrorResponse{
+			Code:    ErrorCodes[err].LocalCode,
+			Message: err.Error(),
+		})
+	}
+	errorsList := models.ErrorsListResponse{
+		Errors: list,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(ErrorCodes[errors[0]].HttpCode)
+	response, _ := json.Marshal(errorsList)
+	_, err := w.Write(response)
 	if err != nil {
 		log.Println(err)
 	}
