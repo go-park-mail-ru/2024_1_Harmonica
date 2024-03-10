@@ -193,16 +193,15 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 		WriteErrorsListResponse(w, ErrDBInternal)
 		return
 	}
-	if isEmailUnique == false && isNicknameUnique == false {
-		WriteErrorsListResponse(w, ErrDBUniqueEmail, ErrDBUniqueNickname)
-		return
+	var errs []error
+	if !isEmailUnique {
+		errs = append(errs, ErrDBUniqueEmail)
 	}
-	if isEmailUnique == false && isNicknameUnique == true { // так расписала для понятности
-		WriteErrorsListResponse(w, ErrDBUniqueEmail)
-		return
+	if !isNicknameUnique {
+		errs = append(errs, ErrDBUniqueNickname)
 	}
-	if isEmailUnique == true && isNicknameUnique == false {
-		WriteErrorsListResponse(w, ErrDBUniqueNickname)
+	if len(errs) > 0 {
+		WriteErrorsListResponse(w, errs...)
 		return
 	}
 

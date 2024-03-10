@@ -1,14 +1,14 @@
 package db
 
-var sqlAuthStatements = map[string]string{
-	"GetUserByEmail":    `SELECT user_id, email, nickname, "password" FROM public.users WHERE email=$1`,
-	"GetUserByNickname": `SELECT user_id, email, nickname, "password" FROM public.users WHERE nickname=$1`,
-	"GetUserById":       `SELECT user_id, email, nickname, "password" FROM public.users WHERE user_id=$1`,
-	"RegisterUser":      `INSERT INTO public.users ("email", "nickname", "password") VALUES($1, $2, $3)`,
-}
+const (
+	QueryGetUserByEmail    = `SELECT user_id, email, nickname, "password" FROM public.users WHERE email=$1`
+	QueryGetUserByNickname = `SELECT user_id, email, nickname, "password" FROM public.users WHERE nickname=$1`
+	QueryGetUserById       = `SELECT user_id, email, nickname, "password" FROM public.users WHERE user_id=$1`
+	QueryRegisterUser      = `INSERT INTO public.users ("email", "nickname", "password") VALUES($1, $2, $3)`
+)
 
 func (connector *Connector) GetUserByEmail(email string) (User, error) {
-	rows, err := connector.db.Queryx(sqlAuthStatements["GetUserByEmail"], email)
+	rows, err := connector.db.Queryx(QueryGetUserByEmail, email)
 	emptyUser := User{}
 	if err != nil {
 		return emptyUser, err
@@ -25,7 +25,7 @@ func (connector *Connector) GetUserByEmail(email string) (User, error) {
 }
 
 func (connector *Connector) GetUserByNickname(nickname string) (User, error) {
-	rows, err := connector.db.Queryx(sqlAuthStatements["GetUserByNickname"], nickname)
+	rows, err := connector.db.Queryx(QueryGetUserByNickname, nickname)
 	emptyUser := User{}
 	if err != nil {
 		return emptyUser, err
@@ -42,7 +42,7 @@ func (connector *Connector) GetUserByNickname(nickname string) (User, error) {
 }
 
 func (connector *Connector) GetUserById(id int64) (User, error) {
-	rows, err := connector.db.Queryx(sqlAuthStatements["GetUserById"], id)
+	rows, err := connector.db.Queryx(QueryGetUserById, id)
 	emptyUser := User{}
 	if err != nil {
 		return emptyUser, err
@@ -59,6 +59,6 @@ func (connector *Connector) GetUserById(id int64) (User, error) {
 }
 
 func (connector *Connector) RegisterUser(user User) error {
-	_, err := connector.db.Exec(sqlAuthStatements["RegisterUser"], user.Email, user.Nickname, user.Password)
+	_, err := connector.db.Exec(QueryRegisterUser, user.Email, user.Nickname, user.Password)
 	return err
 }
