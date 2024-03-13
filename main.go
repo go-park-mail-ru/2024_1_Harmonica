@@ -31,11 +31,10 @@ func runServer(addr string) {
 	mux.HandleFunc("GET /api/v1/logout", handler.Logout)
 	mux.HandleFunc("GET /api/v1/is_auth", handler.IsAuth)
 	mux.HandleFunc("GET /api/v1/pins_list", handler.PinsList)
-	mux.Handle("GET /img/", http.StripPrefix("/img/", http.FileServer(http.Dir("./static/img"))))
 	mux.Handle("GET /docs/swagger.json", http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))))
 	mux.Handle("GET /swagger/", v3.NewHandler("My API", "/docs/swagger.json", "/swagger"))
 	c := cors.New(cors.Options{
-		AllowedOrigins:     []string{"http://localhost:8000", "http://85.192.35.36:8000"},
+		AllowedOrigins:     []string{"http://localhost", "http://85.192.35.36:8000", "https://localhost", "https://85.192.35.36"},
 		AllowCredentials:   true,
 		AllowedMethods:     []string{"GET", "POST", "OPTIONS"},
 		AllowedHeaders:     []string{"*"},
@@ -46,7 +45,7 @@ func runServer(addr string) {
 		Addr:    addr,
 		Handler: c.Handler(mux),
 	}
-	server.ListenAndServe()
+	server.ListenAndServeTLS("cert.pem", "key.pem")
 }
 
 func init() {
@@ -59,7 +58,7 @@ func init() {
 //	@version		1.0
 //	@description	This is API-docs of backend server of Harmonica team.
 
-// @host		http://85.192.35.36:8080
+// @host		https://85.192.35.36:8080
 // @BasePath	api/v1
 func main() {
 	runServer(":8080")
