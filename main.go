@@ -34,7 +34,7 @@ func runServer(addr string) {
 	mux.Handle("GET /docs/swagger.json", http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))))
 	mux.Handle("GET /swagger/", v3.NewHandler("My API", "/docs/swagger.json", "/swagger"))
 	c := cors.New(cors.Options{
-		AllowedOrigins:     []string{"http://localhost", "http://85.192.35.36:8000", "https://localhost", "https://85.192.35.36"},
+		AllowedOrigins:     []string{"https://127.0.0.1", "https://85.192.35.36"},
 		AllowCredentials:   true,
 		AllowedMethods:     []string{"GET", "POST", "OPTIONS"},
 		AllowedHeaders:     []string{"*"},
