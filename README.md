@@ -45,5 +45,4 @@ DBname=harmonica
 1. Создаем ветку от main с названием `har-###-action-description`, где ### - номер задачи в jira, action - add/update/fix/delete и т.д., description - лаконичное описание.
 2. В эту ветку добавляем коммиты с сообщением по шаблону `HAR-###: description.`
 3. При создании PR в описание добавляем ссылку на задачу в jira.
-4. Скидываем на аппрув в тг @grv_nikita ссылку на PR.
-
+4. Для аппрува скидываем ссылку на PR в тг @grv_nikita.
