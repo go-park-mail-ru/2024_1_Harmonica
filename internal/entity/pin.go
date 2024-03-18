@@ -1,8 +1,17 @@
-package models
+package entity
 
 import "time"
 
-// Pin author model
+type Pin struct {
+	PinId      int64     `db:"pin_id"`
+	AuthorId   int64     `db:"author_id"`
+	CreatedAt  time.Time `db:"created_at"`
+	Caption    string    `db:"caption"`
+	ClickUrl   string    `db:"click_url"`
+	ContentUrl string    `db:"content_url"`
+}
+
+// PinResponse author model
 // @Description User-author information
 // @Description with user id and nickname
 type PinAuthor struct {
@@ -10,10 +19,10 @@ type PinAuthor struct {
 	Nickname string `db:"nickname" json:"nickname"`
 }
 
-// Pin model
-// @Description Pin information
+// PinResponse model
+// @Description PinResponse information
 // @Description with author, pin id, created date, caption, click and content URLs.
-type Pin struct {
+type PinResponse struct {
 	PinId      int64     `db:"pin_id" json:"pin_id"`
 	CreatedAt  time.Time `db:"created_at" json:"created_at"`
 	Caption    string    `db:"caption" json:"caption"`
@@ -23,7 +32,7 @@ type Pin struct {
 }
 
 // Pins model
-// @Description Pins array of Pin
+// @Description Pins array of PinResponse
 type Pins struct {
-	Pins []Pin `json:"pins"`
+	Pins []PinResponse `json:"pins"`
 }

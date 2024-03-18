@@ -7,11 +7,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	mock2 "github.com/stretchr/testify/mock"
 	"golang.org/x/crypto/bcrypt"
+	"harmonica/entity"
+	"harmonica/internal/repository/mocks"
 	"net/http"
 	"net/http/httptest"
 
-	"harmonica/db"
-	"harmonica/db/mocks"
 	"testing"
 )
 
@@ -94,7 +94,7 @@ func TestLoginBad(t *testing.T) {
 		name:    "Error reading request body",
 		reqBody: test{},
 		mockBehavior: func() {
-			mock.On("GetUserByEmail", "sth").Return(db.User{}, nil)
+			mock.On("GetUserByEmail", "sth").Return(entity.User{}, nil)
 		},
 		expectedStatusCode: ErrorCodes[ErrInvalidInputFormat].HttpCode,
 		expectedRespBody: fmt.Sprintf(`{"code":%d,"message":"%s"}`,
@@ -105,7 +105,7 @@ func TestLoginBad(t *testing.T) {
 		name:    "Error unmarshalling request body",
 		reqBody: `"email":"a@b.c,"password":"Test5Name"}`,
 		mockBehavior: func() {
-			mock.On("GetUserByEmail", "sth").Return(db.User{}, nil)
+			mock.On("GetUserByEmail", "sth").Return(entity.User{}, nil)
 		},
 		expectedStatusCode: ErrorCodes[ErrReadingRequestBody].HttpCode,
 		expectedRespBody: fmt.Sprintf(`{"code":%d,"message":"%s"}`,
@@ -114,14 +114,14 @@ func TestLoginBad(t *testing.T) {
 
 	tests = append(tests, test{
 		name: "Error find user",
-		reqBody: db.User{
+		reqBody: entity.User{
 			UserID:   3,
 			Email:    "Tes.her_e@sth.ru",
 			Nickname: "Michael",
 			Password: "1918Michael",
 		},
 		mockBehavior: func() {
-			mock.On("GetUserByEmail", "Tes.her_e@sth.ru").Return(db.User{}, nil)
+			mock.On("GetUserByEmail", "Tes.her_e@sth.ru").Return(entity.User{}, nil)
 		},
 		expectedStatusCode: ErrorCodes[ErrUserNotExist].HttpCode,
 		expectedRespBody: fmt.Sprintf(`{"code":%d,"message":"%s"}`,
@@ -131,14 +131,14 @@ func TestLoginBad(t *testing.T) {
 	wrongHashedPassword, _ := bcrypt.GenerateFromPassword([]byte("WrongPassword"), bcrypt.DefaultCost)
 	tests = append(tests, test{
 		name: "Error wrong password",
-		reqBody: db.User{
+		reqBody: entity.User{
 			UserID:   3,
 			Email:    "Tes.her_e@sth.ru",
 			Nickname: "Michael",
 			Password: "1918Michael",
 		},
 		mockBehavior: func() {
-			mock.On("GetUserByEmail", "Tes.her_e@sth.ru").Return(db.User{
+			mock.On("GetUserByEmail", "Tes.her_e@sth.ru").Return(entity.User{
 				UserID:   3,
 				Email:    "Tes.her_e@sth.ru",
 				Nickname: "Michael",
@@ -165,7 +165,7 @@ func TestRegisterSuccess(t *testing.T) {
 				"password": user.Password,
 			},
 			mockBehavior: func() {
-				mock.On("RegisterUser", mock2.AnythingOfType("db.User")).Return(nil)
+				mock.On("RegisterUser", mock2.AnythingOfType("repository.User")).Return(nil)
 				mock.On("GetUserByEmail", user.Email).Return(user, nil)
 			},
 			expectedStatusCode: 200,
@@ -190,7 +190,7 @@ func TestRegisterBad(t *testing.T) {
 				"password": user.Password,
 			},
 			mockBehavior: func() {
-				mock.On("RegisterUser", mock2.AnythingOfType("db.User")).Return(nil)
+				mock.On("RegisterUser", mock2.AnythingOfType("repository.User")).Return(nil)
 				mock.On("GetUserByEmail", user.Email).Return(user, nil)
 			},
 			expectedStatusCode: ErrorCodes[ErrInvalidInputFormat].HttpCode,
@@ -202,15 +202,15 @@ func TestRegisterBad(t *testing.T) {
 
 	tests = append(tests, test{
 		name: "Invalid characters in nickname",
-		reqBody: db.User{
+		reqBody: entity.User{
 			UserID:   3,
 			Email:    "Tes.her_e@sth.ru",
 			Nickname: "Micha'[el#",
 			Password: "1918Michael",
 		},
 		mockBehavior: func() {
-			mock.On("RegisterUser", mock2.AnythingOfType("db.User")).Return(nil)
-			mock.On("GetUserByEmail", "sth").Return(db.User{}, nil)
+			mock.On("RegisterUser", mock2.AnythingOfType("repository.User")).Return(nil)
+			mock.On("GetUserByEmail", "sth").Return(entity.User{}, nil)
 		},
 		expectedStatusCode: ErrorCodes[ErrInvalidInputFormat].HttpCode,
 		expectedRespBody: fmt.Sprintf(`{"code":%d,"message":"%s"}`,
@@ -221,8 +221,8 @@ func TestRegisterBad(t *testing.T) {
 		name:    "Error reading request body",
 		reqBody: true,
 		mockBehavior: func() {
-			mock.On("RegisterUser", mock2.AnythingOfType("db.User")).Return(nil)
-			mock.On("GetUserByEmail", "sth").Return(db.User{}, nil)
+			mock.On("RegisterUser", mock2.AnythingOfType("repository.User")).Return(nil)
+			mock.On("GetUserByEmail", "sth").Return(entity.User{}, nil)
 		},
 		expectedStatusCode: ErrorCodes[ErrReadingRequestBody].HttpCode,
 		expectedRespBody: fmt.Sprintf(`{"code":%d,"message":"%s"}`,
@@ -233,8 +233,8 @@ func TestRegisterBad(t *testing.T) {
 		name:    "Error unmarshalling request body",
 		reqBody: `{"email":"a@b.c,"nickname":"sss","password":"Test5Name"}`,
 		mockBehavior: func() {
-			mock.On("RegisterUser", mock2.AnythingOfType("db.User")).Return(nil)
-			mock.On("GetUserByEmail", "sth").Return(db.User{}, nil)
+			mock.On("RegisterUser", mock2.AnythingOfType("repository.User")).Return(nil)
+			mock.On("GetUserByEmail", "sth").Return(entity.User{}, nil)
 		},
 		expectedStatusCode: ErrorCodes[ErrReadingRequestBody].HttpCode,
 		expectedRespBody: fmt.Sprintf(`{"code":%d,"message":"%s"}`,
@@ -325,7 +325,7 @@ func GetTypeTestsExecution(t *testing.T, path string, tests []test) {
 }
 
 var (
-	users = map[string]db.User{
+	users = map[string]entity.User{
 		"200 Capital letters in email": {
 			UserID:   3,
 			Email:    "TesT.her_e@sth.ru",
@@ -345,7 +345,7 @@ var (
 			Password: "crazyUser24ksHokssn27awb",
 		},
 	}
-	usersInvalidInput = map[string]db.User{
+	usersInvalidInput = map[string]entity.User{
 		"400 No @ in email": {
 			UserID:   1,
 			Email:    "badexamplegmail.com",

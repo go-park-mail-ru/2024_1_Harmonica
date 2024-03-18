@@ -2,8 +2,9 @@ package main
 
 import (
 	"harmonica/config"
-	"harmonica/db"
-	h "harmonica/handler"
+	handler2 "harmonica/internal/handler"
+	"harmonica/internal/repository"
+	"harmonica/internal/service"
 	"log"
 	"net/http"
 
@@ -15,22 +16,27 @@ import (
 func runServer(addr string) {
 	conf := config.New()
 
-	dbConn, err := db.NewConnector(conf.DB)
+	dbConn, err := repository.NewConnector(conf.DB)
 	if err != nil {
 		log.Print(err)
 		return
 	}
 	defer dbConn.Disconnect()
-	handler := h.NewAPIHandler(dbConn)
+
+	//useCase := slslls.NewUseCase / NewApp
+	r := repository.NewRepository(dbConn)
+	s := service.NewService(r)
+	h := handler2.NewAPIHandler(s)
+	//handler := handler2.NewAPIHandler(dbConn)
 	mux := http.NewServeMux()
 
-	go h.CleanupSessions()
+	go handler2.CleanupSessions()
 
-	mux.HandleFunc("POST /api/v1/login", handler.Login)
-	mux.HandleFunc("POST /api/v1/register", handler.Register)
-	mux.HandleFunc("GET /api/v1/logout", handler.Logout)
-	mux.HandleFunc("GET /api/v1/is_auth", handler.IsAuth)
-	mux.HandleFunc("GET /api/v1/pins_list", handler.PinsList)
+	mux.HandleFunc("POST /api/v1/login", h.Login)
+	mux.HandleFunc("POST /api/v1/register", h.Register)
+	mux.HandleFunc("GET /api/v1/logout", h.Logout)
+	mux.HandleFunc("GET /api/v1/is_auth", h.IsAuth)
+	mux.HandleFunc("GET /api/v1/pins_list", h.PinsList)
 	mux.Handle("GET /img/", http.StripPrefix("/img/", http.FileServer(http.Dir("./static/img"))))
 	mux.Handle("GET /docs/swagger.json", http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))))
 	mux.Handle("GET /swagger/", v3.NewHandler("My API", "/docs/swagger.json", "/swagger"))

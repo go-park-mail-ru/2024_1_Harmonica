@@ -3,7 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"errors"
-	"harmonica/models"
+	"harmonica/internal/entity"
 	"log"
 	"net/http"
 )
@@ -43,7 +43,7 @@ func WriteErrorResponse(w http.ResponseWriter, err error) {
 	log.Println("ERROR ", err.Error())
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(ErrorCodes[err].HttpCode)
-	response, _ := json.Marshal(models.ErrorResponse{
+	response, _ := json.Marshal(entity.ErrorResponse{
 		Code:    ErrorCodes[err].LocalCode,
 		Message: err.Error(),
 	})
@@ -54,15 +54,15 @@ func WriteErrorResponse(w http.ResponseWriter, err error) {
 }
 
 func WriteErrorsListResponse(w http.ResponseWriter, errors ...error) {
-	var list []models.ErrorResponse
+	var list []entity.ErrorResponse
 	for _, err := range errors {
 		log.Println("ERROR ", err.Error())
-		list = append(list, models.ErrorResponse{
+		list = append(list, entity.ErrorResponse{
 			Code:    ErrorCodes[err].LocalCode,
 			Message: err.Error(),
 		})
 	}
-	errorsList := models.ErrorsListResponse{
+	errorsList := entity.ErrorsListResponse{
 		Errors: list,
 	}
 

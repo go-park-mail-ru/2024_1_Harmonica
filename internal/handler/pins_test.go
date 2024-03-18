@@ -2,7 +2,7 @@ package handler
 
 import (
 	"fmt"
-	"harmonica/models"
+	"harmonica/entity"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -41,7 +41,7 @@ func TestPinsList(t *testing.T) {
 		if err != nil {
 			t.Errorf("error: %v", err)
 		}
-		mock.On("GetPins", Limit, Limit*1).Return(models.Pins{}, nil)
+		mock.On("GetPins", Limit, Limit*1).Return(entity.Pins{}, nil)
 		recorder := httptest.NewRecorder()
 		handler.PinsList(recorder, req)
 		assert.Equal(t, http.StatusOK, recorder.Code)
@@ -65,7 +65,7 @@ func TestPinsList(t *testing.T) {
 		if err != nil {
 			t.Errorf("error: %v", err)
 		}
-		mock.On("GetPins", Limit, Limit*0).Return(models.Pins{}, ErrDBInternal) // тут не нужен
+		mock.On("GetPins", Limit, Limit*0).Return(entity.Pins{}, ErrDBInternal) // тут не нужен
 		recorder := httptest.NewRecorder()
 		handler.PinsList(recorder, req)
 		assert.Equal(t, ErrorCodes[ErrDBInternal].HttpCode, recorder.Code)

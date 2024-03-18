@@ -1,3 +1,6 @@
+run-server:
+	go run ./cmd
+
 test:
 	go test ./... -coverprofile cover.out.tmp && \
 	cat cover.out.tmp | grep -v "IConnector.go" | grep -v "docs.go" > cover.out && \

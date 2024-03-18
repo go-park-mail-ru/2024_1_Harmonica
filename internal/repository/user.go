@@ -1,4 +1,9 @@
-package db
+package repository
+
+import (
+	"github.com/jmoiron/sqlx"
+	"harmonica/internal/entity"
+)
 
 const (
 	QueryGetUserByEmail    = `SELECT user_id, email, nickname, "password" FROM public.users WHERE email=$1`
@@ -7,14 +12,41 @@ const (
 	QueryRegisterUser      = `INSERT INTO public.users ("email", "nickname", "password") VALUES($1, $2, $3)`
 )
 
-func (connector *Connector) GetUserByEmail(email string) (User, error) {
-	rows, err := connector.db.Queryx(QueryGetUserByEmail, email)
-	emptyUser := User{}
+type UserDB struct {
+	db *sqlx.DB
+}
+
+func NewUserDB(db *sqlx.DB) *UserDB {
+	return &UserDB{db: db}
+}
+
+func (u *UserDB) GetUserByEmail(email string) (entity.User, error) {
+	rows, err := u.db.Queryx(QueryGetUserByEmail, email)
+	emptyUser := entity.User{}
+
 	if err != nil {
 		return emptyUser, err
 	}
 
-	var user User
+	var user entity.User
+	for rows.Next() {
+		err = rows.StructScan(&user)
+		if err != nil {
+			return emptyUser, err
+		}
+	}
+
+	return user, nil
+}
+
+func (u *UserDB) GetUserByNickname(nickname string) (entity.User, error) {
+	rows, err := u.db.Queryx(QueryGetUserByNickname, nickname)
+	emptyUser := entity.User{}
+	if err != nil {
+		return emptyUser, err
+	}
+
+	var user entity.User
 	for rows.Next() {
 		err = rows.StructScan(&user)
 		if err != nil {
@@ -24,14 +56,14 @@ func (connector *Connector) GetUserByEmail(email string) (User, error) {
 	return user, nil
 }
 
-func (connector *Connector) GetUserByNickname(nickname string) (User, error) {
-	rows, err := connector.db.Queryx(QueryGetUserByNickname, nickname)
-	emptyUser := User{}
+func (u *UserDB) GetUserById(id int64) (entity.User, error) {
+	rows, err := u.db.Queryx(QueryGetUserById, id)
+	emptyUser := entity.User{}
 	if err != nil {
 		return emptyUser, err
 	}
 
-	var user User
+	var user entity.User
 	for rows.Next() {
 		err = rows.StructScan(&user)
 		if err != nil {
@@ -41,24 +73,7 @@ func (connector *Connector) GetUserByNickname(nickname string) (User, error) {
 	return user, nil
 }
 
-func (connector *Connector) GetUserById(id int64) (User, error) {
-	rows, err := connector.db.Queryx(QueryGetUserById, id)
-	emptyUser := User{}
-	if err != nil {
-		return emptyUser, err
-	}
-
-	var user User
-	for rows.Next() {
-		err = rows.StructScan(&user)
-		if err != nil {
-			return emptyUser, err
-		}
-	}
-	return user, nil
-}
-
-func (connector *Connector) RegisterUser(user User) error {
-	_, err := connector.db.Exec(QueryRegisterUser, user.Email, user.Nickname, user.Password)
+func (u *UserDB) RegisterUser(user entity.User) error {
+	_, err := u.db.Exec(QueryRegisterUser, user.Email, user.Nickname, user.Password)
 	return err
 }
