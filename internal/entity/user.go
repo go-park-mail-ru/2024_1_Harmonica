@@ -18,3 +18,5 @@ type UserResponse struct {
 	Email    string `json:"email"`
 	Nickname string `json:"nickname"`
 }
+
+// ответ - для хэндлера => в сторону хэндлера перенести

@@ -1,6 +1,9 @@
 package repository
 
-import "harmonica/internal/entity"
+import (
+	"github.com/jmoiron/sqlx"
+	"harmonica/internal/entity"
+)
 
 ////go:generate mockery --name IConnector
 //type IConnector interface {
@@ -11,25 +14,46 @@ import "harmonica/internal/entity"
 //	GetPins(limit, offset int) (entity.Pins, error)
 //}
 
-type User interface {
+//type User interface {
+//	GetUserByEmail(email string) (entity.User, error)
+//	GetUserByNickname(nickname string) (entity.User, error)
+//	GetUserById(id int64) (entity.User, error)
+//	RegisterUser(user entity.User) error
+//}
+//
+//type Pin interface {
+//	GetPins(limit, offset int) (entity.Pins, error)
+//}
+//
+//type Repository struct {
+//	User
+//	Pin
+//}
+
+type IRepository interface {
 	GetUserByEmail(email string) (entity.User, error)
 	GetUserByNickname(nickname string) (entity.User, error)
 	GetUserById(id int64) (entity.User, error)
 	RegisterUser(user entity.User) error
-}
-
-type Pin interface {
 	GetPins(limit, offset int) (entity.Pins, error)
 }
 
-type Repository struct {
-	User
-	Pin
+type DBRepository struct {
+	db *sqlx.DB
 }
 
-func NewRepository(connector *Connector) *Repository {
+func NewDBRepository(db *sqlx.DB) *DBRepository {
+	return &DBRepository{db: db}
+}
+
+//объединить интерфейсы в один Репозиторий
+
+type Repository struct {
+	IRepository
+}
+
+func NewRepository(c *Connector) *Repository {
 	return &Repository{
-		User: NewUserDB(connector.db),
-		Pin:  NewPinDB(connector.db),
+		IRepository: NewDBRepository(c.db),
 	}
 }

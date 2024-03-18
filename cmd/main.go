@@ -2,7 +2,7 @@ package main
 
 import (
 	"harmonica/config"
-	handler2 "harmonica/internal/handler"
+	"harmonica/internal/handler"
 	"harmonica/internal/repository"
 	"harmonica/internal/service"
 	"log"
@@ -26,11 +26,11 @@ func runServer(addr string) {
 	//useCase := slslls.NewUseCase / NewApp
 	r := repository.NewRepository(dbConn)
 	s := service.NewService(r)
-	h := handler2.NewAPIHandler(s)
+	h := handler.NewAPIHandler(s)
 	//handler := handler2.NewAPIHandler(dbConn)
 	mux := http.NewServeMux()
 
-	go handler2.CleanupSessions()
+	go handler.CleanupSessions()
 
 	mux.HandleFunc("POST /api/v1/login", h.Login)
 	mux.HandleFunc("POST /api/v1/register", h.Register)

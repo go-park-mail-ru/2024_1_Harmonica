@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"harmonica/internal/entity/errors_list"
 	"log"
 	"net/http"
 	"strconv"
@@ -29,13 +30,13 @@ func (handler *APIHandler) PinsList(w http.ResponseWriter, r *http.Request) {
 	}
 	page, err := strconv.Atoi(pageString)
 	if err != nil {
-		WriteErrorResponse(w, ErrReadingRequestBody)
+		WriteErrorResponse(w, errors_list.ErrReadingRequestBody)
 		return
 	}
 	limit, offset := PageToLimitAndOffset(page)
 	pins, err := handler.service.GetPins(limit, offset)
 	if err != nil {
-		WriteErrorResponse(w, ErrDBInternal)
+		WriteErrorResponse(w, errors_list.ErrDBInternal)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

@@ -12,3 +12,5 @@ type APIHandler struct {
 func NewAPIHandler(s *service.Service) *APIHandler {
 	return &APIHandler{service: s}
 }
+
+//интерфейс между сервисом

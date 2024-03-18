@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"harmonica/internal/entity"
+	"harmonica/internal/entity/errors_list"
 	"io"
 	"log"
 	"net/http"
@@ -41,19 +42,19 @@ func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 	// Checking existing authorization
 	curSessionToken, err := CheckAuth(r)
 	if err != nil {
-		WriteErrorResponse(w, ErrReadCookie)
+		WriteErrorResponse(w, errors_list.ErrReadCookie)
 		return
 	}
 	isAuth := curSessionToken != ""
 	if isAuth {
-		WriteErrorResponse(w, ErrAlreadyAuthorized)
+		WriteErrorResponse(w, errors_list.ErrAlreadyAuthorized)
 		return
 	}
 
 	// Body reading
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
-		WriteErrorResponse(w, ErrReadingRequestBody)
+		WriteErrorResponse(w, errors_list.ErrReadingRequestBody)
 		return
 	}
 
@@ -61,32 +62,32 @@ func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 	userRequest := new(entity.User)
 	err = json.Unmarshal(bodyBytes, userRequest)
 	if err != nil {
-		WriteErrorResponse(w, ErrReadingRequestBody)
+		WriteErrorResponse(w, errors_list.ErrReadingRequestBody)
 		return
 	}
 
 	// Format validation
 	if !ValidateEmail(userRequest.Email) ||
 		!ValidatePassword(userRequest.Password) {
-		WriteErrorResponse(w, ErrInvalidInputFormat)
+		WriteErrorResponse(w, errors_list.ErrInvalidInputFormat)
 		return
 	}
 
 	// Search for user by email
 	user, err := handler.service.GetUserByEmail(userRequest.Email)
 	if err != nil {
-		WriteErrorResponse(w, ErrDBInternal)
+		WriteErrorResponse(w, errors_list.ErrDBInternal)
 		return
 	}
 	if user == (entity.User{}) {
-		WriteErrorResponse(w, ErrUserNotExist)
+		WriteErrorResponse(w, errors_list.ErrUserNotExist)
 		return
 	}
 
 	// Password check
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(userRequest.Password))
 	if err != nil {
-		WriteErrorResponse(w, ErrWrongPassword)
+		WriteErrorResponse(w, errors_list.ErrWrongPassword)
 		return
 	}
 
@@ -122,7 +123,7 @@ func (handler *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	// Checking existing authorization
 	curSessionToken, err := CheckAuth(r)
 	if err != nil {
-		WriteErrorResponse(w, ErrReadCookie)
+		WriteErrorResponse(w, errors_list.ErrReadCookie)
 		return
 	}
 	isAuth := curSessionToken != ""
@@ -158,19 +159,19 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 	// Checking existing authorization
 	curSessionToken, err := CheckAuth(r)
 	if err != nil {
-		WriteErrorsListResponse(w, ErrReadCookie)
+		WriteErrorsListResponse(w, errors_list.ErrReadCookie)
 		return
 	}
 	isAuth := curSessionToken != ""
 	if isAuth {
-		WriteErrorsListResponse(w, ErrAlreadyAuthorized)
+		WriteErrorsListResponse(w, errors_list.ErrAlreadyAuthorized)
 		return
 	}
 
 	// Body reading
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
-		WriteErrorsListResponse(w, ErrReadingRequestBody)
+		WriteErrorsListResponse(w, errors_list.ErrReadingRequestBody)
 		return
 	}
 
@@ -178,7 +179,7 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 	user := new(entity.User)
 	err = json.Unmarshal(bodyBytes, user)
 	if err != nil {
-		WriteErrorsListResponse(w, ErrReadingRequestBody)
+		WriteErrorsListResponse(w, errors_list.ErrReadingRequestBody)
 		return
 	}
 
@@ -186,36 +187,18 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 	if !ValidateEmail(user.Email) ||
 		!ValidateNickname(user.Nickname) ||
 		!ValidatePassword(user.Password) {
-		WriteErrorsListResponse(w, ErrInvalidInputFormat)
+		WriteErrorsListResponse(w, errors_list.ErrInvalidInputFormat)
 		return
 	}
-
-	// Checking for unique fields
-	//isEmailUnique, isNicknameUnique, err := CheckUniqueFields(handler, user.Email, user.Nickname)
-	//if err != nil {
-	//	WriteErrorsListResponse(w, ErrDBInternal)
-	//	return
-	//}
-	//var errs []error
-	//if !isEmailUnique {
-	//	errs = append(errs, ErrDBUniqueEmail)
-	//}
-	//if !isNicknameUnique {
-	//	errs = append(errs, ErrDBUniqueNickname)
-	//}
-	//if len(errs) > 0 {
-	//	WriteErrorsListResponse(w, errs...)
-	//	return
-	//}
 
 	// Password hashing
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
-		WriteErrorsListResponse(w, ErrHashingPassword)
+		WriteErrorsListResponse(w, errors_list.ErrHashingPassword)
 		return
 	}
 
-	// User registration
+	// User registration (checking for unique fields is now here)
 	user.Password = string(hashPassword)
 	errs := handler.service.RegisterUser(*user)
 	if len(errs) != 0 {
@@ -226,11 +209,11 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 	// Search for user by email (to get user id)
 	registeredUser, err := handler.service.GetUserByEmail(user.Email)
 	if err != nil {
-		WriteErrorsListResponse(w, ErrDBInternal)
+		WriteErrorsListResponse(w, errors_list.ErrDBInternal)
 		return
 	}
 	if registeredUser == (entity.User{}) {
-		WriteErrorsListResponse(w, ErrUserNotExist)
+		WriteErrorsListResponse(w, errors_list.ErrUserNotExist)
 		return
 	}
 
@@ -268,12 +251,12 @@ func (handler *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
 	// Checking existing authorization
 	curSessionToken, err := CheckAuth(r)
 	if err != nil {
-		WriteErrorResponse(w, ErrReadCookie)
+		WriteErrorResponse(w, errors_list.ErrReadCookie)
 		return
 	}
 	isAuth := curSessionToken != ""
 	if !isAuth {
-		WriteErrorResponse(w, ErrUnauthorized)
+		WriteErrorResponse(w, errors_list.ErrUnauthorized)
 		return
 	}
 
@@ -287,7 +270,7 @@ func (handler *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if user == (entity.User{}) {
-		WriteErrorResponse(w, ErrUnauthorized)
+		WriteErrorResponse(w, errors_list.ErrUnauthorized)
 		return
 	}
 
@@ -315,28 +298,6 @@ func CheckAuth(r *http.Request) (string, error) {
 	return sessionToken, nil
 	// в мидлваре прокинуть session_token в контекст, чтобы он был досупен далее в ручке
 }
-
-//func CheckUniqueFields(handler *APIHandler, email, nickname string) (bool, bool, error) {
-//	isEmailUnique, isNicknameUnique := false, false
-//
-//	user, err := handler.service.GetUserByEmail(email)
-//	if err != nil {
-//		return false, false, ErrDBInternal
-//	}
-//	if user == (entity.User{}) {
-//		isEmailUnique = true
-//	}
-//
-//	user, err = handler.service.GetUserByNickname(nickname)
-//	if err != nil {
-//		return false, false, ErrDBInternal
-//	}
-//	if user == (entity.User{}) {
-//		isNicknameUnique = true
-//	}
-//
-//	return isEmailUnique, isNicknameUnique, nil
-//}
 
 func WriteUserResponse(w http.ResponseWriter, user entity.User) {
 	w.Header().Set("Content-Type", "application/json")
