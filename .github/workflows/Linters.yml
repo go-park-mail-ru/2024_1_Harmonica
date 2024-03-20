@@ -1,11 +1,10 @@
-name: Run Linters
+name: Run linter
 
 on:
   push:
     branches: [ "*" ]
   pull_request:
     branches: [ "*" ]
-
 jobs:
   run-lint:
     runs-on: ubuntu-latest
@@ -15,5 +14,9 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Lint run
-        run: make lint
+      - name: Lint Code Base
+        uses: github/super-linter@v4
+        env:
+          VALIDATE_ALL_CODEBASE: false
+          DEFAULT_BRANCH: "main"
+          LINTER_RULES_PATH: "linter/"
