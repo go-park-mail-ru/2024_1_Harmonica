@@ -15,10 +15,7 @@ func ValidateNickname(nickname string) bool {
 	// можно - цифры, латинские буквы и (!!!) знак нижнего подчеркивания _
 	// обязательно - длина от 3 до 20
 	match, _ := regexp.MatchString("^[a-zA-Z0-9_]{3,20}$", nickname)
-	if !match {
-		return false
-	}
-	return true
+	return match
 }
 
 func ValidatePassword(password string) bool {
