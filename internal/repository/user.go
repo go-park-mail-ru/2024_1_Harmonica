@@ -12,6 +12,8 @@ const (
 )
 
 func (r *DBRepository) GetUserByEmail(email string) (entity.User, error) {
+	//rows, err := r.db.QueryxContext(ctx, QueryGetUserByEmail, email) // добавить
+	//(чтобы запрос не продолжался, если пользователь ушел)
 	rows, err := r.db.Queryx(QueryGetUserByEmail, email)
 	emptyUser := entity.User{}
 

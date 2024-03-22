@@ -23,11 +23,10 @@ func runServer(addr string) {
 	}
 	defer dbConn.Disconnect()
 
-	//useCase := slslls.NewUseCase / NewApp
 	r := repository.NewRepository(dbConn)
 	s := service.NewService(r)
 	h := handler.NewAPIHandler(s)
-	//handler := handler2.NewAPIHandler(dbConn)
+	//handler := handler2.NewAPIHandler(dbConn) // было
 	mux := http.NewServeMux()
 
 	go handler.CleanupSessions()

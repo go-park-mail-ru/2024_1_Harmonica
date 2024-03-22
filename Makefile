@@ -1,4 +1,4 @@
-run-server:
+run:
 	go run ./cmd
 
 test:

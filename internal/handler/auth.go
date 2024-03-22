@@ -36,7 +36,7 @@ var (
 // @Header			200		{string}	Set-Cookie	"session-token"
 // @Router			/login [post]
 func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
-	//ctx := r?? или как первый аргумент в ручку (чтобы session-token был доступен)
+	//ctx := r.Context() (чтобы session-token можно было получить после мидлвары)
 	log.Println("INFO receive POST request by /login")
 
 	// Checking existing authorization
@@ -265,8 +265,7 @@ func (handler *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
 	// не проверяю существование ключа в мапе, потому что это было обработано в CheckAuth
 	user, err := handler.service.GetUserById(s.(Session).UserId)
 	if err != nil {
-		WriteErrorResponse(w, err) // возвращаем просто err,
-		// так как service должен вернуть внятную ошибку (ErrDBInternal - из нашего списка)
+		WriteErrorResponse(w, errors_list.ErrDBInternal)
 		return
 	}
 	if user == (entity.User{}) {
