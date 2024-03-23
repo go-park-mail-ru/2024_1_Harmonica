@@ -19,6 +19,7 @@ var (
 	sessions            sync.Map
 	sessionTTL          = 24 * time.Hour
 	sessionsCleanupTime = 6 * time.Hour
+	emptyUser           = entity.User{}
 )
 
 // Login
@@ -36,11 +37,11 @@ var (
 // @Header			200		{string}	Set-Cookie	"session-token"
 // @Router			/login [post]
 func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
-	//ctx := r.Context() (чтобы session-token можно было получить после мидлвары)
 	log.Println("INFO receive POST request by /login")
+	ctx := r.Context() // чтобы session-token можно было получить после мидлвары
 
 	// Checking existing authorization
-	curSessionToken, err := CheckAuth(r)
+	curSessionToken, _, err := CheckAuth(r)
 	if err != nil {
 		WriteErrorResponse(w, errors_list.ErrReadCookie)
 		return
@@ -74,12 +75,12 @@ func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Search for user by email
-	user, err := handler.service.GetUserByEmail(userRequest.Email)
+	user, err := handler.service.GetUserByEmail(ctx, userRequest.Email)
 	if err != nil {
 		WriteErrorResponse(w, errors_list.ErrDBInternal)
 		return
 	}
-	if user == (entity.User{}) {
+	if user == emptyUser {
 		WriteErrorResponse(w, errors_list.ErrUserNotExist)
 		return
 	}
@@ -121,7 +122,7 @@ func (handler *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	log.Println("INFO Receive GET request by /logout")
 
 	// Checking existing authorization
-	curSessionToken, err := CheckAuth(r)
+	curSessionToken, _, err := CheckAuth(r)
 	if err != nil {
 		WriteErrorResponse(w, errors_list.ErrReadCookie)
 		return
@@ -155,9 +156,9 @@ func (handler *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
 //	@Router			/register [post]
 func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 	log.Println("INFO Receive POST request by /register")
+	ctx := r.Context()
 
-	// Checking existing authorization
-	curSessionToken, err := CheckAuth(r)
+	curSessionToken, _, err := CheckAuth(r)
 	if err != nil {
 		WriteErrorsListResponse(w, errors_list.ErrReadCookie)
 		return
@@ -168,14 +169,12 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Body reading
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		WriteErrorsListResponse(w, errors_list.ErrReadingRequestBody)
 		return
 	}
 
-	// Body parsing
 	user := new(entity.User)
 	err = json.Unmarshal(bodyBytes, user)
 	if err != nil {
@@ -183,7 +182,6 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Format validation
 	if !ValidateEmail(user.Email) ||
 		!ValidateNickname(user.Nickname) ||
 		!ValidatePassword(user.Password) {
@@ -191,33 +189,29 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Password hashing
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		WriteErrorsListResponse(w, errors_list.ErrHashingPassword)
 		return
 	}
-
-	// User registration (checking for unique fields is now here)
 	user.Password = string(hashPassword)
-	errs := handler.service.RegisterUser(*user)
+	errs := handler.service.RegisterUser(ctx, *user)
 	if len(errs) != 0 {
 		WriteErrorsListResponse(w, errs...)
 		return
 	}
 
 	// Search for user by email (to get user id)
-	registeredUser, err := handler.service.GetUserByEmail(user.Email)
+	registeredUser, err := handler.service.GetUserByEmail(ctx, user.Email)
 	if err != nil {
 		WriteErrorsListResponse(w, errors_list.ErrDBInternal)
 		return
 	}
-	if registeredUser == (entity.User{}) {
+	if registeredUser == emptyUser {
 		WriteErrorsListResponse(w, errors_list.ErrUserNotExist)
 		return
 	}
 
-	// Session creating
 	sessionToken := uuid.NewString()
 	expiresAt := time.Now().Add(sessionTTL)
 	s := Session{
@@ -226,7 +220,6 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 	sessions.Store(sessionToken, s)
 
-	// Writing cookie & response
 	SetSessionTokenCookie(w, sessionToken, expiresAt)
 	WriteUserResponse(w, registeredUser)
 }
@@ -247,9 +240,9 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 //	@Router			/is_auth [get]
 func (handler *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
 	log.Println("INFO Receive GET request by /is_auth")
+	ctx := r.Context()
 
-	// Checking existing authorization
-	curSessionToken, err := CheckAuth(r)
+	curSessionToken, curUserId, err := CheckAuth(r)
 	if err != nil {
 		WriteErrorResponse(w, errors_list.ErrReadCookie)
 		return
@@ -261,40 +254,37 @@ func (handler *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Checking the existence of user with userId associated with session
-	s, _ := sessions.Load(curSessionToken)
-	// не проверяю существование ключа в мапе, потому что это было обработано в CheckAuth
-	user, err := handler.service.GetUserById(s.(Session).UserId)
+	user, err := handler.service.GetUserById(ctx, curUserId)
 	if err != nil {
 		WriteErrorResponse(w, errors_list.ErrDBInternal)
 		return
 	}
-	if user == (entity.User{}) {
+	if user == emptyUser {
 		WriteErrorResponse(w, errors_list.ErrUnauthorized)
 		return
 	}
 
-	// Writing response
 	WriteUserResponse(w, user)
 }
 
-func CheckAuth(r *http.Request) (string, error) {
+func CheckAuth(r *http.Request) (string, int64, error) {
 	c, err := r.Cookie("session_token")
 	if err != nil {
 		if errors.Is(err, http.ErrNoCookie) {
-			return "", nil
+			return "", 0, nil
 		}
-		return "", err
+		return "", 0, nil
 	}
 	sessionToken := c.Value
 	s, exists := sessions.Load(sessionToken)
 	if !exists {
-		return "", nil
+		return "", 0, nil
 	}
 	if s.(Session).IsExpired() {
 		sessions.Delete(sessionToken)
-		return "", nil
+		return "", 0, nil
 	}
-	return sessionToken, nil
+	return sessionToken, s.(Session).UserId, nil
 	// в мидлваре прокинуть session_token в контекст, чтобы он был досупен далее в ручке
 }
 

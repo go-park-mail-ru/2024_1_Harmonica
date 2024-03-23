@@ -24,6 +24,7 @@ func PageToLimitAndOffset(page int) (int, int) {
 //	@Failure		400		{object}	entity.ErrorResponse
 //	@Router			/pins_list [get]
 func (handler *APIHandler) PinsList(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	pageString := r.URL.Query().Get("page")
 	if pageString == "" {
 		pageString = "0"
@@ -34,7 +35,7 @@ func (handler *APIHandler) PinsList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	limit, offset := PageToLimitAndOffset(page)
-	pins, err := handler.service.GetPins(limit, offset)
+	pins, err := handler.service.GetPins(ctx, limit, offset)
 	if err != nil {
 		WriteErrorResponse(w, errors_list.ErrDBInternal)
 		return

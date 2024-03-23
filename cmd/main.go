@@ -36,6 +36,7 @@ func runServer(addr string) {
 	mux.HandleFunc("GET /api/v1/logout", h.Logout)
 	mux.HandleFunc("GET /api/v1/is_auth", h.IsAuth)
 	mux.HandleFunc("GET /api/v1/pins_list", h.PinsList)
+	mux.HandleFunc("POST /api/v1/update_user", h.UpdateUser)
 	mux.Handle("GET /img/", http.StripPrefix("/img/", http.FileServer(http.Dir("./static/img"))))
 	mux.Handle("GET /docs/swagger.json", http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))))
 	mux.Handle("GET /swagger/", v3.NewHandler("My API", "/docs/swagger.json", "/swagger"))
