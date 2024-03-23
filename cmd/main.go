@@ -1,42 +1,41 @@
 package main
 
 import (
+	"github.com/rs/cors"
 	"harmonica/config"
-	"harmonica/internal/handler"
-	"harmonica/internal/repository"
-	"harmonica/internal/service"
+	h "harmonica/internal/handler"
+	r "harmonica/internal/repository"
+	s "harmonica/internal/service"
 	"log"
 	"net/http"
 
 	"github.com/joho/godotenv"
-	"github.com/rs/cors"
 	v3 "github.com/swaggest/swgui/v3"
 )
 
 func runServer(addr string) {
 	conf := config.New()
-
-	dbConn, err := repository.NewConnector(conf.DB)
+	dbConn, err := r.NewConnector(conf.DB)
 	if err != nil {
 		log.Print(err)
 		return
 	}
 	defer dbConn.Disconnect()
 
-	r := repository.NewRepository(dbConn)
-	s := service.NewService(r)
-	h := handler.NewAPIHandler(s)
+	repo := r.NewRepository(dbConn)
+	service := s.NewService(repo)
+	handler := h.NewAPIHandler(service)
 	//handler := handler2.NewAPIHandler(dbConn) // было
 	mux := http.NewServeMux()
 
-	go handler.CleanupSessions()
+	go h.CleanupSessions()
 
-	mux.HandleFunc("POST /api/v1/login", h.Login)
-	mux.HandleFunc("POST /api/v1/register", h.Register)
-	mux.HandleFunc("GET /api/v1/logout", h.Logout)
-	mux.HandleFunc("GET /api/v1/is_auth", h.IsAuth)
-	mux.HandleFunc("GET /api/v1/pins_list", h.PinsList)
-	mux.HandleFunc("POST /api/v1/update_user", h.UpdateUser)
+	mux.HandleFunc("POST /api/v1/login", handler.Login)
+	mux.HandleFunc("POST /api/v1/register", handler.Register)
+	mux.HandleFunc("GET /api/v1/logout", handler.Logout)
+	mux.HandleFunc("GET /api/v1/is_auth", handler.IsAuth)
+	mux.HandleFunc("GET /api/v1/pins_list", handler.PinsList)
+	mux.HandleFunc("POST /api/v1/update_user", handler.UpdateUser)
 	mux.Handle("GET /img/", http.StripPrefix("/img/", http.FileServer(http.Dir("./static/img"))))
 	mux.Handle("GET /docs/swagger.json", http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))))
 	mux.Handle("GET /swagger/", v3.NewHandler("My API", "/docs/swagger.json", "/swagger"))
@@ -47,11 +46,16 @@ func runServer(addr string) {
 		AllowedHeaders:     []string{"*"},
 		OptionsPassthrough: false,
 	})
-
 	server := http.Server{
 		Addr:    addr,
 		Handler: c.Handler(mux),
 	}
+
+	//server := http.Server{
+	//	Addr:    addr,
+	//	Handler: handler.CorsMiddleware(mux),
+	//}
+
 	server.ListenAndServe()
 }
 
