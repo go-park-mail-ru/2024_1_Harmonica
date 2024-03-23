@@ -6,11 +6,12 @@ import (
 )
 
 const (
-	QueryGetUserByEmail    = `SELECT user_id, email, nickname, "password" FROM public.users WHERE email=$1`
-	QueryGetUserByNickname = `SELECT user_id, email, nickname, "password" FROM public.users WHERE nickname=$1`
-	QueryGetUserById       = `SELECT user_id, email, nickname, "password" FROM public.users WHERE user_id=$1`
-	QueryRegisterUser      = `INSERT INTO public.users ("email", "nickname", "password") VALUES($1, $2, $3)`
-	QueryUpdateUser        = `UPDATE public.users SET nickname=$2, "password"=$3 WHERE user_id=$1`
+	QueryGetUserByEmail     = `SELECT user_id, email, nickname, "password" FROM public.users WHERE email=$1`
+	QueryGetUserByNickname  = `SELECT user_id, email, nickname, "password" FROM public.users WHERE nickname=$1`
+	QueryGetUserById        = `SELECT user_id, email, nickname, "password" FROM public.users WHERE user_id=$1`
+	QueryRegisterUser       = `INSERT INTO public.users ("email", "nickname", "password") VALUES($1, $2, $3)`
+	QueryUpdateUserNickname = `UPDATE public.users SET nickname=$2 WHERE user_id=$1`
+	QueryUpdateUserPassword = `UPDATE public.users SET "password"=$2 WHERE user_id=$1`
 )
 
 var emptyUser = entity.User{}
@@ -72,6 +73,17 @@ func (r *DBRepository) RegisterUser(ctx context.Context, user entity.User) error
 }
 
 func (r *DBRepository) UpdateUser(ctx context.Context, user entity.User) error {
-	_, err := r.db.ExecContext(ctx, QueryUpdateUser, user.UserID, user.Nickname, user.Password)
-	return err
+	if user.Nickname != "" {
+		_, err := r.db.ExecContext(ctx, QueryUpdateUserNickname, user.UserID, user.Nickname)
+		if err != nil {
+			return err
+		}
+	}
+	if user.Password != "" {
+		_, err := r.db.ExecContext(ctx, QueryUpdateUserPassword, user.UserID, user.Password)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

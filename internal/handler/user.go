@@ -40,21 +40,27 @@ func (handler *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	user.UserID = curUserId
 
 	// изменить можно только ник и пароль, остальное игнорируется
-	if !ValidateNickname(user.Nickname) ||
-		!ValidatePassword(user.Password) {
+	if user.Nickname != "" && !ValidateNickname(user.Nickname) {
 		WriteErrorResponse(w, errors_list.ErrInvalidInputFormat)
 		return
 	}
 
-	hashPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-	if err != nil {
-		WriteErrorsListResponse(w, errors_list.ErrHashingPassword)
-		return
+	if user.Password != "" {
+		if !ValidatePassword(user.Password) {
+			WriteErrorResponse(w, errors_list.ErrInvalidInputFormat)
+			return
+		}
+		hashPassword, errH := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+		if errH != nil {
+			WriteErrorsListResponse(w, errors_list.ErrHashingPassword)
+			return
+		}
+		user.Password = string(hashPassword)
 	}
-	user.Password = string(hashPassword)
+
 	updatedUser, err := handler.service.UpdateUser(ctx, user)
 	if err != nil {
-		WriteErrorResponse(w, errors_list.ErrDBInternal)
+		WriteErrorResponse(w, err)
 		return
 	}
 

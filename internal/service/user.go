@@ -74,20 +74,22 @@ func (r RepositoryService) RegisterUser(ctx context.Context, user entity.User) [
 
 func (r RepositoryService) UpdateUser(ctx context.Context, user entity.User) (entity.User, error) {
 	// Checking for unique field
-	checkUser, err := r.repo.GetUserByNickname(ctx, user.Nickname)
+	if user.Nickname != "" {
+		checkUser, err := r.repo.GetUserByNickname(ctx, user.Nickname)
+		if err != nil {
+			return emptyUser, errors_list.ErrDBInternal
+		}
+		if checkUser != emptyUser && checkUser.UserID != user.UserID {
+			return emptyUser, errors_list.ErrDBUniqueNickname
+		}
+	}
+
+	err := r.repo.UpdateUser(ctx, user)
 	if err != nil {
 		return emptyUser, errors_list.ErrDBInternal
 	}
-	if checkUser != emptyUser {
-		return emptyUser, errors_list.ErrDBUniqueNickname
-	}
 
-	err = r.repo.UpdateUser(ctx, user)
-	if err != nil {
-		return emptyUser, errors_list.ErrDBInternal
-	}
-
-	updatedUser, err := r.repo.GetUserByNickname(ctx, user.Nickname)
+	updatedUser, err := r.repo.GetUserById(ctx, user.UserID)
 	if err != nil {
 		return emptyUser, errors_list.ErrDBInternal
 	}
