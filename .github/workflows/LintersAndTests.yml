@@ -1,6 +1,7 @@
-name: Run linters
+name: Run linters and tests
 on:
-  push:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
     branches: ["*"]
 permissions:
   contents: read
@@ -20,3 +21,18 @@ jobs:
         with:
           version: v1.54
           args: --config=linter/.golangci.toml --timeout=30m
+  tests:
+      runs-on: ubuntu-latest
+      steps:
+      - uses: actions/checkout@v4
+  
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+  
+      - name: Build
+        run: go build -v ./...
+  
+      - name: Test
+        run: make test
