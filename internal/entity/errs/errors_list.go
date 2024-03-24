@@ -1,4 +1,4 @@
-package errors_list
+package errs
 
 import "errors"
 
@@ -7,13 +7,15 @@ var (
 	ErrUnauthorized       = errors.New("unauthorized")
 	ErrReadCookie         = errors.New("error reading cookie")
 	ErrReadingRequestBody = errors.New("error reading request body")
-	ErrInvalidInputFormat = errors.New("failed to login/register because of invalid input format")
+	ErrInvalidInputFormat = errors.New("validation conditions are not met")
 	ErrHashingPassword    = errors.New("error hashing password")
 	ErrUserNotExist       = errors.New("user with this email does not exist (can't authorize)")
 	ErrWrongPassword      = errors.New("wrong password (can't authorize)")
 	ErrDBUniqueEmail      = errors.New("user with this email already exists (can't register)")
 	ErrDBUniqueNickname   = errors.New("user with this nickname already exists (can't register)")
 	ErrDBInternal         = errors.New("internal db error")
+	ErrInvalidSlug        = errors.New("invalid slug parameter")                  // NEW !
+	ErrDiffUserId         = errors.New("user id in slug and session don't match") // NEW !
 )
 
 var ErrorCodes = map[error]struct {
@@ -31,4 +33,6 @@ var ErrorCodes = map[error]struct {
 	ErrDBUniqueEmail:      {HttpCode: 500, LocalCode: 9},
 	ErrDBUniqueNickname:   {HttpCode: 500, LocalCode: 10},
 	ErrDBInternal:         {HttpCode: 500, LocalCode: 11},
+	ErrInvalidSlug:        {HttpCode: 400, LocalCode: 12},
+	ErrDiffUserId:         {HttpCode: 400, LocalCode: 13},
 }

@@ -1,4 +1,4 @@
-package entity
+package errs
 
 type ErrorResponse struct {
 	Code    int    `json:"code"`

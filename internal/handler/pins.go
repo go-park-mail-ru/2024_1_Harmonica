@@ -2,7 +2,7 @@ package handler
 
 import (
 	"encoding/json"
-	"harmonica/internal/entity/errors_list"
+	"harmonica/internal/entity/errs"
 	"log"
 	"net/http"
 	"strconv"
@@ -21,7 +21,7 @@ func PageToLimitAndOffset(page int) (int, int) {
 //	@Tags			Pins
 //	@Param			page	query		int	false	"Page num from 0"
 //	@Success		200		{object}	entity.Pins
-//	@Failure		400		{object}	entity.ErrorResponse
+//	@Failure		400		{object}	errs.ErrorResponse
 //	@Router			/pins_list [get]
 func (handler *APIHandler) PinsList(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -31,13 +31,13 @@ func (handler *APIHandler) PinsList(w http.ResponseWriter, r *http.Request) {
 	}
 	page, err := strconv.Atoi(pageString)
 	if err != nil {
-		WriteErrorResponse(w, errors_list.ErrReadingRequestBody)
+		WriteErrorResponse(w, errs.ErrReadingRequestBody)
 		return
 	}
 	limit, offset := PageToLimitAndOffset(page)
 	pins, err := handler.service.GetPins(ctx, limit, offset)
 	if err != nil {
-		WriteErrorResponse(w, errors_list.ErrDBInternal)
+		WriteErrorResponse(w, errs.ErrDBInternal)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

@@ -3,95 +3,88 @@ package service
 import (
 	"context"
 	"harmonica/internal/entity"
-	"harmonica/internal/entity/errors_list"
+	"harmonica/internal/entity/errs"
 )
 
 var emptyUser = entity.User{}
 
-func (r RepositoryService) GetUserByEmail(ctx context.Context, email string) (entity.User, error) {
+func (r *RepositoryService) GetUserByEmail(ctx context.Context, email string) (entity.User, error) {
 	user, err := r.repo.GetUserByEmail(ctx, email)
 	if err != nil {
-		return emptyUser, errors_list.ErrDBInternal
+		return emptyUser, errs.ErrDBInternal
 	}
 	return user, nil
 }
 
-func (r RepositoryService) GetUserByNickname(ctx context.Context, nickname string) (entity.User, error) {
+func (r *RepositoryService) GetUserByNickname(ctx context.Context, nickname string) (entity.User, error) {
 	user, err := r.repo.GetUserByNickname(ctx, nickname)
 	if err != nil {
-		return emptyUser, errors_list.ErrDBInternal
+		return emptyUser, errs.ErrDBInternal
 	}
 	return user, nil
 }
 
-func (r RepositoryService) GetUserById(ctx context.Context, id int64) (entity.User, error) {
+func (r *RepositoryService) GetUserById(ctx context.Context, id int64) (entity.User, error) {
 	user, err := r.repo.GetUserById(ctx, id)
 	if err != nil {
-		return emptyUser, errors_list.ErrDBInternal
+		return emptyUser, errs.ErrDBInternal
 	}
 	return user, nil
 }
 
-func (r RepositoryService) RegisterUser(ctx context.Context, user entity.User) []error {
-	isEmailUnique, isNicknameUnique := false, false
-	var errs []error
+func (r *RepositoryService) RegisterUser(ctx context.Context, user entity.User) []error {
+	var errsList []error
 
 	// Checking for unique fields
 	checkUser, err := r.repo.GetUserByEmail(ctx, user.Email)
 	if err != nil {
-		errs = append(errs, errors_list.ErrDBInternal)
-		return errs
+		errsList = append(errsList, errs.ErrDBInternal)
+		return errsList
 	}
-	if checkUser == emptyUser {
-		isEmailUnique = true
-	}
-	checkUser, err = r.repo.GetUserByNickname(ctx, user.Nickname)
-	if err != nil {
-		errs = append(errs, errors_list.ErrDBInternal)
-		return errs
-	}
-	if checkUser == emptyUser {
-		isNicknameUnique = true
+	if checkUser != emptyUser {
+		errsList = append(errsList, errs.ErrDBUniqueEmail)
 	}
 
-	if !isEmailUnique {
-		errs = append(errs, errors_list.ErrDBUniqueEmail)
+	checkUser, err = r.repo.GetUserByNickname(ctx, user.Nickname)
+	if err != nil {
+		errsList = append(errsList, errs.ErrDBInternal)
+		return errsList
 	}
-	if !isNicknameUnique {
-		errs = append(errs, errors_list.ErrDBUniqueNickname)
+	if checkUser != emptyUser {
+		errsList = append(errsList, errs.ErrDBUniqueNickname)
 	}
-	if len(errs) > 0 {
-		return errs
+
+	if len(errsList) > 0 {
+		return errsList
 	}
 
 	err = r.repo.RegisterUser(ctx, user)
 	if err != nil {
-		errs = append(errs, errors_list.ErrDBInternal)
+		errsList = append(errsList, errs.ErrDBInternal)
 	}
 
-	return errs
+	return errsList
 }
 
-func (r RepositoryService) UpdateUser(ctx context.Context, user entity.User) (entity.User, error) {
-	// Checking for unique field
+func (r *RepositoryService) UpdateUser(ctx context.Context, user entity.User) (entity.User, error) {
 	if user.Nickname != "" {
 		checkUser, err := r.repo.GetUserByNickname(ctx, user.Nickname)
 		if err != nil {
-			return emptyUser, errors_list.ErrDBInternal
+			return emptyUser, errs.ErrDBInternal
 		}
 		if checkUser != emptyUser && checkUser.UserID != user.UserID {
-			return emptyUser, errors_list.ErrDBUniqueNickname
+			return emptyUser, errs.ErrDBUniqueNickname
 		}
 	}
 
 	err := r.repo.UpdateUser(ctx, user)
 	if err != nil {
-		return emptyUser, errors_list.ErrDBInternal
+		return emptyUser, errs.ErrDBInternal
 	}
 
 	updatedUser, err := r.repo.GetUserById(ctx, user.UserID)
 	if err != nil {
-		return emptyUser, errors_list.ErrDBInternal
+		return emptyUser, errs.ErrDBInternal
 	}
 
 	return updatedUser, nil

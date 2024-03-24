@@ -15,10 +15,10 @@ func CleanupSessions() {
 	ticker := time.NewTicker(sessionsCleanupTime)
 	for {
 		<-ticker.C
-		sessions.Range(func(key, value interface{}) bool {
+		Sessions.Range(func(key, value interface{}) bool {
 			if session, ok := value.(Session); ok {
 				if time.Now().After(session.Expiry) {
-					sessions.Delete(key)
+					Sessions.Delete(key)
 				}
 			}
 			return true
