@@ -36,8 +36,11 @@ func Auth(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		ctx := r.Context()
-		ctx = context.WithValue(ctx, "session_token", sessionToken)
-		ctx = context.WithValue(ctx, "user_id", s.(handler.Session).UserId)
+		type ctxString string
+		sessionTokenKey := ctxString("session_token")
+		userIdKey := ctxString("user_id")
+		ctx = context.WithValue(ctx, sessionTokenKey, sessionToken)
+		ctx = context.WithValue(ctx, userIdKey, s.(handler.Session).UserId)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
