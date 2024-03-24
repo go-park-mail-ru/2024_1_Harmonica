@@ -38,25 +38,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.UserResponse"
+                            "$ref": "#/definitions/entity.UserResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
+                            "$ref": "#/definitions/entity.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
+                            "$ref": "#/definitions/entity.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
+                            "$ref": "#/definitions/entity.ErrorResponse"
                         }
                     }
                 }
@@ -94,25 +94,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
+                            "$ref": "#/definitions/entity.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
+                            "$ref": "#/definitions/entity.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
+                            "$ref": "#/definitions/entity.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
+                            "$ref": "#/definitions/entity.ErrorResponse"
                         }
                     }
                 }
@@ -151,7 +151,7 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
+                            "$ref": "#/definitions/entity.ErrorResponse"
                         }
                     }
                 }
@@ -176,13 +176,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.Pins"
+                            "$ref": "#/definitions/entity.Pins"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
+                            "$ref": "#/definitions/entity.ErrorResponse"
                         }
                     }
                 }
@@ -208,7 +208,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/db.User"
+                            "$ref": "#/definitions/repository.User"
                         }
                     }
                 ],
@@ -216,25 +216,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.UserResponse"
+                            "$ref": "#/definitions/entity.UserResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/models.ErrorsListResponse"
+                            "$ref": "#/definitions/entity.ErrorsListResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/models.ErrorsListResponse"
+                            "$ref": "#/definitions/entity.ErrorsListResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/models.ErrorsListResponse"
+                            "$ref": "#/definitions/entity.ErrorsListResponse"
                         }
                     }
                 }
@@ -242,7 +242,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "db.User": {
+        "repository.User": {
             "type": "object",
             "properties": {
                 "email": {
@@ -256,7 +256,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.ErrorResponse": {
+        "entity.ErrorResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -267,23 +267,23 @@ const docTemplate = `{
                 }
             }
         },
-        "models.ErrorsListResponse": {
+        "entity.ErrorsListResponse": {
             "type": "object",
             "properties": {
                 "errors": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.ErrorResponse"
+                        "$ref": "#/definitions/entity.ErrorResponse"
                     }
                 }
             }
         },
-        "models.Pin": {
+        "entity.Pin": {
             "description": "Pin information with author, pin id, created date, caption, click and content URLs.",
             "type": "object",
             "properties": {
                 "author": {
-                    "$ref": "#/definitions/models.PinAuthor"
+                    "$ref": "#/definitions/entity.PinAuthor"
                 },
                 "caption": {
                     "type": "string"
@@ -302,7 +302,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.PinAuthor": {
+        "entity.PinAuthor": {
             "description": "User-author information with user id and nickname",
             "type": "object",
             "properties": {
@@ -314,19 +314,19 @@ const docTemplate = `{
                 }
             }
         },
-        "models.Pins": {
+        "entity.Pins": {
             "description": "Pins array of Pin",
             "type": "object",
             "properties": {
                 "pins": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.Pin"
+                        "$ref": "#/definitions/entity.Pin"
                     }
                 }
             }
         },
-        "models.UserResponse": {
+        "entity.UserResponse": {
             "description": "User information with user id, email and nickname",
             "type": "object",
             "properties": {

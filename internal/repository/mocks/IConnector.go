@@ -3,8 +3,7 @@
 package mocks
 
 import (
-	db "harmonica/db"
-	models "harmonica/models"
+	models "harmonica/internal/entity"
 
 	mock "github.com/stretchr/testify/mock"
 )
@@ -43,22 +42,22 @@ func (_m *IConnector) GetPins(limit int, offset int) (models.Pins, error) {
 }
 
 // GetUserByEmail provides a mock function with given fields: email
-func (_m *IConnector) GetUserByEmail(email string) (db.User, error) {
+func (_m *IConnector) GetUserByEmail(email string) (models.User, error) {
 	ret := _m.Called(email)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUserByEmail")
 	}
 
-	var r0 db.User
+	var r0 models.User
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (db.User, error)); ok {
+	if rf, ok := ret.Get(0).(func(string) (models.User, error)); ok {
 		return rf(email)
 	}
-	if rf, ok := ret.Get(0).(func(string) db.User); ok {
+	if rf, ok := ret.Get(0).(func(string) models.User); ok {
 		r0 = rf(email)
 	} else {
-		r0 = ret.Get(0).(db.User)
+		r0 = ret.Get(0).(models.User)
 	}
 
 	if rf, ok := ret.Get(1).(func(string) error); ok {
@@ -71,22 +70,22 @@ func (_m *IConnector) GetUserByEmail(email string) (db.User, error) {
 }
 
 // GetUserById provides a mock function with given fields: id
-func (_m *IConnector) GetUserById(id int64) (db.User, error) {
+func (_m *IConnector) GetUserById(id int64) (models.User, error) {
 	ret := _m.Called(id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUserById")
 	}
 
-	var r0 db.User
+	var r0 models.User
 	var r1 error
-	if rf, ok := ret.Get(0).(func(int64) (db.User, error)); ok {
+	if rf, ok := ret.Get(0).(func(int64) (models.User, error)); ok {
 		return rf(id)
 	}
-	if rf, ok := ret.Get(0).(func(int64) db.User); ok {
+	if rf, ok := ret.Get(0).(func(int64) models.User); ok {
 		r0 = rf(id)
 	} else {
-		r0 = ret.Get(0).(db.User)
+		r0 = ret.Get(0).(models.User)
 	}
 
 	if rf, ok := ret.Get(1).(func(int64) error); ok {
@@ -99,22 +98,22 @@ func (_m *IConnector) GetUserById(id int64) (db.User, error) {
 }
 
 // GetUserByNickname provides a mock function with given fields: nickname
-func (_m *IConnector) GetUserByNickname(nickname string) (db.User, error) {
+func (_m *IConnector) GetUserByNickname(nickname string) (models.User, error) {
 	ret := _m.Called(nickname)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUserByNickname")
 	}
 
-	var r0 db.User
+	var r0 models.User
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (db.User, error)); ok {
+	if rf, ok := ret.Get(0).(func(string) (models.User, error)); ok {
 		return rf(nickname)
 	}
-	if rf, ok := ret.Get(0).(func(string) db.User); ok {
+	if rf, ok := ret.Get(0).(func(string) models.User); ok {
 		r0 = rf(nickname)
 	} else {
-		r0 = ret.Get(0).(db.User)
+		r0 = ret.Get(0).(models.User)
 	}
 
 	if rf, ok := ret.Get(1).(func(string) error); ok {
@@ -127,7 +126,7 @@ func (_m *IConnector) GetUserByNickname(nickname string) (db.User, error) {
 }
 
 // RegisterUser provides a mock function with given fields: user
-func (_m *IConnector) RegisterUser(user db.User) error {
+func (_m *IConnector) RegisterUser(user models.User) error {
 	ret := _m.Called(user)
 
 	if len(ret) == 0 {
@@ -135,7 +134,7 @@ func (_m *IConnector) RegisterUser(user db.User) error {
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(db.User) error); ok {
+	if rf, ok := ret.Get(0).(func(models.User) error); ok {
 		r0 = rf(user)
 	} else {
 		r0 = ret.Error(0)
