@@ -44,8 +44,7 @@ func runServer(addr string) {
 		Addr:    addr,
 		Handler: middleware.CORS(mux),
 	}
-
-	server.ListenAndServe()
+	server.ListenAndServeTLS("cert.pem", "key.pem")
 }
 
 func init() {
@@ -58,7 +57,7 @@ func init() {
 //	@version		1.0
 //	@description	This is API-docs of backend server of Harmonica team.
 
-// @host		http://85.192.35.36:8080
+// @host		https://85.192.35.36:8080
 // @BasePath	api/v1
 func main() {
 	runServer(":8080")

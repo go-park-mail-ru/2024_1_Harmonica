@@ -4,7 +4,7 @@
 * Костин Глеб
 * Амирова Лилиана
 ### [Frontend repository](https://github.com/frontend-park-mail-ru/2024_1_Harmonica)
-### [Deploy link](http://85.192.35.36:8000)
+### Deploy: [harmoniums.ru](https://harmoniums.ru/)
 ---
 ### Инструкция по локальной сборке
 #### 1. Установка БД PostgreSQL
@@ -40,3 +40,9 @@ DBname=harmonica
 Чтобы запустить сервер в консоли, перейдите в корень проекта и запустите следующую команду:
 
 `go run harmonica`
+
+### Оформление Pull Requests.
+1. Создаем ветку от main с названием `har-###-action-description`, где ### - номер задачи в jira, action - add/update/fix/delete и т.д., description - лаконичное описание.
+2. В эту ветку добавляем коммиты с сообщением по шаблону `HAR-###: description.`
+3. При создании PR в описание добавляем ссылку на задачу в jira.
+4. Для аппрува скидываем ссылку на PR в тг @grv_nikita.
