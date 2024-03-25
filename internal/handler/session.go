@@ -1,9 +1,12 @@
 package handler
 
-import "time"
+import (
+	"harmonica/internal/entity"
+	"time"
+)
 
 type Session struct {
-	UserId int64
+	UserId entity.UserID
 	Expiry time.Time
 }
 

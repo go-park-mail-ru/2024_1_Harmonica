@@ -6,12 +6,12 @@ import (
 )
 
 const (
-	QueryGetUserByEmail     = `SELECT user_id, email, nickname, "password" FROM public.users WHERE email=$1`
-	QueryGetUserByNickname  = `SELECT user_id, email, nickname, "password" FROM public.users WHERE nickname=$1`
-	QueryGetUserById        = `SELECT user_id, email, nickname, "password" FROM public.users WHERE user_id=$1`
-	QueryRegisterUser       = `INSERT INTO public.users ("email", "nickname", "password") VALUES($1, $2, $3)`
-	QueryUpdateUserNickname = `UPDATE public.users SET nickname=$2 WHERE user_id=$1`
-	QueryUpdateUserPassword = `UPDATE public.users SET "password"=$2 WHERE user_id=$1`
+	QueryGetUserByEmail     = `SELECT user_id, email, nickname, "password", avatar_url FROM public.user WHERE email=$1`
+	QueryGetUserByNickname  = `SELECT user_id, email, nickname, "password", avatar_url FROM public.user WHERE nickname=$1`
+	QueryGetUserById        = `SELECT user_id, email, nickname, "password", avatar_url FROM public.user WHERE user_id=$1`
+	QueryRegisterUser       = `INSERT INTO public.user ("email", "nickname", "password") VALUES($1, $2, $3)`
+	QueryUpdateUserNickname = `UPDATE public.user SET nickname=$2 WHERE user_id=$1`
+	QueryUpdateUserPassword = `UPDATE public.user SET "password"=$2 WHERE user_id=$1`
 )
 
 var emptyUser = entity.User{}
@@ -19,7 +19,6 @@ var emptyUser = entity.User{}
 func (r *DBRepository) GetUserByEmail(ctx context.Context, email string) (entity.User, error) {
 	rows, err := r.db.QueryxContext(ctx, QueryGetUserByEmail, email)
 	//чтобы запрос не продолжался, если пользователь ушел
-
 	if err != nil {
 		return emptyUser, err
 	}
@@ -51,7 +50,7 @@ func (r *DBRepository) GetUserByNickname(ctx context.Context, nickname string) (
 	return user, nil
 }
 
-func (r *DBRepository) GetUserById(ctx context.Context, id int64) (entity.User, error) {
+func (r *DBRepository) GetUserById(ctx context.Context, id entity.UserID) (entity.User, error) {
 	rows, err := r.db.QueryxContext(ctx, QueryGetUserById, id)
 	if err != nil {
 		return emptyUser, err

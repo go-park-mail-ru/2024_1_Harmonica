@@ -2,12 +2,13 @@ package handler
 
 import (
 	"encoding/json"
-	"golang.org/x/crypto/bcrypt"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"io"
 	"log"
 	"net/http"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 func (handler *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
@@ -31,7 +32,7 @@ func (handler *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if userIdFromSession != userIdFromSlug {
+	if uint64(userIdFromSession) != userIdFromSlug {
 		WriteErrorResponse(w, errs.ErrDiffUserId)
 		return
 	}

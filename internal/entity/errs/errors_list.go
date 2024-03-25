@@ -16,6 +16,7 @@ var (
 	ErrDBInternal         = errors.New("internal db error")
 	ErrInvalidSlug        = errors.New("invalid slug parameter")                  // NEW !
 	ErrDiffUserId         = errors.New("user id in slug and session don't match") // NEW !
+	ErrPermissionDenied   = errors.New("current user doesn't have requested permissions")
 )
 
 var ErrorCodes = map[error]struct {
@@ -35,4 +36,5 @@ var ErrorCodes = map[error]struct {
 	ErrDBInternal:         {HttpCode: 500, LocalCode: 11},
 	ErrInvalidSlug:        {HttpCode: 400, LocalCode: 12},
 	ErrDiffUserId:         {HttpCode: 400, LocalCode: 13},
+	ErrPermissionDenied:   {HttpCode: 403, LocalCode: 14},
 }

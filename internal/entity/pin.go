@@ -1,38 +1,64 @@
 package entity
 
-import "time"
+import (
+	"time"
+)
 
+// Pin model for DB
+// @Description Full pin information
 type Pin struct {
-	PinId      int64     `db:"pin_id"`
-	AuthorId   int64     `db:"author_id"`
-	CreatedAt  time.Time `db:"created_at"`
-	Caption    string    `db:"caption"`
-	ClickUrl   string    `db:"click_url"`
-	ContentUrl string    `db:"content_url"`
+	PinId         PinID     `db:"pin_id" json:"pin_id"`
+	AuthorId      UserID    `db:"author_id" json:"author_id"`
+	CreatedAt     time.Time `db:"created_at" json:"created_at"`
+	Title         string    `db:"title" json:"title"`
+	Description   string    `db:"description" json:"description"`
+	AllowComments bool      `db:"allow_comments" json:"allow_comments"`
+	ClickUrl      string    `db:"click_url" json:"click_url"`
+	ContentUrl    string    `db:"content_url" json:"content_url"`
 }
 
-// PinResponse author model
+// Pin response author model
 // @Description User-author information
-// @Description with user id and nickname
+// @Description with user id, nickname and avatar
 type PinAuthor struct {
-	UserId   int64  `db:"user_id" json:"user_id"`
-	Nickname string `db:"nickname" json:"nickname"`
+	UserId    UserID `db:"user_id" json:"user_id"`
+	Nickname  string `db:"nickname" json:"nickname"`
+	AvatarURL string `db:"avatar_url" json:"avatar_url"`
 }
 
-// PinResponse model
+// Pin page response model
+// @Description Full pin information
+type PinPageResponse struct {
+	PinId         PinID     `db:"pin_id" json:"pin_id"`
+	CreatedAt     time.Time `db:"created_at" json:"created_at"`
+	Title         string    `db:"title" json:"title"`
+	Description   string    `db:"description" json:"description"`
+	AllowComments bool      `db:"allow_comments" json:"allow_comments"`
+	ClickUrl      string    `db:"click_url" json:"click_url"`
+	ContentUrl    string    `db:"content_url" json:"content_url"`
+	PinAuthor     `json:"author"`
+}
+
+// Feed pin response model
 // @Description PinResponse information
-// @Description with author, pin id, created date, caption, click and content URLs.
-type PinResponse struct {
-	PinId      int64     `db:"pin_id" json:"pin_id"`
-	CreatedAt  time.Time `db:"created_at" json:"created_at"`
-	Caption    string    `db:"caption" json:"caption"`
-	ClickUrl   string    `db:"click_url" json:"click_url"`
-	ContentUrl string    `db:"content_url" json:"content_url"`
+// @Description with author, pin id and content URL.
+type FeedPinResponse struct {
+	PinId      PinID  `db:"pin_id" json:"pin_id"`
+	ContentUrl string `db:"content_url" json:"content_url"`
 	PinAuthor  `json:"author"`
 }
 
 // Pins model
-// @Description Pins array of PinResponse
-type Pins struct {
-	Pins []PinResponse `json:"pins"`
+// @Description Pins array of FeedPinResponse
+type FeedPins struct {
+	Pins []FeedPinResponse `json:"pins"`
+}
+
+type UserPinResponse struct {
+	PinId      PinID  `db:"pin_id" json:"pin_id"`
+	ContentUrl string `db:"content_url" json:"content_url"`
+}
+
+type UserPins struct {
+	Pins []UserPinResponse `json:"pins"`
 }

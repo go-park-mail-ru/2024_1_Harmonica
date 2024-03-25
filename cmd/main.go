@@ -33,9 +33,16 @@ func runServer(addr string) {
 	mux.HandleFunc("POST /api/v1/login", handler.Login)
 	mux.HandleFunc("GET /api/v1/logout", handler.Logout)
 	mux.HandleFunc("POST /api/v1/users", handler.Register)
-	mux.HandleFunc("POST /api/v1/users/{user_id}", handler.UpdateUser)
+	mux.HandleFunc("POST /api/v1/users/{id}", handler.UpdateUser)
 	mux.HandleFunc("GET /api/v1/is_auth", handler.IsAuth)
-	mux.HandleFunc("GET /api/v1/pins", handler.PinsList)
+
+	mux.HandleFunc("GET /api/v1/pins", handler.GetFeedPins)
+	mux.HandleFunc("GET /api/v1/pins/{id}", handler.GetUserPins)
+	mux.HandleFunc("GET /api/v1/pin/{id}", handler.GetPin)
+	mux.HandleFunc("POST /api/v1/pins", handler.CreatePin)        // Обернуть в OnlyAuth
+	mux.HandleFunc("POST /api/v1/pins/{id}", handler.UpdatePin)   // Обернуть в OnlyAuth
+	mux.HandleFunc("DELETE /api/v1/pins/{id}", handler.DeletePin) // Обернуть в OnlyAuth
+
 	mux.Handle("GET /img/", http.StripPrefix("/img/", http.FileServer(http.Dir("./static/img"))))
 	mux.Handle("GET /docs/swagger.json", http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))))
 	mux.Handle("GET /swagger/", v3.NewHandler("My API", "/docs/swagger.json", "/swagger"))
@@ -44,7 +51,7 @@ func runServer(addr string) {
 		Addr:    addr,
 		Handler: middleware.CORS(mux),
 	}
-	server.ListenAndServeTLS("cert.pem", "key.pem")
+	server.ListenAndServe()
 }
 
 func init() {
