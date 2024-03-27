@@ -15,7 +15,7 @@ func (handler *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	log.Println("INFO receive POST request by /users/{user_id}")
 	ctx := r.Context()
 
-	userIdFromSlug, err := ReadInt64Slug(r)
+	userIdFromSlug, err := ReadInt64Slug(r, "user_id")
 	if err != nil {
 		WriteErrorResponse(w, errs.ErrInvalidSlug)
 		return

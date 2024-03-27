@@ -56,7 +56,7 @@ func WriteDefaultResponse(w http.ResponseWriter, object any) {
 //	@Success		200		{object}	entity.Pins
 //	@Failure		400		{object}	errs.ErrorResponse
 //	@Router			/pins_list [get]
-func (handler *APIHandler) GetFeedPins(w http.ResponseWriter, r *http.Request) {
+func (handler *APIHandler) Feed(w http.ResponseWriter, r *http.Request) {
 	limit, offset, err := GetLimitAndOffset(r)
 	if err != nil {
 		WriteErrorResponse(w, errs.ErrReadingRequestBody)
@@ -70,8 +70,8 @@ func (handler *APIHandler) GetFeedPins(w http.ResponseWriter, r *http.Request) {
 	WriteDefaultResponse(w, pins)
 }
 
-func (handler *APIHandler) GetUserPins(w http.ResponseWriter, r *http.Request) {
-	userId, err := ReadInt64Slug(r)
+func (handler *APIHandler) UserPins(w http.ResponseWriter, r *http.Request) {
+	userId, err := ReadInt64Slug(r, "user_id")
 	if err != nil {
 		WriteErrorResponse(w, errs.ErrInvalidSlug)
 		return
@@ -90,7 +90,7 @@ func (handler *APIHandler) GetUserPins(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *APIHandler) GetPin(w http.ResponseWriter, r *http.Request) {
-	pinId, err := ReadInt64Slug(r)
+	pinId, err := ReadInt64Slug(r, "pin_id")
 	if err != nil {
 		WriteErrorResponse(w, errs.ErrInvalidSlug)
 		return
@@ -129,7 +129,7 @@ func (handler *APIHandler) CreatePin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *APIHandler) UpdatePin(w http.ResponseWriter, r *http.Request) {
-	pinId, err := ReadInt64Slug(r)
+	pinId, err := ReadInt64Slug(r, "pin_id")
 	if err != nil {
 		WriteErrorResponse(w, errs.ErrInvalidSlug)
 		return
@@ -156,7 +156,7 @@ func (handler *APIHandler) UpdatePin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *APIHandler) DeletePin(w http.ResponseWriter, r *http.Request) {
-	pinId, err := ReadInt64Slug(r)
+	pinId, err := ReadInt64Slug(r, "pin_id")
 	if err != nil {
 		WriteErrorResponse(w, errs.ErrInvalidSlug)
 		return

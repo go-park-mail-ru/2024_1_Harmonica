@@ -17,6 +17,8 @@ var (
 	ErrInvalidSlug        = errors.New("invalid slug parameter")                  // NEW !
 	ErrDiffUserId         = errors.New("user id in slug and session don't match") // NEW !
 	ErrPermissionDenied   = errors.New("current user doesn't have requested permissions")
+	ErrLikeAlreadyCreated = errors.New("like already was created")
+	ErrLikeAlreadyDeleted = errors.New("like already was deleted")
 )
 
 var ErrorCodes = map[error]struct {
@@ -37,4 +39,6 @@ var ErrorCodes = map[error]struct {
 	ErrInvalidSlug:        {HttpCode: 400, LocalCode: 12},
 	ErrDiffUserId:         {HttpCode: 400, LocalCode: 13},
 	ErrPermissionDenied:   {HttpCode: 403, LocalCode: 14},
+	ErrLikeAlreadyCreated: {HttpCode: 403, LocalCode: 15},
+	ErrLikeAlreadyDeleted: {HttpCode: 404, LocalCode: 16},
 }

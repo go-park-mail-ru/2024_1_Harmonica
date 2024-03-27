@@ -15,7 +15,7 @@ type User struct {
 
 // User response model
 // @Description User information
-// @Description with user id, email and nickname
+// @Description with user id, email, nickname and avatar_url
 type UserResponse struct {
 	UserId    UserID `json:"user_id"`
 	Email     string `json:"email"`
@@ -24,3 +24,10 @@ type UserResponse struct {
 }
 
 // ответ - для хэндлера => в сторону хэндлера перенести
+
+// User list response model
+// @Description User information
+// @Description with user id, email, nickname and avatar_url
+type UserList struct {
+	Users []UserResponse `json:"users"`
+}

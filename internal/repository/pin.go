@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"fmt"
 	"harmonica/internal/entity"
 
 	"github.com/jackskj/carta"
@@ -62,7 +61,6 @@ func (r *DBRepository) GetPinById(ctx context.Context, pinId entity.PinID) (enti
 
 func (r *DBRepository) CreatePin(ctx context.Context, pin entity.Pin) (entity.PinID, error) {
 	res := entity.PinID(0)
-	fmt.Println(pin, "IN REPO")
 	err := r.db.QueryRowContext(ctx, QueryCreatePin, pin.AuthorId, pin.ContentUrl, pin.ClickUrl, pin.Title,
 		pin.Description, pin.AllowComments).Scan(&res)
 	return res, err

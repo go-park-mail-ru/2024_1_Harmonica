@@ -6,8 +6,8 @@ import (
 	"strconv"
 )
 
-func ReadInt64Slug(r *http.Request) (uint64, error) {
-	stringId := r.PathValue("id")
+func ReadInt64Slug(r *http.Request, name string) (uint64, error) {
+	stringId := r.PathValue(name)
 	if len(stringId) == 0 {
 		return 0, errs.ErrInvalidSlug
 	}

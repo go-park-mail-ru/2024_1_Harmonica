@@ -33,15 +33,21 @@ func runServer(addr string) {
 	mux.HandleFunc("POST /api/v1/login", handler.Login)
 	mux.HandleFunc("GET /api/v1/logout", handler.Logout)
 	mux.HandleFunc("POST /api/v1/users", handler.Register)
-	mux.HandleFunc("POST /api/v1/users/{id}", handler.UpdateUser)
+	mux.HandleFunc("POST /api/v1/users/{user_id}", handler.UpdateUser)
 	mux.HandleFunc("GET /api/v1/is_auth", handler.IsAuth)
 
-	mux.HandleFunc("GET /api/v1/pins", handler.GetFeedPins)
-	mux.HandleFunc("GET /api/v1/pins/{id}", handler.GetUserPins)
-	mux.HandleFunc("GET /api/v1/pin/{id}", handler.GetPin)
-	mux.HandleFunc("POST /api/v1/pins", handler.CreatePin)        // Обернуть в OnlyAuth
-	mux.HandleFunc("POST /api/v1/pins/{id}", handler.UpdatePin)   // Обернуть в OnlyAuth
-	mux.HandleFunc("DELETE /api/v1/pins/{id}", handler.DeletePin) // Обернуть в OnlyAuth
+	mux.HandleFunc("GET /api/v1/pins/created/{user_id}", handler.UserPins)
+	mux.HandleFunc("GET /api/v1/pins", handler.Feed)
+	mux.HandleFunc("POST /api/v1/pins", handler.CreatePin) // Обернуть в OnlyAuth
+	mux.HandleFunc("GET /api/v1/pins/{pin_id}", handler.GetPin)
+	mux.HandleFunc("POST /api/v1/pins/{pin_id}", handler.UpdatePin)   // Обернуть в OnlyAuth
+	mux.HandleFunc("DELETE /api/v1/pins/{pin_id}", handler.DeletePin) // Обернуть в OnlyAuth
+
+	mux.HandleFunc("GET /api/v1/likes/pins", handler.LikedPins)              // Обернуть в OnlyAuth
+	mux.HandleFunc("POST /api/v1/likes/{pin_id}/like", handler.CreateLike)   // Обернуть в OnlyAuth
+	mux.HandleFunc("DELETE /api/v1/likes/{pin_id}/like", handler.DeleteLike) // Обернуть в OnlyAuth
+	mux.HandleFunc("GET /api/v1/likes/{pin_id}/count", handler.LikesCount)
+	mux.HandleFunc("GET /api/v1/likes/{pin_id}/users", handler.UsersLiked)
 
 	mux.Handle("GET /img/", http.StripPrefix("/img/", http.FileServer(http.Dir("./static/img"))))
 	mux.Handle("GET /docs/swagger.json", http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))))

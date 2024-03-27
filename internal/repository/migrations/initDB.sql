@@ -55,6 +55,7 @@ DROP TABLE IF EXISTS public.like;
 CREATE TABLE public.like (
 	pin_id bigint NOT NULL,
 	user_id bigint NOT NULL,
+	created_at timestamptz NULL DEFAULT CURRENT_TIMESTAMP,
 	PRIMARY KEY (pin_id, user_id),
 	FOREIGN KEY(pin_id) REFERENCES public.pin(pin_id) ON DELETE CASCADE,
 	FOREIGN KEY(user_id) REFERENCES public.user(user_id) ON DELETE CASCADE
