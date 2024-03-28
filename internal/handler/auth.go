@@ -256,7 +256,7 @@ func (handler *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
 	WriteUserResponse(w, user)
 }
 
-func CheckAuth(r *http.Request) (string, int64, error) {
+func CheckAuth(r *http.Request) (string, entity.UserID, error) {
 	c, err := r.Cookie("session_token")
 	if err != nil {
 		if errors.Is(err, http.ErrNoCookie) {
