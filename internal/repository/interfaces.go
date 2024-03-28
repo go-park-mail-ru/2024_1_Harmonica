@@ -19,10 +19,7 @@ type IRepository interface {
 	UpdatePin(ctx context.Context, pin entity.Pin) error
 	DeletePin(ctx context.Context, id entity.PinID) error
 
-	CreateLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) error
-	DeleteLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) error
-	GetLikedPins(ctx context.Context, userId entity.UserID, limit int) (entity.FeedPins, error)
+	SetLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) error
+	ClearLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) error
 	GetUsersLiked(ctx context.Context, pinId entity.PinID, limit int) (entity.UserList, error)
-	GetLikesCount(ctx context.Context, pinId entity.PinID) (uint64, error)
-	FindLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) (bool, error)
 }

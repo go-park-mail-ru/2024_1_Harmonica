@@ -10,10 +10,10 @@ import (
 	"strconv"
 )
 
-const Limit = 10
+const FEED_PINS_LIMIT = 10
 
 func PageToLimitAndOffset(page int) (int, int) {
-	return Limit, page * Limit
+	return FEED_PINS_LIMIT, page * FEED_PINS_LIMIT
 }
 
 func GetLimitAndOffset(r *http.Request) (int, int, error) {

@@ -43,10 +43,8 @@ func runServer(addr string) {
 	mux.HandleFunc("POST /api/v1/pins/{pin_id}", handler.UpdatePin)   // Обернуть в OnlyAuth
 	mux.HandleFunc("DELETE /api/v1/pins/{pin_id}", handler.DeletePin) // Обернуть в OnlyAuth
 
-	mux.HandleFunc("GET /api/v1/likes/pins", handler.LikedPins)              // Обернуть в OnlyAuth
-	mux.HandleFunc("POST /api/v1/likes/{pin_id}/like", handler.CreateLike)   // Обернуть в OnlyAuth
-	mux.HandleFunc("DELETE /api/v1/likes/{pin_id}/like", handler.DeleteLike) // Обернуть в OnlyAuth
-	mux.HandleFunc("GET /api/v1/likes/{pin_id}/count", handler.LikesCount)
+	mux.HandleFunc("POST /api/v1/pins/{pin_id}/like", handler.CreateLike)   // Обернуть в OnlyAuth
+	mux.HandleFunc("DELETE /api/v1/pins/{pin_id}/like", handler.DeleteLike) // Обернуть в OnlyAuth
 	mux.HandleFunc("GET /api/v1/likes/{pin_id}/users", handler.UsersLiked)
 
 	mux.Handle("GET /img/", http.StripPrefix("/img/", http.FileServer(http.Dir("./static/img"))))
@@ -57,7 +55,7 @@ func runServer(addr string) {
 		Addr:    addr,
 		Handler: middleware.CORS(mux),
 	}
-	server.ListenAndServe()
+	server.ListenAndServeTLS("cert.pem", "key.pem")
 }
 
 func init() {

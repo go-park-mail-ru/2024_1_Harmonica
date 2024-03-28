@@ -14,7 +14,8 @@ const (
 	QueryGetUserPins = `SELECT pin_id, content_url FROM public.pin INNER JOIN public.user ON 
 	public.pin.author_id=public.user.user_id WHERE public.pin.author_id=$1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`
 
-	QueryGetPinById = `SELECT user_id, avatar_url, nickname, pin_id, title, "description", content_url, click_url, created_at, allow_comments
+	QueryGetPinById = `SELECT user_id, avatar_url, nickname, pin_id, title, "description", content_url, click_url, created_at, allow_comments, 
+	(SELECT COUNT(*) FROM public.like WHERE public.like.pin_id=public.pin.pin_id) AS likes_count
 	FROM public.pin INNER JOIN public.user ON public.pin.author_id=public.user.user_id WHERE pin_id=$1`
 
 	QueryCreatePin = `INSERT INTO public.pin ("author_id", "content_url", "click_url", "title", "description", "allow_comments") 
