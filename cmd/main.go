@@ -35,7 +35,18 @@ func runServer(addr string) {
 	mux.HandleFunc("POST /api/v1/users", handler.Register)
 	mux.HandleFunc("POST /api/v1/users/{user_id}", handler.UpdateUser)
 	mux.HandleFunc("GET /api/v1/is_auth", handler.IsAuth)
-	mux.HandleFunc("GET /api/v1/pins", handler.PinsList)
+
+	mux.HandleFunc("GET /api/v1/pins/created/{user_id}", handler.UserPins)
+	mux.HandleFunc("GET /api/v1/pins", handler.Feed)
+	mux.HandleFunc("POST /api/v1/pins", handler.CreatePin) // Обернуть в OnlyAuth
+	mux.HandleFunc("GET /api/v1/pins/{pin_id}", handler.GetPin)
+	mux.HandleFunc("POST /api/v1/pins/{pin_id}", handler.UpdatePin)   // Обернуть в OnlyAuth
+	mux.HandleFunc("DELETE /api/v1/pins/{pin_id}", handler.DeletePin) // Обернуть в OnlyAuth
+
+	mux.HandleFunc("POST /api/v1/pins/{pin_id}/like", handler.CreateLike)   // Обернуть в OnlyAuth
+	mux.HandleFunc("DELETE /api/v1/pins/{pin_id}/like", handler.DeleteLike) // Обернуть в OnlyAuth
+	mux.HandleFunc("GET /api/v1/likes/{pin_id}/users", handler.UsersLiked)
+
 	mux.Handle("GET /img/", http.StripPrefix("/img/", http.FileServer(http.Dir("./static/img"))))
 	mux.Handle("GET /docs/swagger.json", http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))))
 	mux.Handle("GET /swagger/", v3.NewHandler("My API", "/docs/swagger.json", "/swagger"))

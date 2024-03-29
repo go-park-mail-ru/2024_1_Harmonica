@@ -24,7 +24,7 @@ func (r *RepositoryService) GetUserByNickname(ctx context.Context, nickname stri
 	return user, nil
 }
 
-func (r *RepositoryService) GetUserById(ctx context.Context, id int64) (entity.User, error) {
+func (r *RepositoryService) GetUserById(ctx context.Context, id entity.UserID) (entity.User, error) {
 	user, err := r.repo.GetUserById(ctx, id)
 	if err != nil {
 		return emptyUser, errs.ErrDBInternal
