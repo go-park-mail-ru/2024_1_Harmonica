@@ -5,14 +5,12 @@ import (
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"io"
-	"log"
 	"net/http"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 func (handler *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	log.Println("INFO receive POST request by /users/{user_id}")
 	l := handler.logger
 	ctx := r.Context()
 
@@ -25,27 +23,9 @@ func (handler *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//sessionToken, userIdFromSession, err := CheckAuth(r)
-	//if err != nil {
-	//	WriteErrorResponse(w, l, errs.ErrorInfo{
-	//		GeneralErr: err,
-	//		LocalErr:   errs.ErrReadCookie,
-	//	})
-	//	return
-	//}
-	//isAuth := sessionToken != ""
-	//if !isAuth {
-	//	WriteErrorResponse(w, l, errs.ErrorInfo{
-	//		//GeneralErr: nil,
-	//		LocalErr: errs.ErrUnauthorized,
-	//	})
-	//	return
-	//}
-
 	userIdFromSession := ctx.Value("user_id").(entity.UserID)
 	if uint64(userIdFromSession) != userIdFromSlug {
 		WriteErrorResponse(w, l, errs.ErrorInfo{
-			//GeneralErr: nil,
 			LocalErr: errs.ErrDiffUserId,
 		})
 		return
@@ -60,7 +40,7 @@ func (handler *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var user entity.User // раньше создавался указатель тут
+	var user entity.User
 	err = json.Unmarshal(bodyBytes, &user)
 	if err != nil {
 		WriteErrorResponse(w, l, errs.ErrorInfo{
@@ -71,10 +51,8 @@ func (handler *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 	user.UserID = userIdFromSession
 
-	// изменить можно только ник и пароль, остальные поля игнорируются
 	if user.Nickname != "" && !ValidateNickname(user.Nickname) {
 		WriteErrorResponse(w, l, errs.ErrorInfo{
-			//GeneralErr: nil,
 			LocalErr: errs.ErrInvalidInputFormat,
 		})
 		return
@@ -83,7 +61,6 @@ func (handler *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	if user.Password != "" {
 		if !ValidatePassword(user.Password) {
 			WriteErrorResponse(w, l, errs.ErrorInfo{
-				//GeneralErr: nil,
 				LocalErr: errs.ErrInvalidInputFormat,
 			})
 			return
@@ -105,5 +82,5 @@ func (handler *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	WriteUserResponse(w, updatedUser)
+	WriteUserResponse(w, l, updatedUser)
 }

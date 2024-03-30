@@ -25,8 +25,8 @@ func runServer(addr string) {
 	}
 	defer dbConn.Disconnect()
 
-	repo := r.NewRepository(dbConn, logger)
-	service := s.NewService(repo, logger)
+	repo := r.NewRepository(dbConn)
+	service := s.NewService(repo)
 	handler := h.NewAPIHandler(service, logger)
 
 	mux := http.NewServeMux()
@@ -35,23 +35,6 @@ func runServer(addr string) {
 
 	configureUserRoutes(logger, handler, mux)
 	configurePinRoutes(logger, handler, mux)
-
-	//mux.HandleFunc("POST /api/v1/login", middleware.NotAuth(logger, handler.Login))
-	//mux.HandleFunc("GET /api/v1/logout", handler.Logout)
-	//mux.HandleFunc("POST /api/v1/users", middleware.NotAuth(logger, handler.Register))
-	//mux.HandleFunc("POST /api/v1/users/{user_id}", middleware.Auth(logger, handler.UpdateUser))
-	//mux.HandleFunc("GET /api/v1/is_auth", middleware.Auth(logger, handler.IsAuth))
-	//
-	//mux.HandleFunc("GET /api/v1/pins/created/{user_id}", handler.UserPins)
-	//mux.HandleFunc("GET /api/v1/pins", handler.Feed)
-	//mux.HandleFunc("POST /api/v1/pins", handler.CreatePin) // Обернуть в OnlyAuth
-	//mux.HandleFunc("GET /api/v1/pins/{pin_id}", handler.GetPin)
-	//mux.HandleFunc("POST /api/v1/pins/{pin_id}", handler.UpdatePin)   // Обернуть в OnlyAuth
-	//mux.HandleFunc("DELETE /api/v1/pins/{pin_id}", handler.DeletePin) // Обернуть в OnlyAuth
-	//
-	//mux.HandleFunc("POST /api/v1/pins/{pin_id}/like", handler.CreateLike)   // Обернуть в OnlyAuth
-	//mux.HandleFunc("DELETE /api/v1/pins/{pin_id}/like", handler.DeleteLike) // Обернуть в OnlyAuth
-	//mux.HandleFunc("GET /api/v1/likes/{pin_id}/users", handler.UsersLiked)
 
 	mux.Handle("GET /img/", http.StripPrefix("/img/", http.FileServer(http.Dir("./static/img"))))
 	mux.Handle("GET /docs/swagger.json", http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))))
@@ -97,9 +80,10 @@ func configurePinRoutes(logger *zap.Logger, handler *h.APIHandler, mux *http.Ser
 		"DELETE /api/v1/pins/{pin_id}/like": handler.DeleteLike,
 	}
 	publicRoutes := map[string]http.HandlerFunc{
-		"GET /api/v1/pins":                 handler.Feed,
-		"GET /api/v1/pins/{pin_id}":        handler.GetPin,
-		"GET /api/v1/likes/{pin_id}/users": handler.UsersLiked,
+		"GET /api/v1/pins":                   handler.Feed,
+		"GET /api/v1/pins/{pin_id}":          handler.GetPin,
+		"GET /api/v1/pins/created/{user_id}": handler.UserPins,
+		"GET /api/v1/likes/{pin_id}/users":   handler.UsersLiked,
 	}
 	for pattern, f := range authRoutes {
 		mux.HandleFunc(pattern, middleware.Auth(logger, f))
@@ -124,3 +108,20 @@ func init() {
 func main() {
 	runServer(":8080")
 }
+
+//mux.HandleFunc("POST /api/v1/login", middleware.NotAuth(logger, handler.Login))
+//mux.HandleFunc("GET /api/v1/logout", handler.Logout)
+//mux.HandleFunc("POST /api/v1/users", middleware.NotAuth(logger, handler.Register))
+//mux.HandleFunc("POST /api/v1/users/{user_id}", middleware.Auth(logger, handler.UpdateUser))
+//mux.HandleFunc("GET /api/v1/is_auth", middleware.Auth(logger, handler.IsAuth))
+//
+//mux.HandleFunc("GET /api/v1/pins/created/{user_id}", handler.UserPins)
+//mux.HandleFunc("GET /api/v1/pins", handler.Feed)
+//mux.HandleFunc("POST /api/v1/pins", handler.CreatePin) // Обернуть в OnlyAuth
+//mux.HandleFunc("GET /api/v1/pins/{pin_id}", handler.GetPin)
+//mux.HandleFunc("POST /api/v1/pins/{pin_id}", handler.UpdatePin)   // Обернуть в OnlyAuth
+//mux.HandleFunc("DELETE /api/v1/pins/{pin_id}", handler.DeletePin) // Обернуть в OnlyAuth
+//
+//mux.HandleFunc("POST /api/v1/pins/{pin_id}/like", handler.CreateLike)   // Обернуть в OnlyAuth
+//mux.HandleFunc("DELETE /api/v1/pins/{pin_id}/like", handler.DeleteLike) // Обернуть в OnlyAuth
+//mux.HandleFunc("GET /api/v1/likes/{pin_id}/users", handler.UsersLiked)

@@ -9,11 +9,9 @@ import (
 	"net/http"
 )
 
-type contextKey string
-
 const (
-	sessionTokenKey contextKey = "session_token"
-	userIdKey       contextKey = "user_id"
+	sessionTokenKey = "session_token"
+	userIdKey       = "user_id"
 )
 
 func Auth(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
@@ -64,12 +62,10 @@ func NotAuth(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		c, err := r.Cookie("session_token")
 		if err != nil {
-
 			if errors.Is(err, http.ErrNoCookie) {
 				next.ServeHTTP(w, r)
 				return
 			}
-
 			handler.WriteErrorResponse(w, l, errs.ErrorInfo{
 				GeneralErr: err,
 				LocalErr:   errs.ErrReadCookie,

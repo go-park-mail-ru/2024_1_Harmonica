@@ -19,13 +19,6 @@ func GetPinAndUserId(r *http.Request, ctx context.Context) (entity.PinID, entity
 	}
 	pinId := entity.PinID(id)
 	userId := ctx.Value("user_id").(entity.UserID)
-	//_, userId, err := CheckAuth(r)
-	//if err != nil || userId == 0 {
-	//	return entity.PinID(0), entity.UserID(0), errs.ErrorInfo{
-	//		GeneralErr: err,
-	//		LocalErr:   errs.ErrReadCookie,
-	//	}
-	//}
 	return pinId, userId, emptyErrorInfo
 }
 

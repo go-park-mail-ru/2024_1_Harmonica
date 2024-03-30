@@ -1,7 +1,6 @@
 package service
 
 import (
-	"go.uber.org/zap"
 	"harmonica/internal/repository"
 )
 
@@ -15,12 +14,10 @@ func NewRepositoryService(r *repository.Repository) *RepositoryService {
 
 type Service struct {
 	IService
-	Logger *zap.Logger
 }
 
-func NewService(r *repository.Repository, logger *zap.Logger) *Service {
+func NewService(r *repository.Repository) *Service {
 	return &Service{
 		IService: NewRepositoryService(r),
-		Logger:   logger,
 	}
 }

@@ -19,7 +19,6 @@ func WriteErrorResponse(w http.ResponseWriter, logger *zap.Logger, errInfo errs.
 		zap.Int("local_error_code", errs.ErrorCodes[errInfo.LocalErr].LocalCode),
 		zap.String("general_error", generalErrMessage),
 	)
-	//log.Println("ERROR", err.Error())
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(errs.ErrorCodes[errInfo.LocalErr].HttpCode)

@@ -135,18 +135,9 @@ func (handler *APIHandler) CreatePin(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	//_, userId, err := CheckAuth(r)
-	//if err != nil || userId == 0 {
-	//	WriteErrorResponse(w, l, errs.ErrorInfo{
-	//		GeneralErr: err,
-	//		LocalErr:   errs.ErrReadCookie,
-	//	})
-	//	return
-	//}
 	pin.AuthorId = ctx.Value("user_id").(entity.UserID)
 	if pin.ContentUrl == "" {
 		WriteErrorResponse(w, l, errs.ErrorInfo{
-			//GeneralErr: nil,
 			LocalErr: errs.ErrEmptyContentURL,
 		})
 		return
@@ -181,14 +172,6 @@ func (handler *APIHandler) UpdatePin(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	//_, userId, err := CheckAuth(r)
-	//if err != nil || userId == 0 {
-	//	WriteErrorResponse(w, l, errs.ErrorInfo{
-	//		GeneralErr: err,
-	//		LocalErr:   errs.ErrReadCookie,
-	//	})
-	//	return
-	//}
 	pin.AuthorId = ctx.Value("user_id").(entity.UserID)
 	res, errInfo := handler.service.UpdatePin(ctx, pin)
 	if errInfo != emptyErrorInfo {
@@ -212,14 +195,6 @@ func (handler *APIHandler) DeletePin(w http.ResponseWriter, r *http.Request) {
 	}
 	pin := entity.Pin{}
 	pin.PinId = entity.PinID(pinId)
-	//_, userId, err := CheckAuth(r)
-	//if err != nil || userId == 0 {
-	//	WriteErrorResponse(w, l, errs.ErrorInfo{
-	//		GeneralErr: err,
-	//		LocalErr:   errs.ErrReadCookie,
-	//	})
-	//	return
-	//}
 	pin.AuthorId = ctx.Value("user_id").(entity.UserID)
 	errInfo := handler.service.DeletePin(ctx, pin)
 	if errInfo != emptyErrorInfo {
