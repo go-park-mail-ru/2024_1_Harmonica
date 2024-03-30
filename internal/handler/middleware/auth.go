@@ -6,13 +6,14 @@ import (
 	"go.uber.org/zap"
 	"harmonica/internal/entity/errs"
 	"harmonica/internal/handler"
-	"log"
 	"net/http"
 )
 
+type contextKey string
+
 const (
-	sessionTokenKey = "session_token"
-	userIdKey       = "user_id"
+	sessionTokenKey contextKey = "session_token"
+	userIdKey       contextKey = "user_id"
 )
 
 func Auth(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
@@ -22,7 +23,6 @@ func Auth(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
 
 			if errors.Is(err, http.ErrNoCookie) {
 				handler.WriteErrorResponse(w, l, errs.ErrorInfo{
-					//GeneralErr: nil,
 					LocalErr: errs.ErrUnauthorized,
 				})
 				return
@@ -39,7 +39,6 @@ func Auth(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
 		s, exists := handler.Sessions.Load(sessionToken)
 		if !exists {
 			handler.WriteErrorResponse(w, l, errs.ErrorInfo{
-				//GeneralErr: nil,
 				LocalErr: errs.ErrUnauthorized,
 			})
 			return
@@ -47,25 +46,15 @@ func Auth(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
 		if s.(handler.Session).IsExpired() {
 			handler.Sessions.Delete(sessionToken)
 			handler.WriteErrorResponse(w, l, errs.ErrorInfo{
-				//GeneralErr: nil,
 				LocalErr: errs.ErrUnauthorized,
 			})
 			return
 		}
-		log.Println("OK 1")
-		userId := s.(handler.Session).UserId
-		log.Println(userId)
 
 		ctx := r.Context()
-		log.Println("OK 2")
-		//type ctxString string
-		//sessionTokenKey := ctxString("session_token")
-		//userIdKey := ctxString("user_id")
-		log.Println("OK 3")
+		userId := s.(handler.Session).UserId
 		ctx = context.WithValue(ctx, sessionTokenKey, sessionToken)
 		ctx = context.WithValue(ctx, userIdKey, userId)
-		log.Println("OK 4")
-		log.Println(ctx.Value("user_id"))
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
@@ -101,7 +90,6 @@ func NotAuth(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		handler.WriteErrorResponse(w, l, errs.ErrorInfo{
-			//GeneralErr: nil,
 			LocalErr: errs.ErrAlreadyAuthorized,
 		})
 	}

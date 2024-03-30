@@ -33,22 +33,25 @@ func runServer(addr string) {
 
 	go h.CleanupSessions()
 
-	mux.HandleFunc("POST /api/v1/login", middleware.NotAuth(logger, handler.Login))
-	mux.HandleFunc("GET /api/v1/logout", handler.Logout)
-	mux.HandleFunc("POST /api/v1/users", middleware.NotAuth(logger, handler.Register))
-	mux.HandleFunc("POST /api/v1/users/{user_id}", middleware.Auth(logger, handler.UpdateUser))
-	mux.HandleFunc("GET /api/v1/is_auth", middleware.Auth(logger, handler.IsAuth))
+	configureUserRoutes(logger, handler, mux)
+	configurePinRoutes(logger, handler, mux)
 
-	mux.HandleFunc("GET /api/v1/pins/created/{user_id}", handler.UserPins)
-	mux.HandleFunc("GET /api/v1/pins", handler.Feed)
-	mux.HandleFunc("POST /api/v1/pins", handler.CreatePin) // Обернуть в OnlyAuth
-	mux.HandleFunc("GET /api/v1/pins/{pin_id}", handler.GetPin)
-	mux.HandleFunc("POST /api/v1/pins/{pin_id}", handler.UpdatePin)   // Обернуть в OnlyAuth
-	mux.HandleFunc("DELETE /api/v1/pins/{pin_id}", handler.DeletePin) // Обернуть в OnlyAuth
-
-	mux.HandleFunc("POST /api/v1/pins/{pin_id}/like", handler.CreateLike)   // Обернуть в OnlyAuth
-	mux.HandleFunc("DELETE /api/v1/pins/{pin_id}/like", handler.DeleteLike) // Обернуть в OnlyAuth
-	mux.HandleFunc("GET /api/v1/likes/{pin_id}/users", handler.UsersLiked)
+	//mux.HandleFunc("POST /api/v1/login", middleware.NotAuth(logger, handler.Login))
+	//mux.HandleFunc("GET /api/v1/logout", handler.Logout)
+	//mux.HandleFunc("POST /api/v1/users", middleware.NotAuth(logger, handler.Register))
+	//mux.HandleFunc("POST /api/v1/users/{user_id}", middleware.Auth(logger, handler.UpdateUser))
+	//mux.HandleFunc("GET /api/v1/is_auth", middleware.Auth(logger, handler.IsAuth))
+	//
+	//mux.HandleFunc("GET /api/v1/pins/created/{user_id}", handler.UserPins)
+	//mux.HandleFunc("GET /api/v1/pins", handler.Feed)
+	//mux.HandleFunc("POST /api/v1/pins", handler.CreatePin) // Обернуть в OnlyAuth
+	//mux.HandleFunc("GET /api/v1/pins/{pin_id}", handler.GetPin)
+	//mux.HandleFunc("POST /api/v1/pins/{pin_id}", handler.UpdatePin)   // Обернуть в OnlyAuth
+	//mux.HandleFunc("DELETE /api/v1/pins/{pin_id}", handler.DeletePin) // Обернуть в OnlyAuth
+	//
+	//mux.HandleFunc("POST /api/v1/pins/{pin_id}/like", handler.CreateLike)   // Обернуть в OnlyAuth
+	//mux.HandleFunc("DELETE /api/v1/pins/{pin_id}/like", handler.DeleteLike) // Обернуть в OnlyAuth
+	//mux.HandleFunc("GET /api/v1/likes/{pin_id}/users", handler.UsersLiked)
 
 	mux.Handle("GET /img/", http.StripPrefix("/img/", http.FileServer(http.Dir("./static/img"))))
 	mux.Handle("GET /docs/swagger.json", http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))))
@@ -60,6 +63,50 @@ func runServer(addr string) {
 	}
 	//server.ListenAndServeTLS("cert.pem", "key.pem")
 	server.ListenAndServe()
+}
+
+func configureUserRoutes(logger *zap.Logger, handler *h.APIHandler, mux *http.ServeMux) {
+	authRoutes := map[string]http.HandlerFunc{
+		"POST /api/v1/users/{user_id}": handler.UpdateUser,
+		"GET /api/v1/is_auth":          handler.IsAuth,
+	}
+	notAuthRoutes := map[string]http.HandlerFunc{
+		"POST /api/v1/login": handler.Login,
+		"POST /api/v1/users": handler.Register,
+	}
+	publicRoutes := map[string]http.HandlerFunc{
+		"GET /api/v1/logout": handler.Logout,
+	}
+	for pattern, f := range authRoutes {
+		mux.HandleFunc(pattern, middleware.Auth(logger, f))
+	}
+	for pattern, f := range notAuthRoutes {
+		mux.HandleFunc(pattern, middleware.NotAuth(logger, f))
+	}
+	for pattern, f := range publicRoutes {
+		mux.HandleFunc(pattern, f)
+	}
+}
+
+func configurePinRoutes(logger *zap.Logger, handler *h.APIHandler, mux *http.ServeMux) {
+	authRoutes := map[string]http.HandlerFunc{
+		"POST /api/v1/pins":                 handler.CreatePin,
+		"POST /api/v1/pins/{pin_id}":        handler.UpdatePin,
+		"DELETE /api/v1/pins/{pin_id}":      handler.DeletePin,
+		"POST /api/v1/pins/{pin_id}/like":   handler.CreateLike,
+		"DELETE /api/v1/pins/{pin_id}/like": handler.DeleteLike,
+	}
+	publicRoutes := map[string]http.HandlerFunc{
+		"GET /api/v1/pins":                 handler.Feed,
+		"GET /api/v1/pins/{pin_id}":        handler.GetPin,
+		"GET /api/v1/likes/{pin_id}/users": handler.UsersLiked,
+	}
+	for pattern, f := range authRoutes {
+		mux.HandleFunc(pattern, middleware.Auth(logger, f))
+	}
+	for pattern, f := range publicRoutes {
+		mux.HandleFunc(pattern, f)
+	}
 }
 
 func init() {
