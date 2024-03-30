@@ -39,50 +39,64 @@ var (
 func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 	log.Println("INFO receive POST request by /login")
 	ctx := r.Context()
+	l := handler.logger
 
-	sessionToken, _, err := CheckAuth(r)
-	if err != nil {
-		WriteErrorResponse(w, errs.ErrReadCookie)
-		return
-	}
-	isAuth := sessionToken != ""
-	if isAuth {
-		WriteErrorResponse(w, errs.ErrAlreadyAuthorized)
-		return
-	}
+	//sessionToken, _, err := CheckAuth(r)
+	//if err != nil {
+	//	WriteErrorResponse(w, errs.ErrReadCookie)
+	//	return
+	//}
+	//isAuth := sessionToken != ""
+	//if isAuth {
+	//	WriteErrorResponse(w, errs.ErrAlreadyAuthorized)
+	//	return
+	//}
 
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
-		WriteErrorResponse(w, errs.ErrReadingRequestBody)
+		WriteErrorResponse(w, l, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrReadingRequestBody,
+		})
 		return
 	}
 
 	var user entity.User
 	err = json.Unmarshal(bodyBytes, &user)
 	if err != nil {
-		WriteErrorResponse(w, errs.ErrReadingRequestBody)
+		WriteErrorResponse(w, l, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrReadingRequestBody})
 		return
 	}
 
 	if !ValidateEmail(user.Email) ||
 		!ValidatePassword(user.Password) {
-		WriteErrorResponse(w, errs.ErrInvalidInputFormat)
+		WriteErrorResponse(w, l, errs.ErrorInfo{
+			//GeneralErr: nil,
+			LocalErr: errs.ErrInvalidInputFormat,
+		})
 		return
 	}
 
-	loggedInUser, err := handler.service.GetUserByEmail(ctx, user.Email)
-	if err != nil {
-		WriteErrorResponse(w, errs.ErrDBInternal)
+	loggedInUser, errInfo := handler.service.GetUserByEmail(ctx, user.Email)
+	if errInfo != emptyErrorInfo {
+		WriteErrorResponse(w, l, errInfo)
 		return
 	}
 	if loggedInUser == emptyUser {
-		WriteErrorResponse(w, errs.ErrUserNotExist)
+		WriteErrorResponse(w, l, errs.ErrorInfo{
+			//GeneralErr: nil,
+			LocalErr: errs.ErrUserNotExist,
+		})
 		return
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(loggedInUser.Password), []byte(user.Password))
 	if err != nil {
-		WriteErrorResponse(w, errs.ErrWrongPassword)
+		WriteErrorResponse(w, l, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrWrongPassword})
 		return
 	}
 
@@ -112,10 +126,14 @@ func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 //	@Router			/logout [get]
 func (handler *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	log.Println("INFO Receive GET request by /logout")
+	l := handler.logger
 
 	sessionToken, _, err := CheckAuth(r)
 	if err != nil {
-		WriteErrorResponse(w, errs.ErrReadCookie)
+		WriteErrorResponse(w, l, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrReadCookie,
+		})
 		return
 	}
 	isAuth := sessionToken != ""
@@ -146,58 +164,84 @@ func (handler *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
 func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 	log.Println("INFO Receive POST request by /users")
 	ctx := r.Context()
+	l := handler.logger
 
 	sessionToken, _, err := CheckAuth(r)
 	if err != nil {
-		WriteErrorsListResponse(w, errs.ErrReadCookie)
+		//errPairs = append(errPairs, ErrorPair{ generalErr: err, localErr: errs.ErrReadCookie })
+		WriteErrorsListResponse(w, l, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrReadCookie,
+		})
 		return
 	}
 	isAuth := sessionToken != ""
 	if isAuth {
-		WriteErrorsListResponse(w, errs.ErrAlreadyAuthorized)
+		//errPairs = append(errPairs, ErrorPair{ generalErr: nil, localErr: errs.ErrAlreadyAuthorized })
+		WriteErrorsListResponse(w, l, errs.ErrorInfo{
+			//GeneralErr: nil,
+			LocalErr: errs.ErrAlreadyAuthorized,
+		})
 		return
 	}
 
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
-		WriteErrorsListResponse(w, errs.ErrReadingRequestBody)
+		//errPairs = append(errPairs, ErrorPair{ generalErr: err, localErr: errs.ErrReadingRequestBody })
+		WriteErrorsListResponse(w, l, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrReadingRequestBody,
+		})
 		return
 	}
 
 	var user entity.User
 	err = json.Unmarshal(bodyBytes, &user)
 	if err != nil {
-		WriteErrorsListResponse(w, errs.ErrReadingRequestBody)
+		WriteErrorsListResponse(w, l, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrReadingRequestBody,
+		})
 		return
 	}
 
 	if !ValidateEmail(user.Email) ||
 		!ValidateNickname(user.Nickname) ||
 		!ValidatePassword(user.Password) {
-		WriteErrorsListResponse(w, errs.ErrInvalidInputFormat)
+		WriteErrorsListResponse(w, l, errs.ErrorInfo{
+			//GeneralErr: nil,
+			LocalErr: errs.ErrInvalidInputFormat,
+		})
 		return
 	}
 
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
-		WriteErrorsListResponse(w, errs.ErrHashingPassword)
+		WriteErrorsListResponse(w, l, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrHashingPassword,
+		})
 		return
 	}
 	user.Password = string(hashPassword)
+
 	errsList := handler.service.RegisterUser(ctx, user)
 	if len(errsList) != 0 {
-		WriteErrorsListResponse(w, errsList...)
+		WriteErrorsListResponse(w, l, errsList...)
 		return
 	}
 
 	// Search for user by email (to get user id)
-	registeredUser, err := handler.service.GetUserByEmail(ctx, user.Email)
-	if err != nil {
-		WriteErrorsListResponse(w, errs.ErrDBInternal)
+	registeredUser, errInfo := handler.service.GetUserByEmail(ctx, user.Email)
+	if errInfo != emptyErrorInfo {
+		WriteErrorsListResponse(w, l, errInfo)
 		return
 	}
 	if registeredUser == emptyUser {
-		WriteErrorsListResponse(w, errs.ErrUserNotExist)
+		WriteErrorsListResponse(w, l, errs.ErrorInfo{
+			//GeneralErr: nil,
+			LocalErr: errs.ErrUserNotExist,
+		})
 		return
 	}
 
@@ -230,26 +274,35 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 func (handler *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
 	log.Println("INFO Receive GET request by /is_auth")
 	ctx := r.Context()
+	l := handler.logger
 
 	sessionToken, userIdFromSession, err := CheckAuth(r)
 	if err != nil {
-		WriteErrorResponse(w, errs.ErrReadCookie)
+		WriteErrorResponse(w, l, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrReadCookie,
+		})
 		return
 	}
 	isAuth := sessionToken != ""
 	if !isAuth {
-		WriteErrorResponse(w, errs.ErrUnauthorized)
+		WriteErrorResponse(w, l, errs.ErrorInfo{
+			//GeneralErr: nil,
+			LocalErr: errs.ErrUnauthorized,
+		})
 		return
 	}
 
 	// Checking the existence of user with userId associated with session
-	user, err := handler.service.GetUserById(ctx, userIdFromSession)
-	if err != nil {
-		WriteErrorResponse(w, errs.ErrDBInternal)
+	user, errInfo := handler.service.GetUserById(ctx, userIdFromSession)
+	if errInfo != emptyErrorInfo {
+		WriteErrorResponse(w, l, errInfo)
 		return
 	}
 	if user == emptyUser {
-		WriteErrorResponse(w, errs.ErrUnauthorized)
+		WriteErrorResponse(w, l, errs.ErrorInfo{
+			//GeneralErr: nil,
+			LocalErr: errs.ErrUnauthorized})
 		return
 	}
 
@@ -262,7 +315,7 @@ func CheckAuth(r *http.Request) (string, entity.UserID, error) {
 		if errors.Is(err, http.ErrNoCookie) {
 			return "", 0, nil
 		}
-		return "", 0, nil
+		return "", 0, err
 	}
 	sessionToken := c.Value
 	s, exists := Sessions.Load(sessionToken)

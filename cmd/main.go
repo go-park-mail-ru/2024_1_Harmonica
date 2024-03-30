@@ -1,6 +1,7 @@
 package main
 
 import (
+	"go.uber.org/zap"
 	"harmonica/config"
 	h "harmonica/internal/handler"
 	"harmonica/internal/handler/middleware"
@@ -14,6 +15,8 @@ import (
 )
 
 func runServer(addr string) {
+	logger := zap.Must(zap.NewProduction())
+
 	conf := config.New()
 	dbConn, err := r.NewConnector(conf.DB)
 	if err != nil {
@@ -22,18 +25,18 @@ func runServer(addr string) {
 	}
 	defer dbConn.Disconnect()
 
-	repo := r.NewRepository(dbConn)
-	service := s.NewService(repo)
-	handler := h.NewAPIHandler(service)
-	//handler := handler2.NewAPIHandler(dbConn) // было
+	repo := r.NewRepository(dbConn, logger)
+	service := s.NewService(repo, logger)
+	handler := h.NewAPIHandler(service, logger)
+
 	mux := http.NewServeMux()
 
 	go h.CleanupSessions()
 
-	mux.HandleFunc("POST /api/v1/login", handler.Login)
+	mux.HandleFunc("POST /api/v1/login", middleware.NotAuth(logger, handler.Login))
 	mux.HandleFunc("GET /api/v1/logout", handler.Logout)
-	mux.HandleFunc("POST /api/v1/users", handler.Register)
-	mux.HandleFunc("POST /api/v1/users/{user_id}", handler.UpdateUser)
+	mux.HandleFunc("POST /api/v1/users", middleware.NotAuth(logger, handler.Register))
+	mux.HandleFunc("POST /api/v1/users/{user_id}", middleware.Auth(logger, handler.UpdateUser))
 	mux.HandleFunc("GET /api/v1/is_auth", handler.IsAuth)
 
 	mux.HandleFunc("GET /api/v1/pins/created/{user_id}", handler.UserPins)
@@ -55,7 +58,8 @@ func runServer(addr string) {
 		Addr:    addr,
 		Handler: middleware.CORS(mux),
 	}
-	server.ListenAndServeTLS("cert.pem", "key.pem")
+	//server.ListenAndServeTLS("cert.pem", "key.pem")
+	server.ListenAndServe()
 }
 
 func init() {

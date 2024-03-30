@@ -6,26 +6,37 @@ import (
 	"harmonica/internal/entity/errs"
 )
 
-func (r *RepositoryService) SetLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) error {
+var emptyErrorInfo = errs.ErrorInfo{}
+
+func (r *RepositoryService) SetLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) errs.ErrorInfo {
 	err := r.repo.SetLike(ctx, pinId, userId)
 	if err != nil {
-		return errs.ErrDBInternal
+		return errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrDBInternal,
+		}
 	}
-	return nil
+	return emptyErrorInfo
 }
 
-func (r *RepositoryService) ClearLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) error {
+func (r *RepositoryService) ClearLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) errs.ErrorInfo {
 	err := r.repo.ClearLike(ctx, pinId, userId)
 	if err != nil {
-		return errs.ErrDBInternal
+		return errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrDBInternal,
+		}
 	}
-	return nil
+	return emptyErrorInfo
 }
 
-func (r *RepositoryService) GetUsersLiked(ctx context.Context, pinId entity.PinID, limit int) (entity.UserList, error) {
+func (r *RepositoryService) GetUsersLiked(ctx context.Context, pinId entity.PinID, limit int) (entity.UserList, errs.ErrorInfo) {
 	res, err := r.repo.GetUsersLiked(ctx, pinId, limit)
 	if err != nil {
-		return entity.UserList{}, errs.ErrDBInternal
+		return entity.UserList{}, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrDBInternal,
+		}
 	}
-	return res, nil
+	return res, emptyErrorInfo
 }

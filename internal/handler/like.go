@@ -8,57 +8,73 @@ import (
 
 const USERS_LIKED_LIMIT = 20
 
-func GetPinAndUserId(r *http.Request) (entity.PinID, entity.UserID, error) {
+var emptyErrorInfo = errs.ErrorInfo{}
+
+func GetPinAndUserId(r *http.Request) (entity.PinID, entity.UserID, errs.ErrorInfo) {
 	id, err := ReadInt64Slug(r, "pin_id")
 	if err != nil {
-		return entity.PinID(0), entity.UserID(0), errs.ErrInvalidSlug
+		return entity.PinID(0), entity.UserID(0), errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrInvalidSlug,
+		}
 	}
 	pinId := entity.PinID(id)
 	_, userId, err := CheckAuth(r)
 	if err != nil || userId == 0 {
-		return entity.PinID(0), entity.UserID(0), errs.ErrReadCookie
+		return entity.PinID(0), entity.UserID(0), errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrReadCookie,
+		}
 	}
-	return pinId, userId, nil
+	return pinId, userId, emptyErrorInfo
 }
 
 func (handler *APIHandler) CreateLike(w http.ResponseWriter, r *http.Request) {
-	pinId, userId, err := GetPinAndUserId(r)
-	if err != nil {
-		WriteErrorResponse(w, err)
+	l := handler.logger
+
+	pinId, userId, errInfo := GetPinAndUserId(r)
+	if errInfo != emptyErrorInfo {
+		WriteErrorResponse(w, l, errInfo)
 		return
 	}
-	err = handler.service.SetLike(r.Context(), pinId, userId)
-	if err != nil {
-		WriteErrorResponse(w, err)
+	errInfo = handler.service.SetLike(r.Context(), pinId, userId)
+	if errInfo != emptyErrorInfo {
+		WriteErrorResponse(w, l, errInfo)
 		return
 	}
 	WriteDefaultResponse(w, nil)
 }
 
 func (handler *APIHandler) DeleteLike(w http.ResponseWriter, r *http.Request) {
-	pinId, userId, err := GetPinAndUserId(r)
-	if err != nil {
-		WriteErrorResponse(w, err)
+	l := handler.logger
+	pinId, userId, errInfo := GetPinAndUserId(r)
+	if errInfo != emptyErrorInfo {
+		WriteErrorResponse(w, l, errInfo)
 		return
 	}
-	err = handler.service.ClearLike(r.Context(), pinId, userId)
-	if err != nil {
-		WriteErrorResponse(w, err)
+	errInfo = handler.service.ClearLike(r.Context(), pinId, userId)
+	if errInfo != emptyErrorInfo {
+		WriteErrorResponse(w, l, errInfo)
 		return
 	}
 	WriteDefaultResponse(w, nil)
 }
 
 func (handler *APIHandler) UsersLiked(w http.ResponseWriter, r *http.Request) {
+	l := handler.logger
+
 	id, err := ReadInt64Slug(r, "pin_id")
 	if err != nil {
-		WriteErrorResponse(w, errs.ErrInvalidSlug)
+		WriteErrorResponse(w, l, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrInvalidSlug,
+		})
 		return
 	}
 	pinId := entity.PinID(id)
-	res, err := handler.service.GetUsersLiked(r.Context(), pinId, USERS_LIKED_LIMIT)
-	if err != nil {
-		WriteErrorResponse(w, errs.ErrDBInternal)
+	res, errInfo := handler.service.GetUsersLiked(r.Context(), pinId, USERS_LIKED_LIMIT)
+	if errInfo != emptyErrorInfo {
+		WriteErrorResponse(w, l, errInfo)
 		return
 	}
 	WriteDefaultResponse(w, res)
