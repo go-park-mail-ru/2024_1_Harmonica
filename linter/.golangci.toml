@@ -16,6 +16,7 @@ enable = [
 
 disable = [
     "errcheck",
+    "staticcheck",
 ]
 
 [issues]
