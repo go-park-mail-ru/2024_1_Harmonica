@@ -6,12 +6,17 @@ import (
 	"go.uber.org/zap"
 	"harmonica/internal/entity/errs"
 	"harmonica/internal/handler"
+	"log"
 	"net/http"
+)
+
+const (
+	sessionTokenKey = "session_token"
+	userIdKey       = "user_id"
 )
 
 func Auth(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		c, err := r.Cookie("session_token")
 		if err != nil {
 
@@ -47,13 +52,20 @@ func Auth(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
 			})
 			return
 		}
+		log.Println("OK 1")
+		userId := s.(handler.Session).UserId
+		log.Println(userId)
 
 		ctx := r.Context()
-		type ctxString string
-		sessionTokenKey := ctxString("session_token")
-		userIdKey := ctxString("user_id")
+		log.Println("OK 2")
+		//type ctxString string
+		//sessionTokenKey := ctxString("session_token")
+		//userIdKey := ctxString("user_id")
+		log.Println("OK 3")
 		ctx = context.WithValue(ctx, sessionTokenKey, sessionToken)
-		ctx = context.WithValue(ctx, userIdKey, s.(handler.Session).UserId)
+		ctx = context.WithValue(ctx, userIdKey, userId)
+		log.Println("OK 4")
+		log.Println(ctx.Value("user_id"))
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
@@ -61,7 +73,6 @@ func Auth(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
 
 func NotAuth(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		c, err := r.Cookie("session_token")
 		if err != nil {
 

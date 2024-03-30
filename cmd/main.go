@@ -37,7 +37,7 @@ func runServer(addr string) {
 	mux.HandleFunc("GET /api/v1/logout", handler.Logout)
 	mux.HandleFunc("POST /api/v1/users", middleware.NotAuth(logger, handler.Register))
 	mux.HandleFunc("POST /api/v1/users/{user_id}", middleware.Auth(logger, handler.UpdateUser))
-	mux.HandleFunc("GET /api/v1/is_auth", handler.IsAuth)
+	mux.HandleFunc("GET /api/v1/is_auth", middleware.Auth(logger, handler.IsAuth))
 
 	mux.HandleFunc("GET /api/v1/pins/created/{user_id}", handler.UserPins)
 	mux.HandleFunc("GET /api/v1/pins", handler.Feed)

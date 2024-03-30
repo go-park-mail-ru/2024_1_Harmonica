@@ -38,7 +38,6 @@ func WriteErrorResponse(w http.ResponseWriter, logger *zap.Logger, errInfo errs.
 func WriteErrorsListResponse(w http.ResponseWriter, logger *zap.Logger, errors ...errs.ErrorInfo) {
 	var list []errs.ErrorResponse
 	for _, err := range errors {
-		//log.Println("ERROR", err.Error())
 		list = append(list, errs.ErrorResponse{
 			Code:    errs.ErrorCodes[err.LocalErr].LocalCode,
 			Message: err.LocalErr.Error(),

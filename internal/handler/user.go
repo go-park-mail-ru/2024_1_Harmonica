@@ -25,23 +25,24 @@ func (handler *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sessionToken, userIdFromSession, err := CheckAuth(r)
-	if err != nil {
-		WriteErrorResponse(w, l, errs.ErrorInfo{
-			GeneralErr: err,
-			LocalErr:   errs.ErrReadCookie,
-		})
-		return
-	}
-	isAuth := sessionToken != ""
-	if !isAuth {
-		WriteErrorResponse(w, l, errs.ErrorInfo{
-			//GeneralErr: nil,
-			LocalErr: errs.ErrUnauthorized,
-		})
-		return
-	}
+	//sessionToken, userIdFromSession, err := CheckAuth(r)
+	//if err != nil {
+	//	WriteErrorResponse(w, l, errs.ErrorInfo{
+	//		GeneralErr: err,
+	//		LocalErr:   errs.ErrReadCookie,
+	//	})
+	//	return
+	//}
+	//isAuth := sessionToken != ""
+	//if !isAuth {
+	//	WriteErrorResponse(w, l, errs.ErrorInfo{
+	//		//GeneralErr: nil,
+	//		LocalErr: errs.ErrUnauthorized,
+	//	})
+	//	return
+	//}
 
+	userIdFromSession := ctx.Value("user_id").(entity.UserID)
 	if uint64(userIdFromSession) != userIdFromSlug {
 		WriteErrorResponse(w, l, errs.ErrorInfo{
 			//GeneralErr: nil,

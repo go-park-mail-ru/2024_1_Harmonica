@@ -2,10 +2,10 @@ package handler
 
 import (
 	"encoding/json"
+	"go.uber.org/zap"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"io"
-	"log"
 	"net/http"
 	"strconv"
 )
@@ -38,12 +38,16 @@ func UnmarshalRequest(r *http.Request, dest any) error {
 	return err
 }
 
-func WriteDefaultResponse(w http.ResponseWriter, object any) {
+func WriteDefaultResponse(w http.ResponseWriter, logger *zap.Logger, object any) {
 	w.Header().Set("Content-Type", "application/json")
 	response, _ := json.Marshal(object)
 	_, err := w.Write(response)
 	if err != nil {
-		log.Print(err)
+		logger.Error(
+			errs.ErrServerInternal.Error(),
+			zap.Int("local_error_code", errs.ErrorCodes[errs.ErrServerInternal].LocalCode),
+			zap.String("general_error", err.Error()),
+		)
 	}
 }
 
@@ -71,7 +75,7 @@ func (handler *APIHandler) Feed(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, l, errInfo)
 		return
 	}
-	WriteDefaultResponse(w, pins)
+	WriteDefaultResponse(w, l, pins)
 }
 
 func (handler *APIHandler) UserPins(w http.ResponseWriter, r *http.Request) {
@@ -97,7 +101,7 @@ func (handler *APIHandler) UserPins(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, l, errInfo)
 		return
 	}
-	WriteDefaultResponse(w, pin)
+	WriteDefaultResponse(w, l, pin)
 }
 
 func (handler *APIHandler) GetPin(w http.ResponseWriter, r *http.Request) {
@@ -115,11 +119,13 @@ func (handler *APIHandler) GetPin(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, l, emptyErrorInfo)
 		return
 	}
-	WriteDefaultResponse(w, pin)
+	WriteDefaultResponse(w, l, pin)
 }
 
 func (handler *APIHandler) CreatePin(w http.ResponseWriter, r *http.Request) {
 	l := handler.logger
+	ctx := r.Context()
+
 	pin := entity.Pin{AllowComments: true}
 	err := UnmarshalRequest(r, &pin)
 	if err != nil {
@@ -129,32 +135,34 @@ func (handler *APIHandler) CreatePin(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	_, userId, err := CheckAuth(r)
-	if err != nil || userId == 0 {
-		WriteErrorResponse(w, l, errs.ErrorInfo{
-			GeneralErr: err,
-			LocalErr:   errs.ErrReadCookie,
-		})
-		return
-	}
-	pin.AuthorId = userId
+	//_, userId, err := CheckAuth(r)
+	//if err != nil || userId == 0 {
+	//	WriteErrorResponse(w, l, errs.ErrorInfo{
+	//		GeneralErr: err,
+	//		LocalErr:   errs.ErrReadCookie,
+	//	})
+	//	return
+	//}
+	pin.AuthorId = ctx.Value("user_id").(entity.UserID)
 	if pin.ContentUrl == "" {
 		WriteErrorResponse(w, l, errs.ErrorInfo{
 			//GeneralErr: nil,
-			LocalErr: errs.ErrInvalidInputFormat,
-		}) // Тут лучше какую-то другую ошибку
+			LocalErr: errs.ErrEmptyContentURL,
+		})
 		return
 	}
-	res, errInfo := handler.service.CreatePin(r.Context(), pin)
+	res, errInfo := handler.service.CreatePin(ctx, pin)
 	if errInfo != emptyErrorInfo {
 		WriteErrorResponse(w, l, emptyErrorInfo)
 		return
 	}
-	WriteDefaultResponse(w, res)
+	WriteDefaultResponse(w, l, res)
 }
 
 func (handler *APIHandler) UpdatePin(w http.ResponseWriter, r *http.Request) {
 	l := handler.logger
+	ctx := r.Context()
+
 	pinId, err := ReadInt64Slug(r, "pin_id")
 	if err != nil {
 		WriteErrorResponse(w, l, errs.ErrorInfo{
@@ -173,25 +181,27 @@ func (handler *APIHandler) UpdatePin(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	_, userId, err := CheckAuth(r)
-	if err != nil || userId == 0 {
-		WriteErrorResponse(w, l, errs.ErrorInfo{
-			GeneralErr: err,
-			LocalErr:   errs.ErrReadCookie,
-		})
-		return
-	}
-	pin.AuthorId = userId
-	res, errInfo := handler.service.UpdatePin(r.Context(), pin)
+	//_, userId, err := CheckAuth(r)
+	//if err != nil || userId == 0 {
+	//	WriteErrorResponse(w, l, errs.ErrorInfo{
+	//		GeneralErr: err,
+	//		LocalErr:   errs.ErrReadCookie,
+	//	})
+	//	return
+	//}
+	pin.AuthorId = ctx.Value("user_id").(entity.UserID)
+	res, errInfo := handler.service.UpdatePin(ctx, pin)
 	if errInfo != emptyErrorInfo {
 		WriteErrorResponse(w, l, errInfo)
 		return
 	}
-	WriteDefaultResponse(w, res)
+	WriteDefaultResponse(w, l, res)
 }
 
 func (handler *APIHandler) DeletePin(w http.ResponseWriter, r *http.Request) {
 	l := handler.logger
+	ctx := r.Context()
+
 	pinId, err := ReadInt64Slug(r, "pin_id")
 	if err != nil {
 		WriteErrorResponse(w, l, errs.ErrorInfo{
@@ -202,19 +212,19 @@ func (handler *APIHandler) DeletePin(w http.ResponseWriter, r *http.Request) {
 	}
 	pin := entity.Pin{}
 	pin.PinId = entity.PinID(pinId)
-	_, userId, err := CheckAuth(r)
-	if err != nil || userId == 0 {
-		WriteErrorResponse(w, l, errs.ErrorInfo{
-			GeneralErr: err,
-			LocalErr:   errs.ErrReadCookie,
-		})
-		return
-	}
-	pin.AuthorId = userId
-	errInfo := handler.service.DeletePin(r.Context(), pin)
+	//_, userId, err := CheckAuth(r)
+	//if err != nil || userId == 0 {
+	//	WriteErrorResponse(w, l, errs.ErrorInfo{
+	//		GeneralErr: err,
+	//		LocalErr:   errs.ErrReadCookie,
+	//	})
+	//	return
+	//}
+	pin.AuthorId = ctx.Value("user_id").(entity.UserID)
+	errInfo := handler.service.DeletePin(ctx, pin)
 	if errInfo != emptyErrorInfo {
 		WriteErrorResponse(w, l, errInfo)
 		return
 	}
-	WriteDefaultResponse(w, nil)
+	WriteDefaultResponse(w, l, nil)
 }

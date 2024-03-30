@@ -15,6 +15,6 @@ func CORS(next http.Handler) http.Handler {
 			OptionsPassthrough: false,
 		})
 		c.Handler(next)
-		next.ServeHTTP(w, r)
+		next.ServeHTTP(w, r.WithContext(r.Context()))
 	})
 }

@@ -20,6 +20,7 @@ var (
 	sessionTTL          = 24 * time.Hour
 	sessionsCleanupTime = 6 * time.Hour
 	emptyUser           = entity.User{}
+	emptyErrorInfo      = errs.ErrorInfo{}
 )
 
 // Login
@@ -37,10 +38,8 @@ var (
 // @Header			200		{string}	Set-Cookie	"session-token"
 // @Router			/login [post]
 func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
-	log.Println("INFO receive POST request by /login")
-	ctx := r.Context()
 	l := handler.logger
-
+	ctx := r.Context()
 	//sessionToken, _, err := CheckAuth(r)
 	//if err != nil {
 	//	WriteErrorResponse(w, errs.ErrReadCookie)
@@ -125,25 +124,44 @@ func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 //	@Header			200		{string}	Set-Cookie	"session-token"
 //	@Router			/logout [get]
 func (handler *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	log.Println("INFO Receive GET request by /logout")
 	l := handler.logger
+	//sessionToken, _, err := CheckAuth(r)
+	//if err != nil {
+	//	WriteErrorResponse(w, l, errs.ErrorInfo{
+	//		GeneralErr: err,
+	//		LocalErr:   errs.ErrReadCookie,
+	//	})
+	//	return
+	//}
 
-	sessionToken, _, err := CheckAuth(r)
+	c, err := r.Cookie("session_token")
 	if err != nil {
+		if errors.Is(err, http.ErrNoCookie) {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
 		WriteErrorResponse(w, l, errs.ErrorInfo{
 			GeneralErr: err,
 			LocalErr:   errs.ErrReadCookie,
 		})
 		return
 	}
-	isAuth := sessionToken != ""
-	if !isAuth {
+	sessionToken := c.Value
+	_, exists := Sessions.Load(sessionToken)
+	if !exists {
+		SetSessionTokenCookie(w, "", time.Now())
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 
-	Sessions.Delete(sessionToken)
+	//if s.(Session).IsExpired() || sessionToken == ""{
+	//	Sessions.Delete(sessionToken)
+	//	SetSessionTokenCookie(w, "", time.Now())
+	//	w.WriteHeader(http.StatusOK)
+	//	return
+	//}
 
+	Sessions.Delete(sessionToken)
 	SetSessionTokenCookie(w, "", time.Now())
 	w.WriteHeader(http.StatusOK)
 }
@@ -162,32 +180,27 @@ func (handler *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
 //	@Failure		500		{object}	entity.ErrorsListResponse
 //	@Router			/register [post]
 func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
-	log.Println("INFO Receive POST request by /users")
 	ctx := r.Context()
 	l := handler.logger
-
-	sessionToken, _, err := CheckAuth(r)
-	if err != nil {
-		//errPairs = append(errPairs, ErrorPair{ generalErr: err, localErr: errs.ErrReadCookie })
-		WriteErrorsListResponse(w, l, errs.ErrorInfo{
-			GeneralErr: err,
-			LocalErr:   errs.ErrReadCookie,
-		})
-		return
-	}
-	isAuth := sessionToken != ""
-	if isAuth {
-		//errPairs = append(errPairs, ErrorPair{ generalErr: nil, localErr: errs.ErrAlreadyAuthorized })
-		WriteErrorsListResponse(w, l, errs.ErrorInfo{
-			//GeneralErr: nil,
-			LocalErr: errs.ErrAlreadyAuthorized,
-		})
-		return
-	}
+	//sessionToken, _, err := CheckAuth(r)
+	//if err != nil {
+	//	WriteErrorsListResponse(w, l, errs.ErrorInfo{
+	//		GeneralErr: err,
+	//		LocalErr:   errs.ErrReadCookie,
+	//	})
+	//	return
+	//}
+	//isAuth := sessionToken != ""
+	//if isAuth {
+	//	WriteErrorsListResponse(w, l, errs.ErrorInfo{
+	//		//GeneralErr: nil,
+	//		LocalErr: errs.ErrAlreadyAuthorized,
+	//	})
+	//	return
+	//}
 
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
-		//errPairs = append(errPairs, ErrorPair{ generalErr: err, localErr: errs.ErrReadingRequestBody })
 		WriteErrorsListResponse(w, l, errs.ErrorInfo{
 			GeneralErr: err,
 			LocalErr:   errs.ErrReadingRequestBody,
@@ -272,26 +285,31 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 //	@Failure		500	{object}	errs.ErrorResponse
 //	@Router			/is_auth [get]
 func (handler *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
-	log.Println("INFO Receive GET request by /is_auth")
-	ctx := r.Context()
 	l := handler.logger
+	ctx := r.Context()
 
-	sessionToken, userIdFromSession, err := CheckAuth(r)
-	if err != nil {
-		WriteErrorResponse(w, l, errs.ErrorInfo{
-			GeneralErr: err,
-			LocalErr:   errs.ErrReadCookie,
-		})
-		return
-	}
-	isAuth := sessionToken != ""
-	if !isAuth {
-		WriteErrorResponse(w, l, errs.ErrorInfo{
-			//GeneralErr: nil,
-			LocalErr: errs.ErrUnauthorized,
-		})
-		return
-	}
+	//sessionToken, userIdFromSession, err := CheckAuth(r)
+	//if err != nil {
+	//	WriteErrorResponse(w, l, errs.ErrorInfo{
+	//		GeneralErr: err,
+	//		LocalErr:   errs.ErrReadCookie,
+	//	})
+	//	return
+	//}
+	//isAuth := sessionToken != ""
+	//if !isAuth {
+	//	WriteErrorResponse(w, l, errs.ErrorInfo{
+	//		//GeneralErr: nil,
+	//		LocalErr: errs.ErrUnauthorized,
+	//	})
+	//	return
+	//}
+	log.Println("OK 5")
+	log.Println(ctx)
+
+	userIdFromSession := ctx.Value("user_id").(entity.UserID)
+
+	log.Println("OK 6")
 
 	// Checking the existence of user with userId associated with session
 	user, errInfo := handler.service.GetUserById(ctx, userIdFromSession)
@@ -306,28 +324,9 @@ func (handler *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	WriteUserResponse(w, user)
-}
+	log.Println("OK 7")
 
-func CheckAuth(r *http.Request) (string, entity.UserID, error) {
-	c, err := r.Cookie("session_token")
-	if err != nil {
-		if errors.Is(err, http.ErrNoCookie) {
-			return "", 0, nil
-		}
-		return "", 0, err
-	}
-	sessionToken := c.Value
-	s, exists := Sessions.Load(sessionToken)
-	if !exists {
-		return "", 0, nil
-	}
-	if s.(Session).IsExpired() {
-		Sessions.Delete(sessionToken)
-		return "", 0, nil
-	}
-	return sessionToken, s.(Session).UserId, nil
-	// в мидлваре прокинуть session_token в контекст, чтобы он был досупен далее в ручке
+	WriteUserResponse(w, user)
 }
 
 func WriteUserResponse(w http.ResponseWriter, user entity.User) {
@@ -352,3 +351,24 @@ func SetSessionTokenCookie(w http.ResponseWriter, sessionToken string, expiresAt
 		HttpOnly: true,
 	})
 }
+
+//func CheckAuth(r *http.Request) (string, entity.UserID, error) {
+//	c, err := r.Cookie("session_token")
+//	if err != nil {
+//		if errors.Is(err, http.ErrNoCookie) {
+//			return "", 0, nil
+//		}
+//		return "", 0, err
+//	}
+//	sessionToken := c.Value
+//	s, exists := Sessions.Load(sessionToken)
+//	if !exists {
+//		return "", 0, nil
+//	}
+//	if s.(Session).IsExpired() {
+//		Sessions.Delete(sessionToken)
+//		return "", 0, nil
+//	}
+//	return sessionToken, s.(Session).UserId, nil
+//	// в мидлваре прокинуть session_token в контекст, чтобы он был досупен далее в ручке
+//}
