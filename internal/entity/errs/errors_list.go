@@ -19,6 +19,8 @@ var (
 	ErrPermissionDenied   = errors.New("current user doesn't have requested permissions")
 	ErrLikeAlreadyCreated = errors.New("like already was created")
 	ErrLikeAlreadyDeleted = errors.New("like already was deleted")
+	ErrEmptyContentURL    = errors.New("content url can't be empty")
+	ErrServerInternal     = errors.New("internal server error")
 )
 
 var ErrorCodes = map[error]struct {
@@ -41,4 +43,5 @@ var ErrorCodes = map[error]struct {
 	ErrPermissionDenied:   {HttpCode: 403, LocalCode: 14},
 	ErrLikeAlreadyCreated: {HttpCode: 403, LocalCode: 15},
 	ErrLikeAlreadyDeleted: {HttpCode: 404, LocalCode: 16},
+	ErrEmptyContentURL:    {HttpCode: 400, LocalCode: 17},
 }

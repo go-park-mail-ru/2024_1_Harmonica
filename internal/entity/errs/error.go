@@ -8,3 +8,8 @@ type ErrorResponse struct {
 type ErrorsListResponse struct {
 	Errors []ErrorResponse `json:"errors"`
 }
+
+type ErrorInfo struct {
+	GeneralErr error
+	LocalErr   error
+}

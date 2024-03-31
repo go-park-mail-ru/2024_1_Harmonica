@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"net/http"
@@ -8,58 +9,67 @@ import (
 
 const USERS_LIKED_LIMIT = 20
 
-func GetPinAndUserId(r *http.Request) (entity.PinID, entity.UserID, error) {
+func GetPinAndUserId(r *http.Request, ctx context.Context) (entity.PinID, entity.UserID, errs.ErrorInfo) {
 	id, err := ReadInt64Slug(r, "pin_id")
 	if err != nil {
-		return entity.PinID(0), entity.UserID(0), errs.ErrInvalidSlug
+		return entity.PinID(0), entity.UserID(0), errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrInvalidSlug,
+		}
 	}
 	pinId := entity.PinID(id)
-	_, userId, err := CheckAuth(r)
-	if err != nil || userId == 0 {
-		return entity.PinID(0), entity.UserID(0), errs.ErrReadCookie
-	}
-	return pinId, userId, nil
+	userId := ctx.Value("user_id").(entity.UserID)
+	return pinId, userId, emptyErrorInfo
 }
 
-func (handler *APIHandler) CreateLike(w http.ResponseWriter, r *http.Request) {
-	pinId, userId, err := GetPinAndUserId(r)
-	if err != nil {
-		WriteErrorResponse(w, err)
+func (h *APIHandler) CreateLike(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	pinId, userId, errInfo := GetPinAndUserId(r, ctx)
+	if errInfo != emptyErrorInfo {
+		WriteErrorResponse(w, h.logger, errInfo)
 		return
 	}
-	err = handler.service.SetLike(r.Context(), pinId, userId)
-	if err != nil {
-		WriteErrorResponse(w, err)
+	errInfo = h.service.SetLike(ctx, pinId, userId)
+	if errInfo != emptyErrorInfo {
+		WriteErrorResponse(w, h.logger, errInfo)
 		return
 	}
-	WriteDefaultResponse(w, nil)
+	WriteDefaultResponse(w, h.logger, nil)
 }
 
-func (handler *APIHandler) DeleteLike(w http.ResponseWriter, r *http.Request) {
-	pinId, userId, err := GetPinAndUserId(r)
-	if err != nil {
-		WriteErrorResponse(w, err)
+func (h *APIHandler) DeleteLike(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	pinId, userId, errInfo := GetPinAndUserId(r, ctx)
+	if errInfo != emptyErrorInfo {
+		WriteErrorResponse(w, h.logger, errInfo)
 		return
 	}
-	err = handler.service.ClearLike(r.Context(), pinId, userId)
-	if err != nil {
-		WriteErrorResponse(w, err)
+	errInfo = h.service.ClearLike(ctx, pinId, userId)
+	if errInfo != emptyErrorInfo {
+		WriteErrorResponse(w, h.logger, errInfo)
 		return
 	}
-	WriteDefaultResponse(w, nil)
+	WriteDefaultResponse(w, h.logger, nil)
 }
 
-func (handler *APIHandler) UsersLiked(w http.ResponseWriter, r *http.Request) {
+func (h *APIHandler) UsersLiked(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	id, err := ReadInt64Slug(r, "pin_id")
 	if err != nil {
-		WriteErrorResponse(w, errs.ErrInvalidSlug)
+		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrInvalidSlug,
+		})
 		return
 	}
 	pinId := entity.PinID(id)
-	res, err := handler.service.GetUsersLiked(r.Context(), pinId, USERS_LIKED_LIMIT)
-	if err != nil {
-		WriteErrorResponse(w, errs.ErrDBInternal)
+	res, errInfo := h.service.GetUsersLiked(ctx, pinId, USERS_LIKED_LIMIT)
+	if errInfo != emptyErrorInfo {
+		WriteErrorResponse(w, h.logger, errInfo)
 		return
 	}
-	WriteDefaultResponse(w, res)
+	WriteDefaultResponse(w, h.logger, res)
 }

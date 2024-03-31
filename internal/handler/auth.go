@@ -3,10 +3,10 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"go.uber.org/zap"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"io"
-	"log"
 	"net/http"
 	"sync"
 	"time"
@@ -20,6 +20,7 @@ var (
 	sessionTTL          = 24 * time.Hour
 	sessionsCleanupTime = 6 * time.Hour
 	emptyUser           = entity.User{}
+	emptyErrorInfo      = errs.ErrorInfo{}
 )
 
 // Login
@@ -36,53 +37,52 @@ var (
 // @Failure		500		{object}	errs.ErrorResponse
 // @Header			200		{string}	Set-Cookie	"session-token"
 // @Router			/login [post]
-func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
-	log.Println("INFO receive POST request by /login")
+func (h *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-
-	sessionToken, _, err := CheckAuth(r)
-	if err != nil {
-		WriteErrorResponse(w, errs.ErrReadCookie)
-		return
-	}
-	isAuth := sessionToken != ""
-	if isAuth {
-		WriteErrorResponse(w, errs.ErrAlreadyAuthorized)
-		return
-	}
 
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
-		WriteErrorResponse(w, errs.ErrReadingRequestBody)
+		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrReadingRequestBody,
+		})
 		return
 	}
 
 	var user entity.User
 	err = json.Unmarshal(bodyBytes, &user)
 	if err != nil {
-		WriteErrorResponse(w, errs.ErrReadingRequestBody)
+		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrReadingRequestBody})
 		return
 	}
 
 	if !ValidateEmail(user.Email) ||
 		!ValidatePassword(user.Password) {
-		WriteErrorResponse(w, errs.ErrInvalidInputFormat)
+		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
+			LocalErr: errs.ErrInvalidInputFormat,
+		})
 		return
 	}
 
-	loggedInUser, err := handler.service.GetUserByEmail(ctx, user.Email)
-	if err != nil {
-		WriteErrorResponse(w, errs.ErrDBInternal)
+	loggedInUser, errInfo := h.service.GetUserByEmail(ctx, user.Email)
+	if errInfo != emptyErrorInfo {
+		WriteErrorResponse(w, h.logger, errInfo)
 		return
 	}
 	if loggedInUser == emptyUser {
-		WriteErrorResponse(w, errs.ErrUserNotExist)
+		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
+			LocalErr: errs.ErrUserNotExist,
+		})
 		return
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(loggedInUser.Password), []byte(user.Password))
 	if err != nil {
-		WriteErrorResponse(w, errs.ErrWrongPassword)
+		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrWrongPassword})
 		return
 	}
 
@@ -95,7 +95,7 @@ func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 	Sessions.Store(newSessionToken, s)
 
 	SetSessionTokenCookie(w, newSessionToken, expiresAt)
-	WriteUserResponse(w, loggedInUser)
+	WriteUserResponse(w, h.logger, loggedInUser)
 }
 
 // Logout
@@ -110,22 +110,28 @@ func (handler *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 //	@Failure		400		{object}	errs.ErrorResponse
 //	@Header			200		{string}	Set-Cookie	"session-token"
 //	@Router			/logout [get]
-func (handler *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	log.Println("INFO Receive GET request by /logout")
-
-	sessionToken, _, err := CheckAuth(r)
+func (h *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	c, err := r.Cookie("session_token")
 	if err != nil {
-		WriteErrorResponse(w, errs.ErrReadCookie)
+		if errors.Is(err, http.ErrNoCookie) {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrReadCookie,
+		})
 		return
 	}
-	isAuth := sessionToken != ""
-	if !isAuth {
+	sessionToken := c.Value
+	_, exists := Sessions.Load(sessionToken)
+	if !exists {
+		SetSessionTokenCookie(w, "", time.Now())
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 
 	Sessions.Delete(sessionToken)
-
 	SetSessionTokenCookie(w, "", time.Now())
 	w.WriteHeader(http.StatusOK)
 }
@@ -143,61 +149,63 @@ func (handler *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
 //	@Failure		403		{object}	entity.ErrorsListResponse
 //	@Failure		500		{object}	entity.ErrorsListResponse
 //	@Router			/register [post]
-func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
-	log.Println("INFO Receive POST request by /users")
+func (h *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-
-	sessionToken, _, err := CheckAuth(r)
-	if err != nil {
-		WriteErrorsListResponse(w, errs.ErrReadCookie)
-		return
-	}
-	isAuth := sessionToken != ""
-	if isAuth {
-		WriteErrorsListResponse(w, errs.ErrAlreadyAuthorized)
-		return
-	}
 
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
-		WriteErrorsListResponse(w, errs.ErrReadingRequestBody)
+		WriteErrorsListResponse(w, h.logger, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrReadingRequestBody,
+		})
 		return
 	}
 
 	var user entity.User
 	err = json.Unmarshal(bodyBytes, &user)
 	if err != nil {
-		WriteErrorsListResponse(w, errs.ErrReadingRequestBody)
+		WriteErrorsListResponse(w, h.logger, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrReadingRequestBody,
+		})
 		return
 	}
 
 	if !ValidateEmail(user.Email) ||
 		!ValidateNickname(user.Nickname) ||
 		!ValidatePassword(user.Password) {
-		WriteErrorsListResponse(w, errs.ErrInvalidInputFormat)
+		WriteErrorsListResponse(w, h.logger, errs.ErrorInfo{
+			LocalErr: errs.ErrInvalidInputFormat,
+		})
 		return
 	}
 
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
-		WriteErrorsListResponse(w, errs.ErrHashingPassword)
+		WriteErrorsListResponse(w, h.logger, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrHashingPassword,
+		})
 		return
 	}
 	user.Password = string(hashPassword)
-	errsList := handler.service.RegisterUser(ctx, user)
+
+	errsList := h.service.RegisterUser(ctx, user)
 	if len(errsList) != 0 {
-		WriteErrorsListResponse(w, errsList...)
+		WriteErrorsListResponse(w, h.logger, errsList...)
 		return
 	}
 
 	// Search for user by email (to get user id)
-	registeredUser, err := handler.service.GetUserByEmail(ctx, user.Email)
-	if err != nil {
-		WriteErrorsListResponse(w, errs.ErrDBInternal)
+	registeredUser, errInfo := h.service.GetUserByEmail(ctx, user.Email)
+	if errInfo != emptyErrorInfo {
+		WriteErrorsListResponse(w, h.logger, errInfo)
 		return
 	}
 	if registeredUser == emptyUser {
-		WriteErrorsListResponse(w, errs.ErrUserNotExist)
+		WriteErrorsListResponse(w, h.logger, errs.ErrorInfo{
+			LocalErr: errs.ErrUserNotExist,
+		})
 		return
 	}
 
@@ -210,7 +218,7 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 	Sessions.Store(newSessionToken, s)
 
 	SetSessionTokenCookie(w, newSessionToken, expiresAt)
-	WriteUserResponse(w, registeredUser)
+	WriteUserResponse(w, h.logger, registeredUser)
 }
 
 // Check if user is authorized
@@ -227,57 +235,27 @@ func (handler *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 //	@Failure		401	{object}	errs.ErrorResponse
 //	@Failure		500	{object}	errs.ErrorResponse
 //	@Router			/is_auth [get]
-func (handler *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
-	log.Println("INFO Receive GET request by /is_auth")
+func (h *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	sessionToken, userIdFromSession, err := CheckAuth(r)
-	if err != nil {
-		WriteErrorResponse(w, errs.ErrReadCookie)
-		return
-	}
-	isAuth := sessionToken != ""
-	if !isAuth {
-		WriteErrorResponse(w, errs.ErrUnauthorized)
-		return
-	}
+	userIdFromSession := ctx.Value("user_id").(entity.UserID)
 
 	// Checking the existence of user with userId associated with session
-	user, err := handler.service.GetUserById(ctx, userIdFromSession)
-	if err != nil {
-		WriteErrorResponse(w, errs.ErrDBInternal)
+	user, errInfo := h.service.GetUserById(ctx, userIdFromSession)
+	if errInfo != emptyErrorInfo {
+		WriteErrorResponse(w, h.logger, errInfo)
 		return
 	}
 	if user == emptyUser {
-		WriteErrorResponse(w, errs.ErrUnauthorized)
+		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
+			LocalErr: errs.ErrUnauthorized})
 		return
 	}
 
-	WriteUserResponse(w, user)
+	WriteUserResponse(w, h.logger, user)
 }
 
-func CheckAuth(r *http.Request) (string, entity.UserID, error) {
-	c, err := r.Cookie("session_token")
-	if err != nil {
-		if errors.Is(err, http.ErrNoCookie) {
-			return "", 0, nil
-		}
-		return "", 0, nil
-	}
-	sessionToken := c.Value
-	s, exists := Sessions.Load(sessionToken)
-	if !exists {
-		return "", 0, nil
-	}
-	if s.(Session).IsExpired() {
-		Sessions.Delete(sessionToken)
-		return "", 0, nil
-	}
-	return sessionToken, s.(Session).UserId, nil
-	// в мидлваре прокинуть session_token в контекст, чтобы он был досупен далее в ручке
-}
-
-func WriteUserResponse(w http.ResponseWriter, user entity.User) {
+func WriteUserResponse(w http.ResponseWriter, logger *zap.Logger, user entity.User) {
 	w.Header().Set("Content-Type", "application/json")
 	userResponse := entity.UserResponse{
 		UserId:   user.UserID,
@@ -287,7 +265,11 @@ func WriteUserResponse(w http.ResponseWriter, user entity.User) {
 	response, _ := json.Marshal(userResponse)
 	_, err := w.Write(response)
 	if err != nil {
-		log.Println(err)
+		logger.Error(
+			errs.ErrServerInternal.Error(),
+			zap.Int("local_error_code", errs.ErrorCodes[errs.ErrServerInternal].LocalCode),
+			zap.String("general_error", err.Error()),
+		)
 	}
 }
 
