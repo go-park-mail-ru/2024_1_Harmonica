@@ -15,6 +15,8 @@ import (
 //	@Summary		Update user
 //	@Description	Update user by description and user id.
 //	@Tags			Users
+//	@Produce		json
+//	@Accept			json
 //	@Param			user	body		entity.User	true	"User information"
 //	@Success		200		{object}	entity.PinPageResponse
 //	@Failure		400		{object}	errs.ErrorResponse	"Possible code responses: 3, 4, 5, 12, 13"

@@ -29,7 +29,6 @@ func GetPinAndUserId(r *http.Request, ctx context.Context) (entity.PinID, entity
 //	@Tags			Likes
 //	@Param			Cookie	header	string	true	"session-token"	default(session-token=)
 //	@Param			pin_id	path	int		true	"Pin ID"
-//	@Produce		json
 //	@Success		200
 //	@Failure		400	{object}	errs.ErrorResponse	"Possible code responses: 3, 12."
 //	@Failure		401	{object}	errs.ErrorResponse	"Possible code responses: 2."
@@ -58,7 +57,6 @@ func (h *APIHandler) CreateLike(w http.ResponseWriter, r *http.Request) {
 //	@Tags			Likes
 //	@Param			Cookie	header	string	true	"session-token"	default(session-token=)
 //	@Param			pin_id	path	int		true	"Pin ID"
-//	@Produce		json
 //	@Success		200
 //	@Failure		400	{object}	errs.ErrorResponse	"Possible code responses: 3, 12."
 //	@Failure		401	{object}	errs.ErrorResponse	"Possible code responses: 2."
@@ -85,9 +83,10 @@ func (h *APIHandler) DeleteLike(w http.ResponseWriter, r *http.Request) {
 //	@Summary		Get last 20 users that liked pin
 //	@Description	Get users that liked pin by pin ID
 //	@Tags			Likes
-//	@Param			pin_id	path	int	true	"Pin ID"
+//	@Param			pin_id	path	int		true	"Pin ID"
+//	@Param			Cookie	header	string	true	"session-token"	default(session-token=)
 //	@Produce		json
-//	@Success		200
+//	@Success		200	{object}	entity.UserList
 //	@Failure		400	{object}	errs.ErrorResponse	"Possible code responses: 12."
 //	@Failure		500	{object}	errs.ErrorResponse	"Possible code responses: 11."
 //	@Router			/likes/{pin_id}/users [get]

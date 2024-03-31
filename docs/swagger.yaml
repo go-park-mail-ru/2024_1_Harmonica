@@ -74,6 +74,14 @@ definitions:
       password:
         type: string
     type: object
+  entity.UserList:
+    description: User information with user id, email, nickname and avatar_url
+    properties:
+      users:
+        items:
+          $ref: '#/definitions/entity.UserResponse'
+        type: array
+    type: object
   entity.UserResponse:
     description: User information with user id, email, nickname and avatar_url
     properties:
@@ -93,7 +101,7 @@ definitions:
       message:
         type: string
     type: object
-host: https://85.192.35.36:8080
+host: https://harmoniums.ru
 info:
   contact: {}
   description: This is API-docs of backend server of Harmonica team.
@@ -140,11 +148,19 @@ paths:
         name: pin_id
         required: true
         type: integer
+      - default: session-token=
+        description: session-token
+        in: header
+        name: Cookie
+        required: true
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
+          schema:
+            $ref: '#/definitions/entity.UserList'
         "400":
           description: 'Possible code responses: 12.'
           schema:
@@ -158,6 +174,8 @@ paths:
       - Likes
   /login:
     post:
+      consumes:
+      - application/json
       description: Login user by request.body json
       parameters:
       - default: session-token=
@@ -165,11 +183,13 @@ paths:
         in: header
         name: Cookie
         type: string
+      produces:
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            type: object
+            $ref: '#/definitions/entity.User'
         "400":
           description: 'Possible code responses: 3, 4, 5.'
           schema:
@@ -197,13 +217,10 @@ paths:
         description: session-token
         in: header
         name: Cookie
-        required: true
         type: string
       responses:
         "200":
           description: OK
-          schema:
-            type: object
         "400":
           description: 'Possible code responses: 3.'
           schema:
@@ -239,6 +256,12 @@ paths:
     delete:
       description: Delete pin by id (allowed only for pin's author)
       parameters:
+      - default: session-token=
+        description: session-token
+        in: header
+        name: Cookie
+        required: true
+        type: string
       - description: Pin ID
         in: path
         name: pin_id
@@ -293,6 +316,8 @@ paths:
       tags:
       - Pins
     post:
+      consumes:
+      - application/json
       description: Update pin by description
       parameters:
       - description: Pin information
@@ -301,6 +326,14 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/entity.Pin'
+      - default: session-token=
+        description: session-token
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      produces:
+      - application/json
       responses:
         "200":
           description: OK
@@ -340,8 +373,6 @@ paths:
         name: pin_id
         required: true
         type: integer
-      produces:
-      - application/json
       responses:
         "200":
           description: OK
@@ -374,8 +405,6 @@ paths:
         name: pin_id
         required: true
         type: integer
-      produces:
-      - application/json
       responses:
         "200":
           description: OK
@@ -458,6 +487,8 @@ paths:
       - Authorization
   /users/{user_id}:
     post:
+      consumes:
+      - application/json
       description: Update user by description and user id.
       parameters:
       - description: User information
@@ -466,6 +497,8 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/entity.User'
+      produces:
+      - application/json
       responses:
         "200":
           description: OK

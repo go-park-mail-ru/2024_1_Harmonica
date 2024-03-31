@@ -99,12 +99,11 @@ func init() {
 	}
 }
 
-//	@title			Harmonium backend API
-//	@version		1.0
-//	@description	This is API-docs of backend server of Harmonica team.
-//
-// @host		https://85.192.35.36:8080
-// @BasePath	api/v1
+// @title			Harmonium backend API
+// @version		1.0
+// @description	This is API-docs of backend server of Harmonica team.
+// @host			https://harmoniums.ru
+// @BasePath		api/v1
 func main() {
 	runServer(":8080")
 }

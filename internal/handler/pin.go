@@ -145,11 +145,14 @@ func (h *APIHandler) GetPin(w http.ResponseWriter, r *http.Request) {
 //	@Summary		Create pin
 //	@Description	Create pin by description
 //	@Tags			Pins
-//	@Param			pin	body		entity.Pin	true	"Pin information"
-//	@Success		200	{object}	entity.PinPageResponse
-//	@Failure		400	{object}	errs.ErrorResponse	"Possible code responses: 3, 4, 15."
-//	@Failure		401	{object}	errs.ErrorResponse	"Possible code responses: 2."
-//	@Failure		500	{object}	errs.ErrorResponse	"Possible code responses: 11."
+//	@Produce		json
+//	@Accept			json
+//	@Param			Cookie	header		string		true	"session-token"	default(session-token=)
+//	@Param			pin		body		entity.Pin	true	"Pin information"
+//	@Success		200		{object}	entity.PinPageResponse
+//	@Failure		400		{object}	errs.ErrorResponse	"Possible code responses: 3, 4, 15."
+//	@Failure		401		{object}	errs.ErrorResponse	"Possible code responses: 2."
+//	@Failure		500		{object}	errs.ErrorResponse	"Possible code responses: 11."
 //	@Router			/pins/{pin_id} [post]
 func (h *APIHandler) CreatePin(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -183,12 +186,15 @@ func (h *APIHandler) CreatePin(w http.ResponseWriter, r *http.Request) {
 //	@Summary		Update pin
 //	@Description	Update pin by description
 //	@Tags			Pins
-//	@Param			pin	body		entity.Pin	true	"Pin information"
-//	@Success		200	{object}	entity.PinPageResponse
-//	@Failure		400	{object}	errs.ErrorResponse	"Possible code responses: 3, 4, 12"
-//	@Failure		401	{object}	errs.ErrorResponse	"Possible code responses: 2."
-//	@Failure		403	{object}	errs.ErrorResponse	"Possible code responses: 14."
-//	@Failure		500	{object}	errs.ErrorResponse	"Possible code responses: 11."
+//	@Produce		json
+//	@Accept			json
+//	@Param			pin		body		entity.Pin	true	"Pin information"
+//	@Param			Cookie	header		string		true	"session-token"	default(session-token=)
+//	@Success		200		{object}	entity.PinPageResponse
+//	@Failure		400		{object}	errs.ErrorResponse	"Possible code responses: 3, 4, 12"
+//	@Failure		401		{object}	errs.ErrorResponse	"Possible code responses: 2."
+//	@Failure		403		{object}	errs.ErrorResponse	"Possible code responses: 14."
+//	@Failure		500		{object}	errs.ErrorResponse	"Possible code responses: 11."
 //	@Router			/pins/{pin_id} [post]
 func (h *APIHandler) UpdatePin(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -225,7 +231,8 @@ func (h *APIHandler) UpdatePin(w http.ResponseWriter, r *http.Request) {
 //	@Summary		Delete pin
 //	@Description	Delete pin by id (allowed only for pin's author)
 //	@Tags			Pins
-//	@Param			pin_id	path		int	true	"Pin ID"
+//	@Param			Cookie	header		string	true	"session-token"	default(session-token=)
+//	@Param			pin_id	path		int		true	"Pin ID"
 //	@Success		200		{object}	entity.PinPageResponse
 //	@Failure		400		{object}	errs.ErrorResponse	"Possible code responses: 3, 4 12"
 //	@Failure		401		{object}	errs.ErrorResponse	"Possible code responses: 2."

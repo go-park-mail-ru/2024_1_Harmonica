@@ -29,9 +29,11 @@ var (
 //	@Summary		Login user
 //	@Description	Login user by request.body json
 //	@Tags			Authorization
+//	@Produce		json
+//	@Accept			json
 //	@Header			200		{string}	Set-Cookie	"session-token"
 //	@Param			Cookie	header		string		false	"session-token"	default(session-token=)
-//	@Success		200		{object}	interface{}
+//	@Success		200		{object}	entity.User
 //	@Failure		400		{object}	errs.ErrorResponse	"Possible code responses: 3, 4, 5."
 //	@Failure		401		{object}	errs.ErrorResponse	"Possible code responses: 7, 8."
 //	@Failure		403		{object}	errs.ErrorResponse	"Possible code responses: 1."
@@ -103,10 +105,10 @@ func (h *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 //	@Summary		Logout user
 //	@Description	Logout user by their session cookie
 //	@Tags			Authorization
-//	@Param			Cookie	header		string		true	"session-token"	default(session-token=)
+//	@Param			Cookie	header		string		false	"session-token"	default(session-token=)
 //	@Header			200		{string}	Set-Cookie	"session-token"
-//	@Success		200		{object}	interface{}
-//	@Failure		400		{object}	errs.ErrorResponse	"Possible code responses: 3."
+//	@Success		200
+//	@Failure		400	{object}	errs.ErrorResponse	"Possible code responses: 3."
 //	@Router			/logout [get]
 func (h *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	c, err := r.Cookie("session_token")

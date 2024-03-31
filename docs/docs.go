@@ -79,11 +79,22 @@ const docTemplate = `{
                         "name": "pin_id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "session-token=",
+                        "description": "session-token",
+                        "name": "Cookie",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK"
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/entity.UserList"
+                        }
                     },
                     "400": {
                         "description": "Possible code responses: 12.",
@@ -103,6 +114,12 @@ const docTemplate = `{
         "/login": {
             "post": {
                 "description": "Login user by request.body json",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "Authorization"
                 ],
@@ -120,7 +137,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/entity.User"
                         }
                     },
                     "400": {
@@ -163,16 +180,12 @@ const docTemplate = `{
                         "default": "session-token=",
                         "description": "session-token",
                         "name": "Cookie",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object"
-                        }
+                        "description": "OK"
                     },
                     "400": {
                         "description": "Possible code responses: 3.",
@@ -296,6 +309,12 @@ const docTemplate = `{
             },
             "post": {
                 "description": "Update pin by description",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "Pins"
                 ],
@@ -309,6 +328,14 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/entity.Pin"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "default": "session-token=",
+                        "description": "session-token",
+                        "name": "Cookie",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -351,6 +378,14 @@ const docTemplate = `{
                 ],
                 "summary": "Delete pin",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "default": "session-token=",
+                        "description": "session-token",
+                        "name": "Cookie",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "integer",
                         "description": "Pin ID",
@@ -396,9 +431,6 @@ const docTemplate = `{
         "/pins/{pin_id}/like": {
             "post": {
                 "description": "Sets like by pin id and auth token",
-                "produces": [
-                    "application/json"
-                ],
                 "tags": [
                     "Likes"
                 ],
@@ -446,9 +478,6 @@ const docTemplate = `{
             },
             "delete": {
                 "description": "Delete like by pin id and auth token",
-                "produces": [
-                    "application/json"
-                ],
                 "tags": [
                     "Likes"
                 ],
@@ -556,6 +585,12 @@ const docTemplate = `{
         "/users/{user_id}": {
             "post": {
                 "description": "Update user by description and user id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "Users"
                 ],
@@ -718,6 +753,18 @@ const docTemplate = `{
                 }
             }
         },
+        "entity.UserList": {
+            "description": "User information with user id, email, nickname and avatar_url",
+            "type": "object",
+            "properties": {
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/entity.UserResponse"
+                    }
+                }
+            }
+        },
         "entity.UserResponse": {
             "description": "User information with user id, email, nickname and avatar_url",
             "type": "object",
@@ -753,7 +800,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "https://85.192.35.36:8080",
+	Host:             "https://harmoniums.ru",
 	BasePath:         "api/v1",
 	Schemes:          []string{},
 	Title:            "Harmonium backend API",
