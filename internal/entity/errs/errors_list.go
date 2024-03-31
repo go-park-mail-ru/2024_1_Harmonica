@@ -44,4 +44,5 @@ var ErrorCodes = map[error]struct {
 	ErrLikeAlreadyCreated: {HttpCode: 403, LocalCode: 15},
 	ErrLikeAlreadyDeleted: {HttpCode: 404, LocalCode: 16},
 	ErrEmptyContentURL:    {HttpCode: 400, LocalCode: 17},
+	ErrServerInternal:     {HttpCode: 500, LocalCode: 18},
 }

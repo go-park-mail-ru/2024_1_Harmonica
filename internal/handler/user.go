@@ -1,11 +1,8 @@
 package handler
 
 import (
-	"encoding/json"
-	"fmt"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
-	"io"
 	"net/http"
 
 	"golang.org/x/crypto/bcrypt"
@@ -53,7 +50,6 @@ func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	userIdFromSlug, err := ReadUint64Slug(r, "user_id")
-	fmt.Println(userIdFromSlug)
 	if err != nil {
 		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
 			GeneralErr: err,
@@ -70,17 +66,8 @@ func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bodyBytes, err := io.ReadAll(r.Body)
-	if err != nil {
-		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
-			GeneralErr: err,
-			LocalErr:   errs.ErrReadingRequestBody,
-		})
-		return
-	}
-
 	var user entity.User
-	err = json.Unmarshal(bodyBytes, &user)
+	err = UnmarshalRequest(r, &user)
 	if err != nil {
 		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
 			GeneralErr: err,

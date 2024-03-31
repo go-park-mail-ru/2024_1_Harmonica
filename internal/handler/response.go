@@ -3,10 +3,31 @@ package handler
 import (
 	"encoding/json"
 	"go.uber.org/zap"
+	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"log"
 	"net/http"
+	"time"
 )
+
+func MakeUserResponse(user entity.User) entity.UserResponse {
+	userResponse := entity.UserResponse{
+		UserId:    user.UserID,
+		Email:     user.Email,
+		Nickname:  user.Nickname,
+		AvatarURL: user.AvatarURL,
+	}
+	return userResponse
+}
+
+func SetSessionTokenCookie(w http.ResponseWriter, sessionToken string, expiresAt time.Time) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session_token",
+		Value:    sessionToken,
+		Expires:  expiresAt,
+		HttpOnly: true,
+	})
+}
 
 func WriteDefaultResponse(w http.ResponseWriter, logger *zap.Logger, object any) {
 	w.Header().Set("Content-Type", "application/json")

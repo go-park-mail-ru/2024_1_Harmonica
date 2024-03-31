@@ -1,11 +1,8 @@
 package handler
 
 import (
-	"encoding/json"
-	"errors"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
-	"io"
 	"net/http"
 	"sync"
 	"time"
@@ -39,17 +36,8 @@ var (
 func (h *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	bodyBytes, err := io.ReadAll(r.Body)
-	if err != nil {
-		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
-			GeneralErr: err,
-			LocalErr:   errs.ErrReadingRequestBody,
-		})
-		return
-	}
-
 	var user entity.User
-	err = json.Unmarshal(bodyBytes, &user)
+	err := UnmarshalRequest(r, &user)
 	if err != nil {
 		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
 			GeneralErr: err,
@@ -110,26 +98,14 @@ func (h *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 //	@Header			200		{string}	Set-Cookie	"session-token"
 //	@Router			/logout [get]
 func (h *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	c, err := r.Cookie("session_token")
-	if err != nil {
-		if errors.Is(err, http.ErrNoCookie) {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
-			GeneralErr: err,
-			LocalErr:   errs.ErrReadCookie,
-		})
-		return
-	}
-	sessionToken := c.Value
-	_, exists := Sessions.Load(sessionToken)
-	if !exists {
-		SetSessionTokenCookie(w, "", time.Now())
+	ctx := r.Context()
+
+	if ctx.Value("is_auth") == false {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 
+	sessionToken := ctx.Value("session_token")
 	Sessions.Delete(sessionToken)
 	SetSessionTokenCookie(w, "", time.Now())
 	w.WriteHeader(http.StatusOK)
@@ -151,22 +127,12 @@ func (h *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
 func (h *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	bodyBytes, err := io.ReadAll(r.Body)
-	if err != nil {
-		WriteErrorsListResponse(w, h.logger, errs.ErrorInfo{
-			GeneralErr: err,
-			LocalErr:   errs.ErrReadingRequestBody,
-		})
-		return
-	}
-
 	var user entity.User
-	err = json.Unmarshal(bodyBytes, &user)
+	err := UnmarshalRequest(r, &user)
 	if err != nil {
-		WriteErrorsListResponse(w, h.logger, errs.ErrorInfo{
+		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
 			GeneralErr: err,
-			LocalErr:   errs.ErrReadingRequestBody,
-		})
+			LocalErr:   errs.ErrReadingRequestBody})
 		return
 	}
 
@@ -251,25 +217,5 @@ func (h *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//userResponse := MakeUserResponse(user)
 	WriteDefaultResponse(w, h.logger, MakeUserResponse(user))
-}
-
-func MakeUserResponse(user entity.User) entity.UserResponse {
-	userResponse := entity.UserResponse{
-		UserId:    user.UserID,
-		Email:     user.Email,
-		Nickname:  user.Nickname,
-		AvatarURL: user.AvatarURL,
-	}
-	return userResponse
-}
-
-func SetSessionTokenCookie(w http.ResponseWriter, sessionToken string, expiresAt time.Time) {
-	http.SetCookie(w, &http.Cookie{
-		Name:     "session_token",
-		Value:    sessionToken,
-		Expires:  expiresAt,
-		HttpOnly: true,
-	})
 }

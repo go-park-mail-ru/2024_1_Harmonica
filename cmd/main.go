@@ -58,10 +58,8 @@ func configureUserRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.Se
 		"POST /api/v1/users": h.Register,
 	}
 	checkAuthRoutes := map[string]http.HandlerFunc{
+		"GET /api/v1/logout":           h.Logout,
 		"GET /api/v1/users/{nickname}": h.GetUser,
-	}
-	publicRoutes := map[string]http.HandlerFunc{
-		"GET /api/v1/logout": h.Logout,
 	}
 	for pattern, f := range authRoutes {
 		mux.HandleFunc(pattern, middleware.Auth(logger, f))
@@ -71,9 +69,6 @@ func configureUserRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.Se
 	}
 	for pattern, f := range checkAuthRoutes {
 		mux.HandleFunc(pattern, middleware.CheckAuth(logger, f))
-	}
-	for pattern, f := range publicRoutes {
-		mux.HandleFunc(pattern, f)
 	}
 }
 
