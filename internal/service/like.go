@@ -8,8 +8,8 @@ import (
 
 var emptyErrorInfo = errs.ErrorInfo{}
 
-func (r *RepositoryService) SetLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) errs.ErrorInfo {
-	err := r.repo.SetLike(ctx, pinId, userId)
+func (s *RepositoryService) SetLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) errs.ErrorInfo {
+	err := s.repo.SetLike(ctx, pinId, userId)
 	if err != nil {
 		return errs.ErrorInfo{
 			GeneralErr: err,
@@ -19,8 +19,8 @@ func (r *RepositoryService) SetLike(ctx context.Context, pinId entity.PinID, use
 	return emptyErrorInfo
 }
 
-func (r *RepositoryService) ClearLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) errs.ErrorInfo {
-	err := r.repo.ClearLike(ctx, pinId, userId)
+func (s *RepositoryService) ClearLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) errs.ErrorInfo {
+	err := s.repo.ClearLike(ctx, pinId, userId)
 	if err != nil {
 		return errs.ErrorInfo{
 			GeneralErr: err,
@@ -30,8 +30,8 @@ func (r *RepositoryService) ClearLike(ctx context.Context, pinId entity.PinID, u
 	return emptyErrorInfo
 }
 
-func (r *RepositoryService) GetUsersLiked(ctx context.Context, pinId entity.PinID, limit int) (entity.UserList, errs.ErrorInfo) {
-	res, err := r.repo.GetUsersLiked(ctx, pinId, limit)
+func (s *RepositoryService) GetUsersLiked(ctx context.Context, pinId entity.PinID, limit int) (entity.UserList, errs.ErrorInfo) {
+	res, err := s.repo.GetUsersLiked(ctx, pinId, limit)
 	if err != nil {
 		return entity.UserList{}, errs.ErrorInfo{
 			GeneralErr: err,

@@ -10,13 +10,12 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func (handler *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	l := handler.logger
+func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	userIdFromSlug, err := ReadInt64Slug(r, "user_id")
 	if err != nil {
-		WriteErrorResponse(w, l, errs.ErrorInfo{
+		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
 			GeneralErr: err,
 			LocalErr:   errs.ErrInvalidSlug,
 		})
@@ -25,7 +24,7 @@ func (handler *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	userIdFromSession := ctx.Value("user_id").(entity.UserID)
 	if uint64(userIdFromSession) != userIdFromSlug {
-		WriteErrorResponse(w, l, errs.ErrorInfo{
+		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
 			LocalErr: errs.ErrDiffUserId,
 		})
 		return
@@ -33,7 +32,7 @@ func (handler *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
-		WriteErrorResponse(w, l, errs.ErrorInfo{
+		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
 			GeneralErr: err,
 			LocalErr:   errs.ErrReadingRequestBody,
 		})
@@ -43,7 +42,7 @@ func (handler *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	var user entity.User
 	err = json.Unmarshal(bodyBytes, &user)
 	if err != nil {
-		WriteErrorResponse(w, l, errs.ErrorInfo{
+		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
 			GeneralErr: err,
 			LocalErr:   errs.ErrReadingRequestBody,
 		})
@@ -52,7 +51,7 @@ func (handler *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	user.UserID = userIdFromSession
 
 	if user.Nickname != "" && !ValidateNickname(user.Nickname) {
-		WriteErrorResponse(w, l, errs.ErrorInfo{
+		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
 			LocalErr: errs.ErrInvalidInputFormat,
 		})
 		return
@@ -60,14 +59,14 @@ func (handler *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	if user.Password != "" {
 		if !ValidatePassword(user.Password) {
-			WriteErrorResponse(w, l, errs.ErrorInfo{
+			WriteErrorResponse(w, h.logger, errs.ErrorInfo{
 				LocalErr: errs.ErrInvalidInputFormat,
 			})
 			return
 		}
 		hashPassword, errH := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 		if errH != nil {
-			WriteErrorsListResponse(w, l, errs.ErrorInfo{
+			WriteErrorsListResponse(w, h.logger, errs.ErrorInfo{
 				GeneralErr: errH,
 				LocalErr:   errs.ErrHashingPassword,
 			})
@@ -76,11 +75,11 @@ func (handler *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		user.Password = string(hashPassword)
 	}
 
-	updatedUser, errInfo := handler.service.UpdateUser(ctx, user)
+	updatedUser, errInfo := h.service.UpdateUser(ctx, user)
 	if errInfo != emptyErrorInfo {
-		WriteErrorResponse(w, l, errInfo)
+		WriteErrorResponse(w, h.logger, errInfo)
 		return
 	}
 
-	WriteUserResponse(w, l, updatedUser)
+	WriteUserResponse(w, h.logger, updatedUser)
 }

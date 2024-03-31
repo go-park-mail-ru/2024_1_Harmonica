@@ -8,8 +8,8 @@ import (
 
 var emptyUser = entity.User{}
 
-func (r *RepositoryService) GetUserByEmail(ctx context.Context, email string) (entity.User, errs.ErrorInfo) {
-	user, err := r.repo.GetUserByEmail(ctx, email)
+func (s *RepositoryService) GetUserByEmail(ctx context.Context, email string) (entity.User, errs.ErrorInfo) {
+	user, err := s.repo.GetUserByEmail(ctx, email)
 	if err != nil {
 		return emptyUser, errs.ErrorInfo{
 			GeneralErr: err,
@@ -19,8 +19,8 @@ func (r *RepositoryService) GetUserByEmail(ctx context.Context, email string) (e
 	return user, emptyErrorInfo
 }
 
-func (r *RepositoryService) GetUserByNickname(ctx context.Context, nickname string) (entity.User, errs.ErrorInfo) {
-	user, err := r.repo.GetUserByNickname(ctx, nickname)
+func (s *RepositoryService) GetUserByNickname(ctx context.Context, nickname string) (entity.User, errs.ErrorInfo) {
+	user, err := s.repo.GetUserByNickname(ctx, nickname)
 	if err != nil {
 		return emptyUser, errs.ErrorInfo{
 			GeneralErr: err,
@@ -30,8 +30,8 @@ func (r *RepositoryService) GetUserByNickname(ctx context.Context, nickname stri
 	return user, emptyErrorInfo
 }
 
-func (r *RepositoryService) GetUserById(ctx context.Context, id entity.UserID) (entity.User, errs.ErrorInfo) {
-	user, err := r.repo.GetUserById(ctx, id)
+func (s *RepositoryService) GetUserById(ctx context.Context, id entity.UserID) (entity.User, errs.ErrorInfo) {
+	user, err := s.repo.GetUserById(ctx, id)
 	if err != nil {
 		return emptyUser, errs.ErrorInfo{
 			GeneralErr: err,
@@ -41,11 +41,11 @@ func (r *RepositoryService) GetUserById(ctx context.Context, id entity.UserID) (
 	return user, emptyErrorInfo
 }
 
-func (r *RepositoryService) RegisterUser(ctx context.Context, user entity.User) []errs.ErrorInfo {
+func (s *RepositoryService) RegisterUser(ctx context.Context, user entity.User) []errs.ErrorInfo {
 	var errsList []errs.ErrorInfo
 
 	// Checking for unique fields
-	checkUser, err := r.repo.GetUserByEmail(ctx, user.Email)
+	checkUser, err := s.repo.GetUserByEmail(ctx, user.Email)
 	if err != nil {
 		errsList = append(errsList, errs.ErrorInfo{
 			GeneralErr: err,
@@ -60,7 +60,7 @@ func (r *RepositoryService) RegisterUser(ctx context.Context, user entity.User) 
 		})
 	}
 
-	checkUser, err = r.repo.GetUserByNickname(ctx, user.Nickname)
+	checkUser, err = s.repo.GetUserByNickname(ctx, user.Nickname)
 	if err != nil {
 		errsList = append(errsList, errs.ErrorInfo{
 			GeneralErr: err,
@@ -79,7 +79,7 @@ func (r *RepositoryService) RegisterUser(ctx context.Context, user entity.User) 
 		return errsList
 	}
 
-	err = r.repo.RegisterUser(ctx, user)
+	err = s.repo.RegisterUser(ctx, user)
 	if err != nil {
 		errsList = append(errsList, errs.ErrorInfo{
 			GeneralErr: err,
@@ -90,9 +90,9 @@ func (r *RepositoryService) RegisterUser(ctx context.Context, user entity.User) 
 	return errsList
 }
 
-func (r *RepositoryService) UpdateUser(ctx context.Context, user entity.User) (entity.User, errs.ErrorInfo) {
+func (s *RepositoryService) UpdateUser(ctx context.Context, user entity.User) (entity.User, errs.ErrorInfo) {
 	if user.Nickname != "" {
-		checkUser, err := r.repo.GetUserByNickname(ctx, user.Nickname)
+		checkUser, err := s.repo.GetUserByNickname(ctx, user.Nickname)
 		if err != nil {
 			return emptyUser, errs.ErrorInfo{
 				GeneralErr: err,
@@ -107,7 +107,7 @@ func (r *RepositoryService) UpdateUser(ctx context.Context, user entity.User) (e
 		}
 	}
 
-	err := r.repo.UpdateUser(ctx, user)
+	err := s.repo.UpdateUser(ctx, user)
 	if err != nil {
 		return emptyUser, errs.ErrorInfo{
 			GeneralErr: err,
@@ -115,7 +115,7 @@ func (r *RepositoryService) UpdateUser(ctx context.Context, user entity.User) (e
 		}
 	}
 
-	updatedUser, err := r.repo.GetUserById(ctx, user.UserID)
+	updatedUser, err := s.repo.GetUserById(ctx, user.UserID)
 	if err != nil {
 		return emptyUser, errs.ErrorInfo{
 			GeneralErr: err,

@@ -22,57 +22,54 @@ func GetPinAndUserId(r *http.Request, ctx context.Context) (entity.PinID, entity
 	return pinId, userId, emptyErrorInfo
 }
 
-func (handler *APIHandler) CreateLike(w http.ResponseWriter, r *http.Request) {
-	l := handler.logger
+func (h *APIHandler) CreateLike(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	pinId, userId, errInfo := GetPinAndUserId(r, ctx)
 	if errInfo != emptyErrorInfo {
-		WriteErrorResponse(w, l, errInfo)
+		WriteErrorResponse(w, h.logger, errInfo)
 		return
 	}
-	errInfo = handler.service.SetLike(ctx, pinId, userId)
+	errInfo = h.service.SetLike(ctx, pinId, userId)
 	if errInfo != emptyErrorInfo {
-		WriteErrorResponse(w, l, errInfo)
+		WriteErrorResponse(w, h.logger, errInfo)
 		return
 	}
-	WriteDefaultResponse(w, l, nil)
+	WriteDefaultResponse(w, h.logger, nil)
 }
 
-func (handler *APIHandler) DeleteLike(w http.ResponseWriter, r *http.Request) {
-	l := handler.logger
+func (h *APIHandler) DeleteLike(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	pinId, userId, errInfo := GetPinAndUserId(r, ctx)
 	if errInfo != emptyErrorInfo {
-		WriteErrorResponse(w, l, errInfo)
+		WriteErrorResponse(w, h.logger, errInfo)
 		return
 	}
-	errInfo = handler.service.ClearLike(ctx, pinId, userId)
+	errInfo = h.service.ClearLike(ctx, pinId, userId)
 	if errInfo != emptyErrorInfo {
-		WriteErrorResponse(w, l, errInfo)
+		WriteErrorResponse(w, h.logger, errInfo)
 		return
 	}
-	WriteDefaultResponse(w, l, nil)
+	WriteDefaultResponse(w, h.logger, nil)
 }
 
-func (handler *APIHandler) UsersLiked(w http.ResponseWriter, r *http.Request) {
-	l := handler.logger
+func (h *APIHandler) UsersLiked(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	id, err := ReadInt64Slug(r, "pin_id")
 	if err != nil {
-		WriteErrorResponse(w, l, errs.ErrorInfo{
+		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
 			GeneralErr: err,
 			LocalErr:   errs.ErrInvalidSlug,
 		})
 		return
 	}
 	pinId := entity.PinID(id)
-	res, errInfo := handler.service.GetUsersLiked(ctx, pinId, USERS_LIKED_LIMIT)
+	res, errInfo := h.service.GetUsersLiked(ctx, pinId, USERS_LIKED_LIMIT)
 	if errInfo != emptyErrorInfo {
-		WriteErrorResponse(w, l, errInfo)
+		WriteErrorResponse(w, h.logger, errInfo)
 		return
 	}
-	WriteDefaultResponse(w, l, res)
+	WriteDefaultResponse(w, h.logger, res)
 }
