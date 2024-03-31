@@ -4,17 +4,17 @@ import (
 	"time"
 )
 
-// Pin model for DB
+// Pin model from DB
 // @Description Full pin information
 type Pin struct {
-	PinId         PinID     `db:"pin_id" json:"pin_id"`
-	AuthorId      UserID    `db:"author_id" json:"author_id"`
-	CreatedAt     time.Time `db:"created_at" json:"created_at"`
+	PinId         PinID     `db:"pin_id" json:"pin_id" swaggerignore:"true"`
+	AuthorId      UserID    `db:"author_id" json:"author_id" swaggerignore:"true"`
+	CreatedAt     time.Time `db:"created_at" json:"created_at" swaggerignore:"true"`
 	Title         string    `db:"title" json:"title"`
 	Description   string    `db:"description" json:"description"`
 	AllowComments bool      `db:"allow_comments" json:"allow_comments"`
 	ClickUrl      string    `db:"click_url" json:"click_url"`
-	ContentUrl    string    `db:"content_url" json:"content_url"`
+	ContentUrl    string    `db:"content_url" json:"content_url"` // Сделать required для свагера
 }
 
 // Pin response author model
