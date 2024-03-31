@@ -42,21 +42,59 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Possible code responses: 3.",
                         "schema": {
-                            "$ref": "#/definitions/entity.ErrorResponse"
+                            "$ref": "#/definitions/errs.ErrorResponse"
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "Possible code responses: 2.",
                         "schema": {
-                            "$ref": "#/definitions/entity.ErrorResponse"
+                            "$ref": "#/definitions/errs.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Possible code responses: 11.",
                         "schema": {
-                            "$ref": "#/definitions/entity.ErrorResponse"
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/likes/{pin_id}/users": {
+            "get": {
+                "description": "Get users that liked pin by pin ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Likes"
+                ],
+                "summary": "Get last 20 users that liked pin",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Pin ID",
+                        "name": "pin_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Possible code responses: 12.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Possible code responses: 11.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
                         }
                     }
                 }
@@ -83,36 +121,30 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "type": "object"
-                        },
-                        "headers": {
-                            "Set-Cookie": {
-                                "type": "string",
-                                "description": "session-token"
-                            }
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Possible code responses: 3, 4, 5.",
                         "schema": {
-                            "$ref": "#/definitions/entity.ErrorResponse"
+                            "$ref": "#/definitions/errs.ErrorResponse"
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "Possible code responses: 7, 8.",
                         "schema": {
-                            "$ref": "#/definitions/entity.ErrorResponse"
+                            "$ref": "#/definitions/errs.ErrorResponse"
                         }
                     },
                     "403": {
-                        "description": "Forbidden",
+                        "description": "Possible code responses: 1.",
                         "schema": {
-                            "$ref": "#/definitions/entity.ErrorResponse"
+                            "$ref": "#/definitions/errs.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Possible code responses: 11.",
                         "schema": {
-                            "$ref": "#/definitions/entity.ErrorResponse"
+                            "$ref": "#/definitions/errs.ErrorResponse"
                         }
                     }
                 }
@@ -140,24 +172,18 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "type": "object"
-                        },
-                        "headers": {
-                            "Set-Cookie": {
-                                "type": "string",
-                                "description": "session-token"
-                            }
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Possible code responses: 3.",
                         "schema": {
-                            "$ref": "#/definitions/entity.ErrorResponse"
+                            "$ref": "#/definitions/errs.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/pins_list": {
+        "/pins": {
             "get": {
                 "description": "Get pins by page",
                 "tags": [
@@ -176,19 +202,300 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/entity.Pins"
+                            "$ref": "#/definitions/entity.FeedPins"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Possible code responses: 4.",
                         "schema": {
-                            "$ref": "#/definitions/entity.ErrorResponse"
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Possible code responses: 11.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/register": {
+        "/pins/created/{nickname}": {
+            "get": {
+                "description": "Get pins of user by page",
+                "tags": [
+                    "Pins"
+                ],
+                "summary": "Get pins that created by user id",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page num from 0",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/entity.FeedPins"
+                        }
+                    },
+                    "400": {
+                        "description": "Possible code responses: 4, 12.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Possible code responses: 11.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/pins/{pin_id}": {
+            "get": {
+                "description": "Get pin by id in the slug",
+                "tags": [
+                    "Pins"
+                ],
+                "summary": "Get pin by id",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Pin ID",
+                        "name": "pin_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/entity.PinPageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Possible code responses: 4, 12.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Possible code responses: 11.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Update pin by description",
+                "tags": [
+                    "Pins"
+                ],
+                "summary": "Update pin",
+                "parameters": [
+                    {
+                        "description": "Pin information",
+                        "name": "pin",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/entity.Pin"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/entity.PinPageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Possible code responses: 3, 4, 12",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Possible code responses: 2.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Possible code responses: 14.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Possible code responses: 11.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete pin by id (allowed only for pin's author)",
+                "tags": [
+                    "Pins"
+                ],
+                "summary": "Delete pin",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Pin ID",
+                        "name": "pin_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/entity.PinPageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Possible code responses: 3, 4 12",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Possible code responses: 2.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Possible code responses: 14.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Possible code responses: 11.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/pins/{pin_id}/like": {
+            "post": {
+                "description": "Sets like by pin id and auth token",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Likes"
+                ],
+                "summary": "Set like on the pin",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "session-token=",
+                        "description": "session-token",
+                        "name": "Cookie",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Pin ID",
+                        "name": "pin_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Possible code responses: 3, 12.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Possible code responses: 2.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Possible code responses: 11.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete like by pin id and auth token",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Likes"
+                ],
+                "summary": "Delete like on the pin",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "session-token=",
+                        "description": "session-token",
+                        "name": "Cookie",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Pin ID",
+                        "name": "pin_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Possible code responses: 3, 12.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Possible code responses: 2.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Possible code responses: 11.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users": {
             "post": {
                 "description": "Register user by POST request and add them to DB",
                 "consumes": [
@@ -208,7 +515,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/repository.User"
+                            "$ref": "#/definitions/entity.User"
                         }
                     }
                 ],
@@ -220,21 +527,79 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Possible code responses: 3, 4, 5.",
                         "schema": {
-                            "$ref": "#/definitions/entity.ErrorsListResponse"
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Possible code responses: 7, 8.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
                         }
                     },
                     "403": {
-                        "description": "Forbidden",
+                        "description": "Possible code responses: 1.",
                         "schema": {
-                            "$ref": "#/definitions/entity.ErrorsListResponse"
+                            "$ref": "#/definitions/errs.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Possible code responses: 11.",
                         "schema": {
-                            "$ref": "#/definitions/entity.ErrorsListResponse"
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}": {
+            "post": {
+                "description": "Update user by description and user id.",
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Update user",
+                "parameters": [
+                    {
+                        "description": "User information",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/entity.User"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/entity.PinPageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Possible code responses: 3, 4, 5, 12, 13",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Possible code responses: 2.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Possible code responses: 14.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Possible code responses: 6, 11.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
                         }
                     }
                 }
@@ -242,7 +607,104 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "repository.User": {
+        "entity.FeedPinResponse": {
+            "description": "PinResponse information with author, pin id and content URL.",
+            "type": "object",
+            "properties": {
+                "author": {
+                    "$ref": "#/definitions/entity.PinAuthor"
+                },
+                "content_url": {
+                    "type": "string"
+                },
+                "pin_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "entity.FeedPins": {
+            "description": "Pins array of FeedPinResponse",
+            "type": "object",
+            "properties": {
+                "pins": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/entity.FeedPinResponse"
+                    }
+                }
+            }
+        },
+        "entity.Pin": {
+            "description": "Full pin information",
+            "type": "object",
+            "properties": {
+                "allow_comments": {
+                    "type": "boolean"
+                },
+                "click_url": {
+                    "type": "string"
+                },
+                "content_url": {
+                    "description": "Сделать required для свагера",
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "entity.PinAuthor": {
+            "description": "User-author information with user id, nickname and avatar",
+            "type": "object",
+            "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
+                "nickname": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "entity.PinPageResponse": {
+            "description": "Full pin information",
+            "type": "object",
+            "properties": {
+                "allow_comments": {
+                    "type": "boolean"
+                },
+                "author": {
+                    "$ref": "#/definitions/entity.PinAuthor"
+                },
+                "click_url": {
+                    "type": "string"
+                },
+                "content_url": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "likes_count": {
+                    "type": "integer"
+                },
+                "pin_id": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "entity.User": {
             "type": "object",
             "properties": {
                 "email": {
@@ -256,80 +718,13 @@ const docTemplate = `{
                 }
             }
         },
-        "entity.ErrorResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "message": {
-                    "type": "string"
-                }
-            }
-        },
-        "entity.ErrorsListResponse": {
-            "type": "object",
-            "properties": {
-                "errors": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/entity.ErrorResponse"
-                    }
-                }
-            }
-        },
-        "entity.Pin": {
-            "description": "Pin information with author, pin id, created date, caption, click and content URLs.",
-            "type": "object",
-            "properties": {
-                "author": {
-                    "$ref": "#/definitions/entity.PinAuthor"
-                },
-                "caption": {
-                    "type": "string"
-                },
-                "click_url": {
-                    "type": "string"
-                },
-                "content_url": {
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "pin_id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "entity.PinAuthor": {
-            "description": "User-author information with user id and nickname",
-            "type": "object",
-            "properties": {
-                "nickname": {
-                    "type": "string"
-                },
-                "user_id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "entity.Pins": {
-            "description": "Pins array of Pin",
-            "type": "object",
-            "properties": {
-                "pins": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/entity.Pin"
-                    }
-                }
-            }
-        },
         "entity.UserResponse": {
-            "description": "User information with user id, email and nickname",
+            "description": "User information with user id, email, nickname and avatar_url",
             "type": "object",
             "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
                 "email": {
                     "type": "string"
                 },
@@ -340,6 +735,17 @@ const docTemplate = `{
                     "type": "integer"
                 }
             }
+        },
+        "errs.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
         }
     }
 }`
@@ -347,7 +753,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "http://89.111.174.111:8080/",
+	Host:             "https://85.192.35.36:8080",
 	BasePath:         "api/v1",
 	Schemes:          []string{},
 	Title:            "Harmonium backend API",

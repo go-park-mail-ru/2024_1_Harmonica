@@ -1,7 +1,6 @@
 package main
 
 import (
-	"go.uber.org/zap"
 	"harmonica/config"
 	"harmonica/internal/handler"
 	"harmonica/internal/handler/middleware"
@@ -9,6 +8,8 @@ import (
 	"harmonica/internal/service"
 	"log"
 	"net/http"
+
+	"go.uber.org/zap"
 
 	"github.com/joho/godotenv"
 	v3 "github.com/swaggest/swgui/v3"
@@ -101,7 +102,7 @@ func init() {
 //	@title			Harmonium backend API
 //	@version		1.0
 //	@description	This is API-docs of backend server of Harmonica team.
-
+//
 // @host		https://85.192.35.36:8080
 // @BasePath	api/v1
 func main() {

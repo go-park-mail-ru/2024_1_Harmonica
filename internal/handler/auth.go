@@ -3,13 +3,14 @@ package handler
 import (
 	"encoding/json"
 	"errors"
-	"go.uber.org/zap"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"io"
 	"net/http"
 	"sync"
 	"time"
+
+	"go.uber.org/zap"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -140,7 +141,7 @@ func (h *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
 //	@Tags			Authorization
 //	@Produce		json
 //	@Accept			json
-//	@Param			request	body		repository.User	true	"json"
+//	@Param			request	body		entity.User	true	"json"
 //	@Success		200		{object}	entity.UserResponse
 //	@Failure		400		{object}	errs.ErrorResponse	"Possible code responses: 3, 4, 5."
 //	@Failure		401		{object}	errs.ErrorResponse	"Possible code responses: 7, 8."
