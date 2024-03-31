@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"io"
@@ -10,10 +11,49 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+func (h *APIHandler) GetUser(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	userNicknameFromSlug := r.PathValue("nickname")
+	if !ValidateNickname(userNicknameFromSlug) {
+		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
+			LocalErr: errs.ErrInvalidSlug,
+		})
+		return
+	}
+
+	user, errInfo := h.service.GetUserByNickname(ctx, userNicknameFromSlug)
+	if errInfo != emptyErrorInfo {
+		WriteErrorResponse(w, h.logger, errInfo)
+		return
+	}
+	if user == emptyUser {
+		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
+			LocalErr: errs.ErrUserNotExist,
+		})
+		return
+	}
+
+	isOwner := false
+	if ctx.Value("is_auth") == true {
+		userIdFromSession := ctx.Value("user_id").(entity.UserID)
+		isOwner = user.UserID == userIdFromSession
+	}
+
+	userProfile := entity.UserProfileResponse{
+		User:            MakeUserResponse(user),
+		FollowersNumber: 0,
+		IsOwner:         isOwner,
+	}
+	WriteDefaultResponse(w, h.logger, userProfile)
+
+}
+
 func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	userIdFromSlug, err := ReadInt64Slug(r, "user_id")
+	userIdFromSlug, err := ReadUint64Slug(r, "user_id")
+	fmt.Println(userIdFromSlug)
 	if err != nil {
 		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
 			GeneralErr: err,
@@ -48,7 +88,7 @@ func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	user.UserID = userIdFromSession
+	user.UserID = userIdFromSession // нужно для слоя сервиса! (проверка уникальности ника)
 
 	if user.Nickname != "" && !ValidateNickname(user.Nickname) {
 		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
@@ -81,5 +121,6 @@ func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	WriteUserResponse(w, h.logger, updatedUser)
+	WriteDefaultResponse(w, h.logger, MakeUserResponse(updatedUser))
+	//WriteUserResponse(w, h.logger, updatedUser)
 }

@@ -3,7 +3,6 @@ package handler
 import (
 	"encoding/json"
 	"errors"
-	"go.uber.org/zap"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"io"
@@ -95,7 +94,7 @@ func (h *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 	Sessions.Store(newSessionToken, s)
 
 	SetSessionTokenCookie(w, newSessionToken, expiresAt)
-	WriteUserResponse(w, h.logger, loggedInUser)
+	WriteDefaultResponse(w, h.logger, MakeUserResponse(loggedInUser))
 }
 
 // Logout
@@ -218,7 +217,7 @@ func (h *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 	Sessions.Store(newSessionToken, s)
 
 	SetSessionTokenCookie(w, newSessionToken, expiresAt)
-	WriteUserResponse(w, h.logger, registeredUser)
+	WriteDefaultResponse(w, h.logger, MakeUserResponse(registeredUser))
 }
 
 // Check if user is authorized
@@ -252,25 +251,18 @@ func (h *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	WriteUserResponse(w, h.logger, user)
+	//userResponse := MakeUserResponse(user)
+	WriteDefaultResponse(w, h.logger, MakeUserResponse(user))
 }
 
-func WriteUserResponse(w http.ResponseWriter, logger *zap.Logger, user entity.User) {
-	w.Header().Set("Content-Type", "application/json")
+func MakeUserResponse(user entity.User) entity.UserResponse {
 	userResponse := entity.UserResponse{
-		UserId:   user.UserID,
-		Email:    user.Email,
-		Nickname: user.Nickname,
+		UserId:    user.UserID,
+		Email:     user.Email,
+		Nickname:  user.Nickname,
+		AvatarURL: user.AvatarURL,
 	}
-	response, _ := json.Marshal(userResponse)
-	_, err := w.Write(response)
-	if err != nil {
-		logger.Error(
-			errs.ErrServerInternal.Error(),
-			zap.Int("local_error_code", errs.ErrorCodes[errs.ErrServerInternal].LocalCode),
-			zap.String("general_error", err.Error()),
-		)
-	}
+	return userResponse
 }
 
 func SetSessionTokenCookie(w http.ResponseWriter, sessionToken string, expiresAt time.Time) {

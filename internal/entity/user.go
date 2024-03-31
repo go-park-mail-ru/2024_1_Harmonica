@@ -31,3 +31,9 @@ type UserResponse struct {
 type UserList struct {
 	Users []UserResponse `json:"users"`
 }
+
+type UserProfileResponse struct {
+	User            UserResponse `json:"user"`
+	FollowersNumber uint64       `json:"followers_number"`
+	IsOwner         bool         `json:"is_owner"`
+}

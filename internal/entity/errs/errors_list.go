@@ -9,7 +9,7 @@ var (
 	ErrReadingRequestBody = errors.New("error reading request body")
 	ErrInvalidInputFormat = errors.New("validation conditions are not met")
 	ErrHashingPassword    = errors.New("error hashing password")
-	ErrUserNotExist       = errors.New("user with this email does not exist (can't authorize)")
+	ErrUserNotExist       = errors.New("user with this email / nickname does not exist")
 	ErrWrongPassword      = errors.New("wrong password (can't authorize)")
 	ErrDBUniqueEmail      = errors.New("user with this email already exists (can't register)")
 	ErrDBUniqueNickname   = errors.New("user with this nickname already exists (can't register)")

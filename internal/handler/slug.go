@@ -1,19 +1,15 @@
 package handler
 
 import (
-	"harmonica/internal/entity/errs"
 	"net/http"
 	"strconv"
 )
 
-func ReadInt64Slug(r *http.Request, name string) (uint64, error) {
-	stringId := r.PathValue(name)
-	if len(stringId) == 0 {
-		return 0, errs.ErrInvalidSlug
-	}
-	res, err := strconv.ParseUint(stringId, 10, 64)
+func ReadUint64Slug(r *http.Request, name string) (uint64, error) {
+	value := r.PathValue(name)
+	res, err := strconv.ParseUint(value, 10, 64)
 	if err != nil {
-		return 0, errs.ErrInvalidSlug
+		return 0, err
 	}
 	return res, nil
 }

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"go.uber.org/zap"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"io"
@@ -38,19 +37,6 @@ func UnmarshalRequest(r *http.Request, dest any) error {
 	return err
 }
 
-func WriteDefaultResponse(w http.ResponseWriter, logger *zap.Logger, object any) {
-	w.Header().Set("Content-Type", "application/json")
-	response, _ := json.Marshal(object)
-	_, err := w.Write(response)
-	if err != nil {
-		logger.Error(
-			errs.ErrServerInternal.Error(),
-			zap.Int("local_error_code", errs.ErrorCodes[errs.ErrServerInternal].LocalCode),
-			zap.String("general_error", err.Error()),
-		)
-	}
-}
-
 // Feed pins list
 //
 //	@Summary		Pins list
@@ -78,7 +64,7 @@ func (h *APIHandler) Feed(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *APIHandler) UserPins(w http.ResponseWriter, r *http.Request) {
-	userId, err := ReadInt64Slug(r, "user_id")
+	userId, err := ReadUint64Slug(r, "user_id")
 	if err != nil {
 		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
 			GeneralErr: err,
@@ -103,7 +89,7 @@ func (h *APIHandler) UserPins(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *APIHandler) GetPin(w http.ResponseWriter, r *http.Request) {
-	pinId, err := ReadInt64Slug(r, "pin_id")
+	pinId, err := ReadUint64Slug(r, "pin_id")
 	if err != nil {
 		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
 			GeneralErr: err,
@@ -149,7 +135,7 @@ func (h *APIHandler) CreatePin(w http.ResponseWriter, r *http.Request) {
 func (h *APIHandler) UpdatePin(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	pinId, err := ReadInt64Slug(r, "pin_id")
+	pinId, err := ReadUint64Slug(r, "pin_id")
 	if err != nil {
 		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
 			GeneralErr: err,
@@ -179,7 +165,7 @@ func (h *APIHandler) UpdatePin(w http.ResponseWriter, r *http.Request) {
 func (h *APIHandler) DeletePin(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	pinId, err := ReadInt64Slug(r, "pin_id")
+	pinId, err := ReadUint64Slug(r, "pin_id")
 	if err != nil {
 		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
 			GeneralErr: err,

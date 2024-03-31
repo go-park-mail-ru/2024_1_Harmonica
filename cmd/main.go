@@ -44,7 +44,8 @@ func runServer(addr string) {
 		Addr:    addr,
 		Handler: middleware.CORS(mux),
 	}
-	server.ListenAndServeTLS("cert.pem", "key.pem")
+	//server.ListenAndServeTLS("cert.pem", "key.pem")
+	server.ListenAndServe()
 }
 
 func configureUserRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.ServeMux) {
@@ -56,6 +57,9 @@ func configureUserRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.Se
 		"POST /api/v1/login": h.Login,
 		"POST /api/v1/users": h.Register,
 	}
+	checkAuthRoutes := map[string]http.HandlerFunc{
+		"GET /api/v1/users/{nickname}": h.GetUser,
+	}
 	publicRoutes := map[string]http.HandlerFunc{
 		"GET /api/v1/logout": h.Logout,
 	}
@@ -64,6 +68,9 @@ func configureUserRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.Se
 	}
 	for pattern, f := range notAuthRoutes {
 		mux.HandleFunc(pattern, middleware.NotAuth(logger, f))
+	}
+	for pattern, f := range checkAuthRoutes {
+		mux.HandleFunc(pattern, middleware.CheckAuth(logger, f))
 	}
 	for pattern, f := range publicRoutes {
 		mux.HandleFunc(pattern, f)
