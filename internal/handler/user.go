@@ -10,6 +10,20 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// Update user.
+//
+//	@Summary		Update user
+//	@Description	Update user by description and user id.
+//	@Tags			Users
+//	@Produce		json
+//	@Accept			json
+//	@Param			user	body		entity.User	true	"User information"
+//	@Success		200		{object}	entity.PinPageResponse
+//	@Failure		400		{object}	errs.ErrorResponse	"Possible code responses: 3, 4, 5, 12, 13"
+//	@Failure		401		{object}	errs.ErrorResponse	"Possible code responses: 2."
+//	@Failure		403		{object}	errs.ErrorResponse	"Possible code responses: 14."
+//	@Failure		500		{object}	errs.ErrorResponse	"Possible code responses: 6, 11."
+//	@Router			/users/{user_id} [post]
 func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

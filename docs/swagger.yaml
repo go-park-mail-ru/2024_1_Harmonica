@@ -1,6 +1,71 @@
 basePath: api/v1
 definitions:
-  db.User:
+  entity.FeedPinResponse:
+    description: PinResponse information with author, pin id and content URL.
+    properties:
+      author:
+        $ref: '#/definitions/entity.PinAuthor'
+      content_url:
+        type: string
+      pin_id:
+        type: integer
+    type: object
+  entity.FeedPins:
+    description: Pins array of FeedPinResponse
+    properties:
+      pins:
+        items:
+          $ref: '#/definitions/entity.FeedPinResponse'
+        type: array
+    type: object
+  entity.Pin:
+    description: Full pin information
+    properties:
+      allow_comments:
+        type: boolean
+      click_url:
+        type: string
+      content_url:
+        description: Сделать required для свагера
+        type: string
+      description:
+        type: string
+      title:
+        type: string
+    type: object
+  entity.PinAuthor:
+    description: User-author information with user id, nickname and avatar
+    properties:
+      avatar_url:
+        type: string
+      nickname:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  entity.PinPageResponse:
+    description: Full pin information
+    properties:
+      allow_comments:
+        type: boolean
+      author:
+        $ref: '#/definitions/entity.PinAuthor'
+      click_url:
+        type: string
+      content_url:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      likes_count:
+        type: integer
+      pin_id:
+        type: integer
+      title:
+        type: string
+    type: object
+  entity.User:
     properties:
       email:
         type: string
@@ -9,56 +74,19 @@ definitions:
       password:
         type: string
     type: object
-  models.ErrorResponse:
+  entity.UserList:
+    description: User information with user id, email, nickname and avatar_url
     properties:
-      code:
-        type: integer
-      message:
-        type: string
-    type: object
-  models.ErrorsListResponse:
-    properties:
-      errors:
+      users:
         items:
-          $ref: '#/definitions/models.ErrorResponse'
+          $ref: '#/definitions/entity.UserResponse'
         type: array
     type: object
-  models.Pin:
-    description: Pin information with author, pin id, created date, caption, click
-      and content URLs.
+  entity.UserResponse:
+    description: User information with user id, email, nickname and avatar_url
     properties:
-      author:
-        $ref: '#/definitions/models.PinAuthor'
-      caption:
+      avatar_url:
         type: string
-      click_url:
-        type: string
-      content_url:
-        type: string
-      created_at:
-        type: string
-      pin_id:
-        type: integer
-    type: object
-  models.PinAuthor:
-    description: User-author information with user id and nickname
-    properties:
-      nickname:
-        type: string
-      user_id:
-        type: integer
-    type: object
-  models.Pins:
-    description: Pins array of Pin
-    properties:
-      pins:
-        items:
-          $ref: '#/definitions/models.Pin'
-        type: array
-    type: object
-  models.UserResponse:
-    description: User information with user id, email and nickname
-    properties:
       email:
         type: string
       nickname:
@@ -66,7 +94,14 @@ definitions:
       user_id:
         type: integer
     type: object
-host: http://89.111.174.111:8080/
+  errs.ErrorResponse:
+    properties:
+      code:
+        type: integer
+      message:
+        type: string
+    type: object
+host: https://harmoniums.ru
 info:
   contact: {}
   description: This is API-docs of backend server of Harmonica team.
@@ -88,24 +123,59 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.UserResponse'
+            $ref: '#/definitions/entity.UserResponse'
         "400":
-          description: Bad Request
+          description: 'Possible code responses: 3.'
           schema:
-            $ref: '#/definitions/models.ErrorResponse'
+            $ref: '#/definitions/errs.ErrorResponse'
         "401":
-          description: Unauthorized
+          description: 'Possible code responses: 2.'
           schema:
-            $ref: '#/definitions/models.ErrorResponse'
+            $ref: '#/definitions/errs.ErrorResponse'
         "500":
-          description: Internal Server Error
+          description: 'Possible code responses: 11.'
           schema:
-            $ref: '#/definitions/models.ErrorResponse'
+            $ref: '#/definitions/errs.ErrorResponse'
       summary: Get auth status
       tags:
       - Authorization
+  /likes/{pin_id}/users:
+    get:
+      description: Get users that liked pin by pin ID
+      parameters:
+      - description: Pin ID
+        in: path
+        name: pin_id
+        required: true
+        type: integer
+      - default: session-token=
+        description: session-token
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.UserList'
+        "400":
+          description: 'Possible code responses: 12.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "500":
+          description: 'Possible code responses: 11.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+      summary: Get last 20 users that liked pin
+      tags:
+      - Likes
   /login:
     post:
+      consumes:
+      - application/json
       description: Login user by request.body json
       parameters:
       - default: session-token=
@@ -113,31 +183,29 @@ paths:
         in: header
         name: Cookie
         type: string
+      produces:
+      - application/json
       responses:
         "200":
           description: OK
-          headers:
-            Set-Cookie:
-              description: session-token
-              type: string
           schema:
-            type: object
+            $ref: '#/definitions/entity.User'
         "400":
-          description: Bad Request
+          description: 'Possible code responses: 3, 4, 5.'
           schema:
-            $ref: '#/definitions/models.ErrorResponse'
+            $ref: '#/definitions/errs.ErrorResponse'
         "401":
-          description: Unauthorized
+          description: 'Possible code responses: 7, 8.'
           schema:
-            $ref: '#/definitions/models.ErrorResponse'
+            $ref: '#/definitions/errs.ErrorResponse'
         "403":
-          description: Forbidden
+          description: 'Possible code responses: 1.'
           schema:
-            $ref: '#/definitions/models.ErrorResponse'
+            $ref: '#/definitions/errs.ErrorResponse'
         "500":
-          description: Internal Server Error
+          description: 'Possible code responses: 11.'
           schema:
-            $ref: '#/definitions/models.ErrorResponse'
+            $ref: '#/definitions/errs.ErrorResponse'
       summary: Login user
       tags:
       - Authorization
@@ -149,25 +217,18 @@ paths:
         description: session-token
         in: header
         name: Cookie
-        required: true
         type: string
       responses:
         "200":
           description: OK
-          headers:
-            Set-Cookie:
-              description: session-token
-              type: string
-          schema:
-            type: object
         "400":
-          description: Bad Request
+          description: 'Possible code responses: 3.'
           schema:
-            $ref: '#/definitions/models.ErrorResponse'
+            $ref: '#/definitions/errs.ErrorResponse'
       summary: Logout user
       tags:
       - Authorization
-  /pins_list:
+  /pins:
     get:
       description: Get pins by page
       parameters:
@@ -179,15 +240,214 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.Pins'
+            $ref: '#/definitions/entity.FeedPins'
         "400":
-          description: Bad Request
+          description: 'Possible code responses: 4.'
           schema:
-            $ref: '#/definitions/models.ErrorResponse'
+            $ref: '#/definitions/errs.ErrorResponse'
+        "500":
+          description: 'Possible code responses: 11.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
       summary: Pins list
       tags:
       - Pins
-  /register:
+  /pins/{pin_id}:
+    delete:
+      description: Delete pin by id (allowed only for pin's author)
+      parameters:
+      - default: session-token=
+        description: session-token
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: Pin ID
+        in: path
+        name: pin_id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.PinPageResponse'
+        "400":
+          description: 'Possible code responses: 3, 4 12'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "401":
+          description: 'Possible code responses: 2.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "403":
+          description: 'Possible code responses: 14.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "500":
+          description: 'Possible code responses: 11.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+      summary: Delete pin
+      tags:
+      - Pins
+    get:
+      description: Get pin by id in the slug
+      parameters:
+      - description: Pin ID
+        in: path
+        name: pin_id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.PinPageResponse'
+        "400":
+          description: 'Possible code responses: 4, 12.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "500":
+          description: 'Possible code responses: 11.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+      summary: Get pin by id
+      tags:
+      - Pins
+    post:
+      consumes:
+      - application/json
+      description: Update pin by description
+      parameters:
+      - description: Pin information
+        in: body
+        name: pin
+        required: true
+        schema:
+          $ref: '#/definitions/entity.Pin'
+      - default: session-token=
+        description: session-token
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.PinPageResponse'
+        "400":
+          description: 'Possible code responses: 3, 4, 12'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "401":
+          description: 'Possible code responses: 2.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "403":
+          description: 'Possible code responses: 14.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "500":
+          description: 'Possible code responses: 11.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+      summary: Update pin
+      tags:
+      - Pins
+  /pins/{pin_id}/like:
+    delete:
+      description: Delete like by pin id and auth token
+      parameters:
+      - default: session-token=
+        description: session-token
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: Pin ID
+        in: path
+        name: pin_id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: 'Possible code responses: 3, 12.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "401":
+          description: 'Possible code responses: 2.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "500":
+          description: 'Possible code responses: 11.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+      summary: Delete like on the pin
+      tags:
+      - Likes
+    post:
+      description: Sets like by pin id and auth token
+      parameters:
+      - default: session-token=
+        description: session-token
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: Pin ID
+        in: path
+        name: pin_id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: 'Possible code responses: 3, 12.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "401":
+          description: 'Possible code responses: 2.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "500":
+          description: 'Possible code responses: 11.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+      summary: Set like on the pin
+      tags:
+      - Likes
+  /pins/created/{nickname}:
+    get:
+      description: Get pins of user by page
+      parameters:
+      - description: Page num from 0
+        in: query
+        name: page
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.FeedPins'
+        "400":
+          description: 'Possible code responses: 4, 12.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "500":
+          description: 'Possible code responses: 11.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+      summary: Get pins that created by user id
+      tags:
+      - Pins
+  /users:
     post:
       consumes:
       - application/json
@@ -198,27 +458,69 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/db.User'
+          $ref: '#/definitions/entity.User'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.UserResponse'
+            $ref: '#/definitions/entity.UserResponse'
         "400":
-          description: Bad Request
+          description: 'Possible code responses: 3, 4, 5.'
           schema:
-            $ref: '#/definitions/models.ErrorsListResponse'
+            $ref: '#/definitions/errs.ErrorResponse'
+        "401":
+          description: 'Possible code responses: 7, 8.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
         "403":
-          description: Forbidden
+          description: 'Possible code responses: 1.'
           schema:
-            $ref: '#/definitions/models.ErrorsListResponse'
+            $ref: '#/definitions/errs.ErrorResponse'
         "500":
-          description: Internal Server Error
+          description: 'Possible code responses: 11.'
           schema:
-            $ref: '#/definitions/models.ErrorsListResponse'
+            $ref: '#/definitions/errs.ErrorResponse'
       summary: Register user
       tags:
       - Authorization
+  /users/{user_id}:
+    post:
+      consumes:
+      - application/json
+      description: Update user by description and user id.
+      parameters:
+      - description: User information
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/entity.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.PinPageResponse'
+        "400":
+          description: 'Possible code responses: 3, 4, 5, 12, 13'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "401":
+          description: 'Possible code responses: 2.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "403":
+          description: 'Possible code responses: 14.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "500":
+          description: 'Possible code responses: 6, 11.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+      summary: Update user
+      tags:
+      - Users
 swagger: "2.0"

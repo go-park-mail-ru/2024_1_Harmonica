@@ -1,7 +1,6 @@
 package main
 
 import (
-	"go.uber.org/zap"
 	"harmonica/config"
 	"harmonica/internal/handler"
 	"harmonica/internal/handler/middleware"
@@ -9,6 +8,8 @@ import (
 	"harmonica/internal/service"
 	"log"
 	"net/http"
+
+	"go.uber.org/zap"
 
 	"github.com/joho/godotenv"
 	v3 "github.com/swaggest/swgui/v3"
@@ -79,10 +80,10 @@ func configurePinRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.Ser
 		"DELETE /api/v1/pins/{pin_id}/like": h.DeleteLike,
 	}
 	publicRoutes := map[string]http.HandlerFunc{
-		"GET /api/v1/pins":                   h.Feed,
-		"GET /api/v1/pins/{pin_id}":          h.GetPin,
-		"GET /api/v1/pins/created/{user_id}": h.UserPins,
-		"GET /api/v1/likes/{pin_id}/users":   h.UsersLiked,
+		"GET /api/v1/pins":                    h.Feed,
+		"GET /api/v1/pins/{pin_id}":           h.GetPin,
+		"GET /api/v1/pins/created/{nickname}": h.UserPins,
+		"GET /api/v1/likes/{pin_id}/users":    h.UsersLiked,
 	}
 	for pattern, f := range authRoutes {
 		mux.HandleFunc(pattern, middleware.Auth(logger, f))
@@ -98,12 +99,11 @@ func init() {
 	}
 }
 
-//	@title			Harmonium backend API
-//	@version		1.0
-//	@description	This is API-docs of backend server of Harmonica team.
-
-// @host		https://85.192.35.36:8080
-// @BasePath	api/v1
+// @title			Harmonium backend API
+// @version		1.0
+// @description	This is API-docs of backend server of Harmonica team.
+// @host			https://harmoniums.ru
+// @BasePath		api/v1
 func main() {
 	runServer(":8080")
 }
