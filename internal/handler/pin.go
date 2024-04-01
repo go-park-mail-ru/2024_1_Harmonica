@@ -140,7 +140,7 @@ func (h *APIHandler) CreatePin(w http.ResponseWriter, r *http.Request) {
 	}
 	res, errInfo := h.service.CreatePin(ctx, pin)
 	if errInfo != emptyErrorInfo {
-		WriteErrorResponse(w, h.logger, emptyErrorInfo)
+		WriteErrorResponse(w, h.logger, errInfo)
 		return
 	}
 	WriteDefaultResponse(w, h.logger, res)

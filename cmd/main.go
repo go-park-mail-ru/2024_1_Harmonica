@@ -35,6 +35,7 @@ func runServer(addr string) {
 
 	configureUserRoutes(logger, h, mux)
 	configurePinRoutes(logger, h, mux)
+	configureBoardRoutes(logger, h, mux)
 
 	mux.Handle("GET /img/", http.StripPrefix("/img/", http.FileServer(http.Dir("./static/img"))))
 	mux.Handle("GET /docs/swagger.json", http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))))
@@ -44,7 +45,8 @@ func runServer(addr string) {
 		Addr:    addr,
 		Handler: middleware.CORS(mux),
 	}
-	server.ListenAndServeTLS("cert.pem", "key.pem")
+	server.ListenAndServe()
+	//server.ListenAndServeTLS("cert.pem", "key.pem")
 }
 
 func configureUserRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.ServeMux) {
@@ -83,6 +85,21 @@ func configurePinRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.Ser
 		"GET /api/v1/pins/{pin_id}":          h.GetPin,
 		"GET /api/v1/pins/created/{user_id}": h.UserPins,
 		"GET /api/v1/likes/{pin_id}/users":   h.UsersLiked,
+	}
+	for pattern, f := range authRoutes {
+		mux.HandleFunc(pattern, middleware.Auth(logger, f))
+	}
+	for pattern, f := range publicRoutes {
+		mux.HandleFunc(pattern, f)
+	}
+}
+
+func configureBoardRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.ServeMux) {
+	authRoutes := map[string]http.HandlerFunc{
+		"POST /api/v1/boards": h.CreateBoard,
+	}
+	publicRoutes := map[string]http.HandlerFunc{
+		"GET /api/v1/boards/created/{nickname}": h.UserPins,
 	}
 	for pattern, f := range authRoutes {
 		mux.HandleFunc(pattern, middleware.Auth(logger, f))
