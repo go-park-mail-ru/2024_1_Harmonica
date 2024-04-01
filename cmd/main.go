@@ -19,14 +19,12 @@ func runServer(addr string) {
 	logger := zap.Must(zap.NewProduction())
 
 	conf := config.New()
-	dbConn, err := repository.NewConnector(conf.DB)
+	connector, err := repository.NewConnector(conf)
 	if err != nil {
 		log.Print(err)
 		return
 	}
-	defer dbConn.Disconnect()
-
-	r := repository.NewRepository(dbConn)
+	r := repository.NewRepository(connector)
 	s := service.NewService(r)
 	h := handler.NewAPIHandler(s, logger)
 
@@ -37,7 +35,6 @@ func runServer(addr string) {
 	configureUserRoutes(logger, h, mux)
 	configurePinRoutes(logger, h, mux)
 
-	mux.Handle("GET /img/", http.StripPrefix("/img/", http.FileServer(http.Dir("./static/img"))))
 	mux.Handle("GET /docs/swagger.json", http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))))
 	mux.Handle("GET /swagger/", v3.NewHandler("My API", "/docs/swagger.json", "/swagger"))
 
@@ -45,7 +42,7 @@ func runServer(addr string) {
 		Addr:    addr,
 		Handler: middleware.CORS(mux),
 	}
-	server.ListenAndServeTLS("cert.pem", "key.pem")
+	server.ListenAndServe()
 }
 
 func configureUserRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.ServeMux) {
@@ -84,6 +81,8 @@ func configurePinRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.Ser
 		"GET /api/v1/pins/{pin_id}":           h.GetPin,
 		"GET /api/v1/pins/created/{nickname}": h.UserPins,
 		"GET /api/v1/likes/{pin_id}/users":    h.UsersLiked,
+		"POST /api/v1/upload":                 h.UploadFile,
+		"GET /img/{image_name}":               h.GetImage,
 	}
 	for pattern, f := range authRoutes {
 		mux.HandleFunc(pattern, middleware.Auth(logger, f))

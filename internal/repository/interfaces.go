@@ -3,6 +3,9 @@ package repository
 import (
 	"context"
 	"harmonica/internal/entity"
+	"mime/multipart"
+
+	"github.com/minio/minio-go/v7"
 )
 
 type IRepository interface {
@@ -22,4 +25,7 @@ type IRepository interface {
 	SetLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) error
 	ClearLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) error
 	GetUsersLiked(ctx context.Context, pinId entity.PinID, limit int) (entity.UserList, error)
+
+	UploadImage(ctx context.Context, file multipart.File, fileHeader *multipart.FileHeader) (string, error)
+	GetImage(ctx context.Context, name string) (*minio.Object, error)
 }
