@@ -37,6 +37,7 @@ type PinPageResponse struct {
 	ClickUrl      string    `db:"click_url" json:"click_url"`
 	ContentUrl    string    `db:"content_url" json:"content_url"`
 	LikesCount    uint64    `db:"likes_count" json:"likes_count"`
+	IsOwner       bool      `json:"is_owner"`
 	PinAuthor     `json:"author"`
 }
 

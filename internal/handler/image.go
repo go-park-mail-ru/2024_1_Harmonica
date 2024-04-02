@@ -29,7 +29,7 @@ func (h *APIHandler) GetImage(w http.ResponseWriter, r *http.Request) {
 func (h *APIHandler) UploadImage(r *http.Request, imageName string) (string, error) {
 	file, header, err := r.FormFile(imageName)
 	if err != nil {
-		return "", err
+		return "", errs.ErrNoImageProvided
 	}
 	name, err := h.service.UploadImage(r.Context(), file, header)
 	if err != nil {

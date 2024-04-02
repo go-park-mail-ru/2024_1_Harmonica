@@ -55,6 +55,8 @@ definitions:
         type: string
       description:
         type: string
+      is_owner:
+        type: boolean
       likes_count:
         type: integer
       pin_id:
@@ -277,7 +279,7 @@ paths:
           schema:
             $ref: '#/definitions/entity.PinPageResponse'
         "400":
-          description: 'Possible code responses: 3, 4, 15, 18.'
+          description: 'Possible code responses: 3, 4, 15, 18, 19.'
           schema:
             $ref: '#/definitions/errs.ErrorResponse'
         "401":

@@ -275,7 +275,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Possible code responses: 3, 4, 15, 18.",
+                        "description": "Possible code responses: 3, 4, 15, 18, 19.",
                         "schema": {
                             "$ref": "#/definitions/errs.ErrorResponse"
                         }
@@ -796,6 +796,9 @@ const docTemplate = `{
                 },
                 "description": {
                     "type": "string"
+                },
+                "is_owner": {
+                    "type": "boolean"
                 },
                 "likes_count": {
                     "type": "integer"

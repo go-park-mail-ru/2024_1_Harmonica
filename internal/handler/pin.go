@@ -135,8 +135,28 @@ func (h *APIHandler) GetPin(w http.ResponseWriter, r *http.Request) {
 	}
 	pin, errInfo := h.service.GetPinById(r.Context(), entity.PinID(pinId))
 	if errInfo != emptyErrorInfo {
-		WriteErrorResponse(w, h.logger, emptyErrorInfo)
+		WriteErrorResponse(w, h.logger, errInfo)
 		return
+	}
+
+	c, err := r.Cookie("session_token")
+	if err != nil {
+		WriteDefaultResponse(w, h.logger, pin)
+		return
+	}
+	sessionToken := c.Value
+	s, exists := Sessions.Load(sessionToken)
+	if !exists {
+		WriteDefaultResponse(w, h.logger, pin)
+		return
+	}
+	if s.(Session).IsExpired() {
+		WriteDefaultResponse(w, h.logger, pin)
+		return
+	}
+	userId := s.(Session).UserId
+	if userId == pin.PinAuthor.UserId {
+		pin.IsOwner = true
 	}
 	WriteDefaultResponse(w, h.logger, pin)
 }
@@ -152,7 +172,7 @@ func (h *APIHandler) GetPin(w http.ResponseWriter, r *http.Request) {
 //	@Param			pin		formData	string	false	"Pin information in json"
 //	@Param			image	formData	file	true	"Pin image"
 //	@Success		200		{object}	entity.PinPageResponse
-//	@Failure		400		{object}	errs.ErrorResponse	"Possible code responses: 3, 4, 15, 18."
+//	@Failure		400		{object}	errs.ErrorResponse	"Possible code responses: 3, 4, 15, 18, 19."
 //	@Failure		401		{object}	errs.ErrorResponse	"Possible code responses: 2."
 //	@Failure		500		{object}	errs.ErrorResponse	"Possible code responses: 11."
 //	@Router			/pins [post]
