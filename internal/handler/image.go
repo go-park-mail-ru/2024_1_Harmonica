@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"harmonica/config"
 	"harmonica/internal/entity/errs"
 	"io"
 	"net/http"
@@ -25,16 +26,18 @@ func (h *APIHandler) GetImage(w http.ResponseWriter, r *http.Request) {
 	w.Write(file)
 }
 
-func (h *APIHandler) UploadFile(w http.ResponseWriter, r *http.Request) {
-	file, header, err := r.FormFile("image")
+func (h *APIHandler) UploadImage(r *http.Request, imageName string) (string, error) {
+	file, header, err := r.FormFile(imageName)
 	if err != nil {
-		WriteErrorResponse(w, h.logger, errs.ErrorInfo{GeneralErr: errs.ErrInvalidInputFormat, LocalErr: errs.ErrInvalidInputFormat})
-		return
+		return "", err
 	}
 	name, err := h.service.UploadImage(r.Context(), file, header)
 	if err != nil {
-		WriteErrorResponse(w, h.logger, errs.ErrorInfo{GeneralErr: err, LocalErr: err})
-		return
+		return "", err
 	}
-	WriteDefaultResponse(w, h.logger, name)
+	return name, nil
+}
+
+func FormImgURL(name string) string {
+	return config.GetEnv("SERVER_URL", "") + name
 }

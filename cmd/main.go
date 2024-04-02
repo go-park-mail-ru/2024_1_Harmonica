@@ -37,6 +37,7 @@ func runServer(addr string) {
 
 	mux.Handle("GET /docs/swagger.json", http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))))
 	mux.Handle("GET /swagger/", v3.NewHandler("My API", "/docs/swagger.json", "/swagger"))
+	mux.HandleFunc("GET /img/{image_name}", h.GetImage)
 
 	server := http.Server{
 		Addr:    addr,
@@ -81,8 +82,6 @@ func configurePinRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.Ser
 		"GET /api/v1/pins/{pin_id}":           h.GetPin,
 		"GET /api/v1/pins/created/{nickname}": h.UserPins,
 		"GET /api/v1/likes/{pin_id}/users":    h.UsersLiked,
-		"POST /api/v1/upload":                 h.UploadFile,
-		"GET /img/{image_name}":               h.GetImage,
 	}
 	for pattern, f := range authRoutes {
 		mux.HandleFunc(pattern, middleware.Auth(logger, f))

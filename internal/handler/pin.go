@@ -2,12 +2,13 @@ package handler
 
 import (
 	"encoding/json"
-	"go.uber.org/zap"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"io"
 	"net/http"
 	"strconv"
+
+	"go.uber.org/zap"
 )
 
 const FEED_PINS_LIMIT = 10
@@ -146,19 +147,20 @@ func (h *APIHandler) GetPin(w http.ResponseWriter, r *http.Request) {
 //	@Description	Create pin by description
 //	@Tags			Pins
 //	@Produce		json
-//	@Accept			json
-//	@Param			Cookie	header		string		true	"session-token"	default(session-token=)
-//	@Param			pin		body		entity.Pin	true	"Pin information"
+//	@Accept			multipart/form-data
+//	@Param			Cookie	header		string	true	"session-token"	default(session-token=)
+//	@Param			pin		formData	string	false	"Pin information in json"
+//	@Param			image	formData	file	true	"Pin image"
 //	@Success		200		{object}	entity.PinPageResponse
-//	@Failure		400		{object}	errs.ErrorResponse	"Possible code responses: 3, 4, 15."
+//	@Failure		400		{object}	errs.ErrorResponse	"Possible code responses: 3, 4, 15, 18."
 //	@Failure		401		{object}	errs.ErrorResponse	"Possible code responses: 2."
 //	@Failure		500		{object}	errs.ErrorResponse	"Possible code responses: 11."
-//	@Router			/pins/{pin_id} [post]
+//	@Router			/pins [post]
 func (h *APIHandler) CreatePin(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-
+	pinParams := r.FormValue("pin")
 	pin := entity.Pin{AllowComments: true}
-	err := UnmarshalRequest(r, &pin)
+	err := json.Unmarshal([]byte(pinParams), &pin)
 	if err != nil {
 		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
 			GeneralErr: err,
@@ -167,12 +169,17 @@ func (h *APIHandler) CreatePin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pin.AuthorId = ctx.Value("user_id").(entity.UserID)
-	if pin.ContentUrl == "" {
-		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
-			LocalErr: errs.ErrEmptyContentURL,
-		})
+	imageName, err := h.UploadImage(r, "image")
+	if err != nil {
+		localErr := err
+		if errs.ErrorCodes[localErr].HttpCode == 0 {
+			localErr = errs.ErrDBInternal
+		}
+		WriteErrorResponse(w, h.logger, errs.ErrorInfo{GeneralErr: err, LocalErr: localErr})
 		return
 	}
+	pin.ContentUrl = FormImgURL(imageName)
+
 	res, errInfo := h.service.CreatePin(ctx, pin)
 	if errInfo != emptyErrorInfo {
 		WriteErrorResponse(w, h.logger, emptyErrorInfo)
