@@ -6,7 +6,10 @@ import (
 	"harmonica/internal/entity/errs"
 )
 
-var emptyFullBoard = entity.FullBoard{}
+var (
+	emptyFullBoard  = entity.FullBoard{}
+	emptyUserBoards = entity.UserBoards{}
+)
 
 func (s *RepositoryService) CreateBoard(ctx context.Context, board entity.Board,
 	userId entity.UserID) (entity.FullBoard, errs.ErrorInfo) {
@@ -70,12 +73,17 @@ func (s *RepositoryService) GetBoardById(ctx context.Context, boardId entity.Boa
 func (s *RepositoryService) GetUserBoards(ctx context.Context, authorNickname string,
 	limit, offset int) (entity.UserBoards, errs.ErrorInfo) {
 	user, errInfo := s.GetUserByNickname(ctx, authorNickname)
-	if errInfo.GeneralErr != nil {
-		return entity.UserBoards{}, errInfo
+	if errInfo != emptyErrorInfo {
+		return emptyUserBoards, errInfo
+	}
+	if user == emptyUser {
+		return emptyUserBoards, errs.ErrorInfo{
+			LocalErr: errs.ErrUserNotExist,
+		}
 	}
 	pins, err := s.repo.GetUserBoards(ctx, user.UserID, limit, offset)
 	if err != nil {
-		return entity.UserBoards{}, errs.ErrorInfo{
+		return emptyUserBoards, errs.ErrorInfo{
 			GeneralErr: err,
 			LocalErr:   errs.ErrDBInternal,
 		}

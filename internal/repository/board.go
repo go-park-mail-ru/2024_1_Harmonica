@@ -30,9 +30,9 @@ const (
 	INNER JOIN public.board_author ON public.user.user_id = public.board_author.author_id 
 	WHERE public.board_author.board_id = $1`
 
-	QueryGetBoardPins = `SELECT public.pin.pin_id, public.pin.content_url 
-	FROM public.pin INNER JOIN public.board_pin 
+	QueryGetBoardPins = `SELECT public.pin.pin_id, public.pin.content_url FROM public.pin INNER JOIN public.board_pin 
     ON public.pin.pin_id = public.board_pin.pin_id WHERE public.board_pin.board_id = $1`
+	//LIMIT $2 OFFSET $3 добавить надо
 
 	QueryGetUserBoards = `SELECT board_id, title, created_at, description, cover_url, visibility_type
 	FROM public.board INNER JOIN public.user ON public.board_author.author_id=public.user.user_id 

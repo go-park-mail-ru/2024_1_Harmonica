@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"harmonica/internal/entity"
 	"net/mail"
 	"regexp"
 	"unicode"
@@ -42,4 +43,20 @@ func ValidatePassword(password string) bool {
 		}
 	}
 	return hasUppercase && hasDigit
+}
+
+func ValidateBoard(board entity.Board) bool {
+	// TODO fix bigint type of title in DB
+	//if (len(board.Title) == 0 || len(board.Title) > 60){
+	//	return false
+	//}
+	if len(board.Description) > 500 {
+		return false
+	}
+	for _, visibilityType := range entity.VisibilityTypes {
+		if board.VisibilityType == visibilityType {
+			return true
+		}
+	}
+	return false
 }

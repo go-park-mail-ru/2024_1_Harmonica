@@ -8,11 +8,15 @@ import (
 
 func (h *APIHandler) CreateBoard(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-
 	board := entity.Board{}
 	err := UnmarshalRequest(r, &board)
 	if err != nil {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrReadingRequestBody))
+		return
+	}
+	//TODO сделать нормальную валидацию
+	if !ValidateBoard(board) {
+		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrInvalidInputFormat))
 		return
 	}
 
@@ -47,7 +51,9 @@ func (h *APIHandler) GetBoard(w http.ResponseWriter, r *http.Request) {
 	WriteDefaultResponse(w, h.logger, pin)
 }
 
-func (h *APIHandler) UpdateBoard(w http.ResponseWriter, r *http.Request) {}
+func (h *APIHandler) UpdateBoard(w http.ResponseWriter, r *http.Request) {
+
+}
 
 func (h *APIHandler) DeleteBoard(w http.ResponseWriter, r *http.Request) {}
 
