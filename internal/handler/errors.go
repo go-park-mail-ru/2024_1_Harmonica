@@ -8,6 +8,13 @@ import (
 	"net/http"
 )
 
+func MakeErrorInfo(generalErr error, localErr error) errs.ErrorInfo {
+	return errs.ErrorInfo{
+		GeneralErr: generalErr,
+		LocalErr:   localErr,
+	}
+}
+
 func WriteErrorResponse(w http.ResponseWriter, logger *zap.Logger, errInfo errs.ErrorInfo) {
 	generalErrMessage := "no general error"
 	if errInfo.GeneralErr != nil {

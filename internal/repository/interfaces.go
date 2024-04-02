@@ -19,8 +19,10 @@ type IRepository interface {
 	UpdatePin(ctx context.Context, pin entity.Pin) error
 	DeletePin(ctx context.Context, id entity.PinID) error
 
-	CreateBoard(ctx context.Context, board entity.FullBoard) (entity.BoardID, error)
-	GetBoardById(ctx context.Context, boardId entity.BoardID) (entity.FullBoard, error)
+	CreateBoard(ctx context.Context, board entity.Board, userId entity.UserID) (entity.BoardID, error)
+	GetBoardById(ctx context.Context, boardId entity.BoardID) (entity.Board, error)
+	GetBoardAuthors(ctx context.Context, boardId entity.BoardID) ([]entity.BoardAuthor, error)
+	GetBoardPins(ctx context.Context, boardId entity.BoardID) ([]entity.FeedPinResponse, error)
 	GetUserBoards(ctx context.Context, authorId entity.UserID, limit, offset int) (entity.UserBoards, error)
 
 	SetLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) error

@@ -20,8 +20,8 @@ type IService interface {
 	UpdatePin(ctx context.Context, pin entity.Pin) (entity.PinPageResponse, errs.ErrorInfo)
 	DeletePin(ctx context.Context, pin entity.Pin) errs.ErrorInfo
 
-	CreateBoard(ctx context.Context, board entity.FullBoard) (entity.FullBoard, errs.ErrorInfo)
-	GetBoardById(ctx context.Context, boardId entity.BoardID) (entity.FullBoard, errs.ErrorInfo)
+	CreateBoard(ctx context.Context, board entity.Board, userId entity.UserID) (entity.FullBoard, errs.ErrorInfo)
+	GetBoardById(ctx context.Context, boardId entity.BoardID, userId entity.UserID) (entity.FullBoard, errs.ErrorInfo)
 	GetUserBoards(ctx context.Context, authorNickname string, limit, offset int) (entity.UserBoards, errs.ErrorInfo)
 
 	SetLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) errs.ErrorInfo

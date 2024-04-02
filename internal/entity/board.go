@@ -25,7 +25,7 @@ type BoardAuthor struct {
 }
 
 type FullBoard struct {
-	Board       `json:"board"`
-	BoardAuthor `json:"author"`
-	Pins        []FeedPinResponse `json:"pins"`
+	Board        `json:"board"`
+	BoardAuthors []BoardAuthor     `json:"author"`
+	Pins         []FeedPinResponse `json:"pins"`
 }
