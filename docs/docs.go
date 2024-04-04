@@ -231,6 +231,68 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "post": {
+                "description": "Create pin by description",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Pins"
+                ],
+                "summary": "Create pin",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "session-token=",
+                        "description": "session-token",
+                        "name": "Cookie",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Pin information in json",
+                        "name": "pin",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "Pin image",
+                        "name": "image",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/entity.PinPageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Possible code responses: 3, 4, 15, 18, 19.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Possible code responses: 2.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Possible code responses: 11.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/pins/created/{nickname}": {
@@ -586,7 +648,7 @@ const docTemplate = `{
             "post": {
                 "description": "Update user by description and user id.",
                 "consumes": [
-                    "application/json"
+                    "multipart/form-data"
                 ],
                 "produces": [
                     "application/json"
@@ -597,13 +659,24 @@ const docTemplate = `{
                 "summary": "Update user",
                 "parameters": [
                     {
-                        "description": "User information",
+                        "type": "string",
+                        "default": "session-token=",
+                        "description": "session-token",
+                        "name": "Cookie",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "User information in json",
                         "name": "user",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/entity.User"
-                        }
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "User avatar",
+                        "name": "image",
+                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -614,7 +687,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Possible code responses: 3, 4, 5, 12, 13",
+                        "description": "Possible code responses: 3, 4, 5, 12, 13, 18",
                         "schema": {
                             "$ref": "#/definitions/errs.ErrorResponse"
                         }
@@ -679,10 +752,6 @@ const docTemplate = `{
                 "click_url": {
                     "type": "string"
                 },
-                "content_url": {
-                    "description": "Сделать required для свагера",
-                    "type": "string"
-                },
                 "description": {
                     "type": "string"
                 },
@@ -727,6 +796,9 @@ const docTemplate = `{
                 },
                 "description": {
                     "type": "string"
+                },
+                "is_owner": {
+                    "type": "boolean"
                 },
                 "likes_count": {
                     "type": "integer"

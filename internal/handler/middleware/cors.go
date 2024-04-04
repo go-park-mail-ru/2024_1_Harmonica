@@ -8,7 +8,7 @@ import (
 
 func CORS(next http.Handler) http.Handler {
 	c := cors.New(cors.Options{
-		AllowedOrigins:     []string{"http://localhost:8000", "http://85.192.35.36:8000"},
+		AllowedOrigins:     []string{"https://harmoniums.ru"},
 		AllowCredentials:   true,
 		AllowedMethods:     []string{"GET", "POST", "OPTIONS"},
 		AllowedHeaders:     []string{"*"},

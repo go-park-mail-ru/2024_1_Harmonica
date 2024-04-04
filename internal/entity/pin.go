@@ -14,7 +14,7 @@ type Pin struct {
 	Description   string    `db:"description" json:"description"`
 	AllowComments bool      `db:"allow_comments" json:"allow_comments"`
 	ClickUrl      string    `db:"click_url" json:"click_url"`
-	ContentUrl    string    `db:"content_url" json:"content_url"` // Сделать required для свагера
+	ContentUrl    string    `db:"content_url" json:"content_url" swaggerignore:"true"`
 }
 
 // Pin response author model
@@ -37,6 +37,7 @@ type PinPageResponse struct {
 	ClickUrl      string    `db:"click_url" json:"click_url"`
 	ContentUrl    string    `db:"content_url" json:"content_url"`
 	LikesCount    uint64    `db:"likes_count" json:"likes_count"`
+	IsOwner       bool      `json:"is_owner"`
 	PinAuthor     `json:"author"`
 }
 

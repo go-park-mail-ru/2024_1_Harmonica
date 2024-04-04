@@ -257,9 +257,10 @@ func (h *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
 func WriteUserResponse(w http.ResponseWriter, logger *zap.Logger, user entity.User) {
 	w.Header().Set("Content-Type", "application/json")
 	userResponse := entity.UserResponse{
-		UserId:   user.UserID,
-		Email:    user.Email,
-		Nickname: user.Nickname,
+		UserId:    user.UserID,
+		Email:     user.Email,
+		Nickname:  user.Nickname,
+		AvatarURL: user.AvatarURL,
 	}
 	response, _ := json.Marshal(userResponse)
 	_, err := w.Write(response)

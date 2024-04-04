@@ -19,14 +19,13 @@ func runServer(addr string) {
 	logger := zap.Must(zap.NewProduction())
 
 	conf := config.New()
-	dbConn, err := repository.NewConnector(conf.DB)
+	connector, err := repository.NewConnector(conf)
 	if err != nil {
 		log.Print(err)
 		return
 	}
-	defer dbConn.Disconnect()
-
-	r := repository.NewRepository(dbConn)
+	defer connector.Disconnect()
+	r := repository.NewRepository(connector)
 	s := service.NewService(r)
 	h := handler.NewAPIHandler(s, logger)
 
@@ -37,15 +36,15 @@ func runServer(addr string) {
 	configureUserRoutes(logger, h, mux)
 	configurePinRoutes(logger, h, mux)
 
-	mux.Handle("GET /img/", http.StripPrefix("/img/", http.FileServer(http.Dir("./static/img"))))
 	mux.Handle("GET /docs/swagger.json", http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))))
 	mux.Handle("GET /swagger/", v3.NewHandler("My API", "/docs/swagger.json", "/swagger"))
+	mux.HandleFunc("GET /img/{image_name}", h.GetImage)
 
 	server := http.Server{
 		Addr:    addr,
 		Handler: middleware.CORS(mux),
 	}
-	server.ListenAndServeTLS("cert.pem", "key.pem")
+	server.ListenAndServeTLS("/etc/letsencrypt/live/harmoniums.ru/fullchain.pem", "/etc/letsencrypt/live/harmoniums.ru/privkey.pem")
 }
 
 func configureUserRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.ServeMux) {

@@ -14,12 +14,15 @@ var (
 	ErrDBUniqueEmail      = errors.New("user with this email already exists (can't register)")
 	ErrDBUniqueNickname   = errors.New("user with this nickname already exists (can't register)")
 	ErrDBInternal         = errors.New("internal db error")
-	ErrInvalidSlug        = errors.New("invalid slug parameter")                  // NEW !
-	ErrDiffUserId         = errors.New("user id in slug and session don't match") // NEW !
+	ErrInvalidSlug        = errors.New("invalid slug parameter")
+	ErrDiffUserId         = errors.New("user id in slug and session don't match")
 	ErrPermissionDenied   = errors.New("current user doesn't have requested permissions")
 	ErrContentUrlRequired = errors.New("field 'content_url' is required")
 	ErrEmptyContentURL    = errors.New("content url can't be empty")
 	ErrServerInternal     = errors.New("internal server error")
+	ErrInvalidContentType = errors.New("invalid content type header")
+	ErrInvalidImg         = errors.New("image is not valid")
+	ErrNoImageProvided    = errors.New("there is not any image file")
 )
 
 var ErrorCodes = map[error]struct {
@@ -42,4 +45,7 @@ var ErrorCodes = map[error]struct {
 	ErrPermissionDenied:   {HttpCode: 403, LocalCode: 14},
 	ErrContentUrlRequired: {HttpCode: 400, LocalCode: 15},
 	ErrEmptyContentURL:    {HttpCode: 400, LocalCode: 16},
+	ErrInvalidContentType: {HttpCode: 400, LocalCode: 17},
+	ErrInvalidImg:         {HttpCode: 400, LocalCode: 18},
+	ErrNoImageProvided:    {HttpCode: 400, LocalCode: 19},
 }
