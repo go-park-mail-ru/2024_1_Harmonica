@@ -46,11 +46,7 @@ func ValidatePassword(password string) bool {
 }
 
 func ValidateBoard(board entity.Board) bool {
-	// TODO fix bigint type of title in DB
-	//if (len(board.Title) == 0 || len(board.Title) > 60){
-	//	return false
-	//}
-	if len(board.Description) > 500 {
+	if (len(board.Title) == 0 || len(board.Title) > 60) || len(board.Description) > 500 {
 		return false
 	}
 	for _, visibilityType := range entity.VisibilityTypes {

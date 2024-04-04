@@ -22,6 +22,9 @@ var (
 	ErrLikeAlreadyDeleted = errors.New("like already was deleted")
 	ErrEmptyContentURL    = errors.New("content url can't be empty")
 	ErrServerInternal     = errors.New("internal server error")
+	ErrElementNotExist    = errors.New("element does not exist")
+	ErrTypeConversion     = errors.New("type conversion error")
+	ErrDBUniqueViolation  = errors.New("unique violation error (element already exists in db)")
 )
 
 var ErrorCodes = map[error]struct {
@@ -46,4 +49,7 @@ var ErrorCodes = map[error]struct {
 	ErrLikeAlreadyCreated: {HttpCode: 403, LocalCode: 15},
 	ErrLikeAlreadyDeleted: {HttpCode: 404, LocalCode: 16},
 	ErrEmptyContentURL:    {HttpCode: 400, LocalCode: 17},
+	ErrElementNotExist:    {HttpCode: 400, LocalCode: 18},
+	ErrTypeConversion:     {HttpCode: 400, LocalCode: 19},
+	ErrDBUniqueViolation:  {HttpCode: 500, LocalCode: 20},
 }

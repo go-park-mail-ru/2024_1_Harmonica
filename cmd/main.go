@@ -96,24 +96,21 @@ func configurePinRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.Ser
 
 func configureBoardRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.ServeMux) {
 	authRoutes := map[string]http.HandlerFunc{
-		"POST /api/v1/boards":              h.CreateBoard,
-		"POST /api/v1/boards/{board_id}":   h.UpdateBoard,
-		"DELETE /api/v1/boards/{board_id}": h.DeleteBoard,
+		"POST /api/v1/boards":                            h.CreateBoard,
+		"POST /api/v1/boards/{board_id}":                 h.UpdateBoard,
+		"DELETE /api/v1/boards/{board_id}":               h.DeleteBoard,
+		"POST /api/v1/boards/{board_id}/pins/{pin_id}":   h.AddPinToBoard,
+		"DELETE /api/v1/boards/{board_id}/pins/{pin_id}": h.DeletePinFromBoard,
 	}
 	checkAuthRoutes := map[string]http.HandlerFunc{
-		"GET /api/v1/boards/{board_id}": h.GetBoard,
-	}
-	publicRoutes := map[string]http.HandlerFunc{
-		"GET /api/v1/boards/created/{nickname}": h.UserBoards,
+		"GET /api/v1/boards/{board_id}":         h.GetBoard,   // с пагинацией ?
+		"GET /api/v1/boards/created/{nickname}": h.UserBoards, // с пагинацией
 	}
 	for pattern, f := range authRoutes {
 		mux.HandleFunc(pattern, middleware.Auth(logger, f))
 	}
 	for pattern, f := range checkAuthRoutes {
 		mux.HandleFunc(pattern, middleware.CheckAuth(logger, f))
-	}
-	for pattern, f := range publicRoutes {
-		mux.HandleFunc(pattern, f)
 	}
 }
 

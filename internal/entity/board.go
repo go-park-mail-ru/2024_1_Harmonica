@@ -12,9 +12,8 @@ const (
 var VisibilityTypes = []VisibilityType{VisibilityPublic, VisibilityPrivate}
 
 type Board struct {
-	BoardID BoardID `db:"board_id" json:"board_id"`
-	//Title          string    `db:"title" json:"title"`
-	Title          int64          `db:"title" json:"title"` // исправить на строку!!!
+	BoardID        BoardID        `db:"board_id" json:"board_id"`
+	Title          string         `db:"title" json:"title"`
 	CreatedAt      time.Time      `db:"created_at" json:"created_at"`
 	Description    string         `db:"description" json:"description"`
 	CoverURL       string         `db:"cover_url" json:"cover_url"`

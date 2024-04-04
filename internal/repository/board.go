@@ -30,13 +30,35 @@ const (
 	INNER JOIN public.board_author ON public.user.user_id = public.board_author.author_id 
 	WHERE public.board_author.board_id = $1`
 
-	QueryGetBoardPins = `SELECT public.pin.pin_id, public.pin.content_url FROM public.pin INNER JOIN public.board_pin 
-    ON public.pin.pin_id = public.board_pin.pin_id WHERE public.board_pin.board_id = $1`
+	//QueryGetBoardPins = `SELECT public.pin.pin_id, public.pin.content_url, public.pin.author_id FROM public.pin INNER JOIN public.board_pin
+	//ON public.pin.pin_id = public.board_pin.pin_id WHERE public.board_pin.board_id = $1`
 	//LIMIT $2 OFFSET $3 добавить надо
 
-	QueryGetUserBoards = `SELECT board_id, title, created_at, description, cover_url, visibility_type
-	FROM public.board INNER JOIN public.user ON public.board_author.author_id=public.user.user_id 
-	WHERE public.board_author.author_id=$1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`
+	QueryGetBoardPins = `SELECT public.pin.pin_id, public.pin.content_url, public.user.user_id, public.user.nickname, 
+    public.user.avatar_url FROM public.pin INNER JOIN public.board_pin ON public.pin.pin_id = public.board_pin.pin_id 
+	INNER JOIN public.user ON public.pin.author_id = public.user.user_id WHERE public.board_pin.board_id = $1`
+
+	//QueryGetBoardPins = `SELECT public.pin.pin_id, public.pin.content_url FROM public.pin INNER JOIN public.board_pin
+	//ON public.pin.pin_id = public.board_pin.pin_id WHERE public.board_pin.board_id = $1`
+	//LIMIT $2 OFFSET $3 добавить надо
+
+	//QueryGetUserBoards = `SELECT board_id, title, created_at, description, cover_url, visibility_type
+	//FROM public.board INNER JOIN public.user ON public.board_author.author_id=public.user.user_id
+	//WHERE public.board_author.author_id=$1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`
+	QueryGetUserBoards = `SELECT board.board_id, board.title, board.created_at, board.description, board.cover_url, board.visibility_type
+	FROM public.board 
+	INNER JOIN public.board_author ON board.board_id = board_author.board_id
+	WHERE board_author.author_id = $1 
+	ORDER BY board.created_at DESC 
+	LIMIT $2 OFFSET $3`
+
+	QueryUpdateBoard = `UPDATE public.board SET title=$2, description=$3, cover_url=$4, visibility_type=$5 
+    WHERE board_id=$1`
+
+	QueryAddPinToBoard      = `INSERT INTO public.board_pin (board_id, pin_id) VALUES ($1, $2)`
+	QueryDeletePinFromBoard = `DELETE FROM public.board_pin WHERE board_id=$1 AND pin_id=$2`
+
+	QueryDeleteBoard = `DELETE FROM public.board WHERE board_id=$1`
 )
 
 var (
@@ -92,6 +114,27 @@ func (r *DBRepository) GetBoardPins(ctx context.Context, boardId entity.BoardID)
 		return []entity.FeedPinResponse{}, err
 	}
 	return pins, nil
+}
+
+func (r *DBRepository) UpdateBoard(ctx context.Context, board entity.Board) error {
+	_, err := r.db.ExecContext(ctx, QueryUpdateBoard, board.BoardID, board.Title, board.Description,
+		board.CoverURL, board.VisibilityType)
+	return err
+}
+
+func (r *DBRepository) AddPinToBoard(ctx context.Context, boardId entity.BoardID, pinId entity.PinID) error {
+	_, err := r.db.ExecContext(ctx, QueryAddPinToBoard, boardId, pinId)
+	return err
+}
+
+func (r *DBRepository) DeletePinFromBoard(ctx context.Context, boardId entity.BoardID, pinId entity.PinID) error {
+	_, err := r.db.ExecContext(ctx, QueryDeletePinFromBoard, boardId, pinId)
+	return err
+}
+
+func (r *DBRepository) DeleteBoard(ctx context.Context, boardId entity.BoardID) error {
+	_, err := r.db.ExecContext(ctx, QueryDeleteBoard, boardId)
+	return err
 }
 
 func (r *DBRepository) GetUserBoards(ctx context.Context, authorId entity.UserID,

@@ -22,7 +22,10 @@ func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userIdFromSession := ctx.Value("user_id").(entity.UserID)
+	userIdFromSession, ok := ctx.Value("user_id").(entity.UserID)
+	if !ok {
+		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrTypeConversion))
+	}
 	if uint64(userIdFromSession) != userIdFromSlug {
 		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
 			LocalErr: errs.ErrDiffUserId,

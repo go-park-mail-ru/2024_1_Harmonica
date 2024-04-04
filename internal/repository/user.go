@@ -18,11 +18,11 @@ var emptyUser = entity.User{}
 
 func (r *DBRepository) GetUserByEmail(ctx context.Context, email string) (entity.User, error) {
 	rows, err := r.db.QueryxContext(ctx, QueryGetUserByEmail, email)
-	//чтобы запрос не продолжался, если пользователь ушел
+	// TODO по-хорошему переписать на QueryRowxContext (сложность в том, чтобы переписать все методы, использующие этот)
+	// так как он возвращает ошибку sql.ErrNoRows, а QueryxContext - нет
 	if err != nil {
 		return emptyUser, err
 	}
-
 	var user entity.User
 	for rows.Next() {
 		err = rows.StructScan(&user)
@@ -30,7 +30,6 @@ func (r *DBRepository) GetUserByEmail(ctx context.Context, email string) (entity
 			return emptyUser, err
 		}
 	}
-
 	return user, nil
 }
 
@@ -39,7 +38,6 @@ func (r *DBRepository) GetUserByNickname(ctx context.Context, nickname string) (
 	if err != nil {
 		return emptyUser, err
 	}
-
 	var user entity.User
 	for rows.Next() {
 		err = rows.StructScan(&user)
