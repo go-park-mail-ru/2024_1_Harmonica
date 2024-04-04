@@ -5,5 +5,4 @@ type MinioConf struct {
 	AccessKeyID     string
 	SecretAccessKey string
 	UseSSL          bool
-	BucketName      string
 }

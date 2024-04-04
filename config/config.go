@@ -50,7 +50,6 @@ func New() *Config {
 			AccessKeyID:     GetEnv("MinioAccessKeyID", ""),
 			SecretAccessKey: GetEnv("MinioSecretAccessKey", ""),
 			UseSSL:          GetEnvAsBool("MinioUseSSL", false),
-			BucketName:      GetEnv("MinioBucketName", ""),
 		},
 	}
 }

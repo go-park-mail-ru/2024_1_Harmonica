@@ -24,6 +24,7 @@ func runServer(addr string) {
 		log.Print(err)
 		return
 	}
+	defer connector.Disconnect()
 	r := repository.NewRepository(connector)
 	s := service.NewService(r)
 	h := handler.NewAPIHandler(s, logger)
@@ -43,7 +44,7 @@ func runServer(addr string) {
 		Addr:    addr,
 		Handler: middleware.CORS(mux),
 	}
-	server.ListenAndServe()
+	server.ListenAndServeTLS("/etc/letsencrypt/live/harmoniums.ru/fullchain.pem", "/etc/letsencrypt/live/harmoniums.ru/privkey.pem")
 }
 
 func configureUserRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.ServeMux) {
