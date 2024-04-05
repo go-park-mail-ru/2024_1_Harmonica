@@ -23,8 +23,6 @@ type UserResponse struct {
 	AvatarURL string `json:"avatar_url"`
 }
 
-// ответ - для хэндлера => в сторону хэндлера перенести
-
 // User list response model
 // @Description User information
 // @Description with user id, email, nickname and avatar_url

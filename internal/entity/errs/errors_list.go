@@ -14,8 +14,8 @@ var (
 	ErrDBUniqueEmail      = errors.New("user with this email already exists (can't register)")
 	ErrDBUniqueNickname   = errors.New("user with this nickname already exists (can't register)")
 	ErrDBInternal         = errors.New("internal db error")
-	ErrInvalidSlug        = errors.New("invalid slug parameter")                  // NEW !
-	ErrDiffUserId         = errors.New("user id in slug and session don't match") // NEW !
+	ErrInvalidSlug        = errors.New("invalid slug parameter")
+	//ErrDiffUserId         = errors.New("user id in slug and session don't match") // не нужна
 	ErrPermissionDenied   = errors.New("current user doesn't have requested permissions")
 	ErrLikeAlreadyCreated = errors.New("like already was created")
 	ErrLikeAlreadyDeleted = errors.New("like already was deleted")
@@ -40,7 +40,7 @@ var ErrorCodes = map[error]struct {
 	ErrDBUniqueNickname:   {HttpCode: 500, LocalCode: 10},
 	ErrDBInternal:         {HttpCode: 500, LocalCode: 11},
 	ErrInvalidSlug:        {HttpCode: 400, LocalCode: 12},
-	ErrDiffUserId:         {HttpCode: 400, LocalCode: 13},
+	//ErrDiffUserId:         {HttpCode: 400, LocalCode: 13}, // не нужна
 	ErrPermissionDenied:   {HttpCode: 403, LocalCode: 14},
 	ErrLikeAlreadyCreated: {HttpCode: 403, LocalCode: 15},
 	ErrLikeAlreadyDeleted: {HttpCode: 404, LocalCode: 16},

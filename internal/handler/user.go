@@ -51,6 +51,8 @@ func (h *APIHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// ИСПРАВИТЬ ОШИБКУ: PinPageResponse В СВАГГЕРЕ!!!!!
+
 func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -71,7 +73,7 @@ func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 	if uint64(userIdFromSession) != userIdFromSlug {
 		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
-			LocalErr: errs.ErrDiffUserId,
+			LocalErr: errs.ErrPermissionDenied,
 		})
 		return
 	}

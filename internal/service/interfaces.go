@@ -11,7 +11,7 @@ type IService interface {
 	GetUserByNickname(ctx context.Context, nickname string) (entity.User, errs.ErrorInfo)
 	GetUserById(ctx context.Context, id entity.UserID) (entity.User, errs.ErrorInfo)
 	RegisterUser(ctx context.Context, user entity.User) []errs.ErrorInfo
-	UpdateUser(ctx context.Context, user entity.User) (entity.User, errs.ErrorInfo)
+	UpdateUser(ctx context.Context, user entity.UserUpdateRequest) (entity.User, errs.ErrorInfo)
 
 	GetFeedPins(ctx context.Context, limit, offset int) (entity.FeedPins, errs.ErrorInfo)
 	GetUserPins(ctx context.Context, authorId entity.UserID, limit, offset int) (entity.UserPins, errs.ErrorInfo)
