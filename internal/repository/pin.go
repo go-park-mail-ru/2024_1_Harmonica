@@ -79,7 +79,9 @@ func (r *DBRepository) DeletePin(ctx context.Context, id entity.PinID) error {
 	return err
 }
 
+// создан, так как в GetPinById происходит сбор лайков, которые тут не нужны
 func (r *DBRepository) GetPinByIdToCheckExistence(ctx context.Context, id entity.PinID) error {
-	_, err := r.db.QueryContext(ctx, QueryGetPinByIdToCheckExistence, id)
+	var pin entity.FeedPinResponse
+	err := r.db.QueryRowxContext(ctx, QueryGetPinByIdToCheckExistence, id).StructScan(&pin)
 	return err
 }

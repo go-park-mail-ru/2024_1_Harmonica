@@ -21,7 +21,7 @@ type IService interface {
 	DeletePin(ctx context.Context, pin entity.Pin) errs.ErrorInfo
 
 	CreateBoard(ctx context.Context, board entity.Board, userId entity.UserID) (entity.FullBoard, errs.ErrorInfo)
-	GetBoardById(ctx context.Context, boardId entity.BoardID, userId entity.UserID) (entity.FullBoard, errs.ErrorInfo)
+	GetBoardById(ctx context.Context, boardId entity.BoardID, userId entity.UserID, limit, offset int) (entity.FullBoard, errs.ErrorInfo)
 	UpdateBoard(ctx context.Context, board entity.Board, userId entity.UserID) (entity.FullBoard, errs.ErrorInfo)
 	AddPinToBoard(ctx context.Context, boardId entity.BoardID, pinId entity.PinID, userId entity.UserID) errs.ErrorInfo
 	DeletePinFromBoard(ctx context.Context, boardId entity.BoardID, pinId entity.PinID, userId entity.UserID) errs.ErrorInfo

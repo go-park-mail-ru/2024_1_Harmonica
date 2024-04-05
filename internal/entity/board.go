@@ -30,8 +30,14 @@ type BoardAuthor struct {
 	AvatarURL string `db:"avatar_url" json:"avatar_url"`
 }
 
+type BoardPinResponse struct {
+	PinId      PinID  `db:"pin_id" json:"pin_id"`
+	ContentUrl string `db:"content_url" json:"content_url"`
+	PinAuthor  `json:"author"`
+}
+
 type FullBoard struct {
 	Board        `json:"board"`
-	BoardAuthors []BoardAuthor     `json:"author"`
-	Pins         []FeedPinResponse `json:"pins"`
+	BoardAuthors []BoardAuthor      `json:"authors"`
+	Pins         []BoardPinResponse `json:"pins"`
 }

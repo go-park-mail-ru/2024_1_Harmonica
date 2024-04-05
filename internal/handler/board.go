@@ -14,12 +14,11 @@ func (h *APIHandler) CreateBoard(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrReadingRequestBody))
 		return
 	}
-	//TODO сделать нормальную валидацию
+	// нужна нормальная валидация ?
 	if !ValidateBoard(board) {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrInvalidInputFormat))
 		return
 	}
-
 	userId, ok := ctx.Value("user_id").(entity.UserID)
 	if !ok {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
@@ -34,7 +33,6 @@ func (h *APIHandler) CreateBoard(w http.ResponseWriter, r *http.Request) {
 
 func (h *APIHandler) GetBoard(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-
 	boardId, err := ReadInt64Slug(r, "board_id")
 	if err != nil {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrInvalidSlug))
@@ -50,7 +48,12 @@ func (h *APIHandler) GetBoard(w http.ResponseWriter, r *http.Request) {
 			WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
 		}
 	}
-	board, errInfo := h.service.GetBoardById(ctx, entity.BoardID(boardId), userId)
+	limit, offset, err := GetLimitAndOffset(r)
+	if err != nil {
+		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrReadingRequestBody))
+		return
+	}
+	board, errInfo := h.service.GetBoardById(ctx, entity.BoardID(boardId), userId, limit, offset)
 	if errInfo != emptyErrorInfo {
 		WriteErrorResponse(w, h.logger, errInfo)
 		return
@@ -60,14 +63,12 @@ func (h *APIHandler) GetBoard(w http.ResponseWriter, r *http.Request) {
 
 func (h *APIHandler) UpdateBoard(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-
 	boardId, err := ReadInt64Slug(r, "board_id")
 	if err != nil {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrInvalidSlug))
 		return
 	}
-
-	newBoard := entity.Board{}
+	var newBoard entity.Board
 	err = UnmarshalRequest(r, &newBoard)
 	if err != nil {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrReadingRequestBody))
@@ -77,7 +78,6 @@ func (h *APIHandler) UpdateBoard(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrInvalidInputFormat))
 		return
 	}
-
 	userId, ok := ctx.Value("user_id").(entity.UserID)
 	if !ok {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
@@ -93,7 +93,6 @@ func (h *APIHandler) UpdateBoard(w http.ResponseWriter, r *http.Request) {
 
 func (h *APIHandler) AddPinToBoard(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-
 	boardId, err := ReadInt64Slug(r, "board_id")
 	if err != nil {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrInvalidSlug))
@@ -118,16 +117,13 @@ func (h *APIHandler) AddPinToBoard(w http.ResponseWriter, r *http.Request) {
 
 func (h *APIHandler) DeletePinFromBoard(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-
 	boardId, err := ReadInt64Slug(r, "board_id")
 	if err != nil {
-		h.logger.Error(err.Error())
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrInvalidSlug))
 		return
 	}
 	pinId, err := ReadInt64Slug(r, "pin_id")
 	if err != nil {
-		h.logger.Error(err.Error())
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrInvalidSlug))
 		return
 	}
@@ -137,7 +133,6 @@ func (h *APIHandler) DeletePinFromBoard(w http.ResponseWriter, r *http.Request) 
 	}
 	errInfo := h.service.DeletePinFromBoard(ctx, entity.BoardID(boardId), entity.PinID(pinId), userId)
 	if errInfo != emptyErrorInfo {
-		h.logger.Error(errInfo.GeneralErr.Error())
 		WriteErrorResponse(w, h.logger, errInfo)
 		return
 	}
@@ -146,13 +141,11 @@ func (h *APIHandler) DeletePinFromBoard(w http.ResponseWriter, r *http.Request) 
 
 func (h *APIHandler) DeleteBoard(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-
 	boardId, err := ReadInt64Slug(r, "board_id")
 	if err != nil {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrInvalidSlug))
 		return
 	}
-
 	userId, ok := ctx.Value("user_id").(entity.UserID)
 	if !ok {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
@@ -167,7 +160,6 @@ func (h *APIHandler) DeleteBoard(w http.ResponseWriter, r *http.Request) {
 
 func (h *APIHandler) UserBoards(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-
 	authorNickname := r.PathValue("nickname")
 	if !ValidateNickname(authorNickname) {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrInvalidSlug))

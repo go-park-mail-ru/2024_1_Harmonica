@@ -23,7 +23,7 @@ type IRepository interface {
 	CreateBoard(ctx context.Context, board entity.Board, userId entity.UserID) (entity.BoardID, error)
 	GetBoardById(ctx context.Context, boardId entity.BoardID) (entity.Board, error)
 	GetBoardAuthors(ctx context.Context, boardId entity.BoardID) ([]entity.BoardAuthor, error)
-	GetBoardPins(ctx context.Context, boardId entity.BoardID) ([]entity.FeedPinResponse, error)
+	GetBoardPins(ctx context.Context, boardId entity.BoardID, limit, offset int) ([]entity.BoardPinResponse, error)
 	UpdateBoard(ctx context.Context, board entity.Board) error
 	AddPinToBoard(ctx context.Context, boardId entity.BoardID, pinId entity.PinID) error
 	DeletePinFromBoard(ctx context.Context, boardId entity.BoardID, pinId entity.PinID) error

@@ -2,13 +2,8 @@ package repository
 
 import (
 	"context"
-	"github.com/jackskj/carta"
 	"harmonica/internal/entity"
 )
-
-//board
-//board_author
-//board_pin
 
 const (
 	QueryCreateBoard = `INSERT INTO public.board (title, description, cover_url, visibility_type) 
@@ -16,54 +11,31 @@ const (
 
 	QueryInsertBoardAuthor = `INSERT INTO public.board_author (board_id, author_id) VALUES ($1, $2)`
 
-	//QueryGetBoardById = ` SELECT public.user.user_id, public.user.nickname, public.user.avatar_url,
-	//public.board.board_id, public.board.title, public.board.created_at, public.board.description,
-	//public.board.cover_url, public.board.visibility_type FROM public.board
-	//INNER JOIN public.board_author ON public.board.board_id = public.board_author.board_id
-	//INNER JOIN public.user ON public.board_author.author_id = public.user.user_id
-	//WHERE public.board.board_id = $1`
-
 	QueryGetBoardById = `SELECT board_id, title, created_at, description, cover_url, visibility_type
-	FROM public.board WHERE board_id = $1`
+	FROM public.board WHERE board_id=$1`
 
 	QueryGetBoardAuthors = `SELECT public.user.user_id, public.user.nickname, public.user.avatar_url FROM public.user
 	INNER JOIN public.board_author ON public.user.user_id = public.board_author.author_id 
-	WHERE public.board_author.board_id = $1`
-
-	//QueryGetBoardPins = `SELECT public.pin.pin_id, public.pin.content_url, public.pin.author_id FROM public.pin INNER JOIN public.board_pin
-	//ON public.pin.pin_id = public.board_pin.pin_id WHERE public.board_pin.board_id = $1`
-	//LIMIT $2 OFFSET $3 добавить надо
+	WHERE public.board_author.board_id=$1`
 
 	QueryGetBoardPins = `SELECT public.pin.pin_id, public.pin.content_url, public.user.user_id, public.user.nickname, 
     public.user.avatar_url FROM public.pin INNER JOIN public.board_pin ON public.pin.pin_id = public.board_pin.pin_id 
-	INNER JOIN public.user ON public.pin.author_id = public.user.user_id WHERE public.board_pin.board_id = $1`
+	INNER JOIN public.user ON public.pin.author_id = public.user.user_id WHERE public.board_pin.board_id=$1
+	ORDER BY public.pin.created_at DESC LIMIT $2 OFFSET $3`
 
-	//QueryGetBoardPins = `SELECT public.pin.pin_id, public.pin.content_url FROM public.pin INNER JOIN public.board_pin
-	//ON public.pin.pin_id = public.board_pin.pin_id WHERE public.board_pin.board_id = $1`
-	//LIMIT $2 OFFSET $3 добавить надо
-
-	//QueryGetUserBoards = `SELECT board_id, title, created_at, description, cover_url, visibility_type
-	//FROM public.board INNER JOIN public.user ON public.board_author.author_id=public.user.user_id
-	//WHERE public.board_author.author_id=$1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`
-	QueryGetUserBoards = `SELECT board.board_id, board.title, board.created_at, board.description, board.cover_url, board.visibility_type
-	FROM public.board 
-	INNER JOIN public.board_author ON board.board_id = board_author.board_id
-	WHERE board_author.author_id = $1 
-	ORDER BY board.created_at DESC 
-	LIMIT $2 OFFSET $3`
+	QueryGetUserBoards = `SELECT public.board.board_id, public.board.title, public.board.created_at, 
+    public.board.description, public.board.cover_url, public.board.visibility_type FROM public.board  
+    INNER JOIN public.board_author ON public.board.board_id = public.board_author.board_id 
+    WHERE public.board_author.author_id=$1 ORDER BY public.board.created_at DESC LIMIT $2 OFFSET $3`
 
 	QueryUpdateBoard = `UPDATE public.board SET title=$2, description=$3, cover_url=$4, visibility_type=$5 
     WHERE board_id=$1`
 
-	QueryAddPinToBoard      = `INSERT INTO public.board_pin (board_id, pin_id) VALUES ($1, $2)`
+	QueryAddPinToBoard = `INSERT INTO public.board_pin (board_id, pin_id) VALUES ($1, $2)`
+
 	QueryDeletePinFromBoard = `DELETE FROM public.board_pin WHERE board_id=$1 AND pin_id=$2`
 
 	QueryDeleteBoard = `DELETE FROM public.board WHERE board_id=$1`
-)
-
-var (
-	emptyBoard      = entity.Board{}
-	emptyUserBoards = entity.UserBoards{}
 )
 
 func (r *DBRepository) CreateBoard(ctx context.Context, board entity.Board,
@@ -93,7 +65,7 @@ func (r *DBRepository) GetBoardById(ctx context.Context, boardId entity.BoardID)
 	board := entity.Board{}
 	err := r.db.QueryRowxContext(ctx, QueryGetBoardById, boardId).StructScan(&board)
 	if err != nil {
-		return emptyBoard, err
+		return entity.Board{}, err
 	}
 	return board, nil
 }
@@ -107,11 +79,11 @@ func (r *DBRepository) GetBoardAuthors(ctx context.Context, boardId entity.Board
 	return authors, nil
 }
 
-func (r *DBRepository) GetBoardPins(ctx context.Context, boardId entity.BoardID) ([]entity.FeedPinResponse, error) {
-	var pins []entity.FeedPinResponse
-	err := r.db.SelectContext(ctx, &pins, QueryGetBoardPins, boardId)
+func (r *DBRepository) GetBoardPins(ctx context.Context, boardId entity.BoardID, limit, offset int) ([]entity.BoardPinResponse, error) {
+	var pins []entity.BoardPinResponse
+	err := r.db.SelectContext(ctx, &pins, QueryGetBoardPins, boardId, limit, offset)
 	if err != nil {
-		return []entity.FeedPinResponse{}, err
+		return []entity.BoardPinResponse{}, err
 	}
 	return pins, nil
 }
@@ -139,14 +111,10 @@ func (r *DBRepository) DeleteBoard(ctx context.Context, boardId entity.BoardID) 
 
 func (r *DBRepository) GetUserBoards(ctx context.Context, authorId entity.UserID,
 	limit, offset int) (entity.UserBoards, error) {
-	result := entity.UserBoards{}
-	rows, err := r.db.QueryContext(ctx, QueryGetUserBoards, authorId, limit, offset)
+	boards := entity.UserBoards{}
+	err := r.db.QueryRowxContext(ctx, QueryGetUserBoards, authorId, limit, offset).StructScan(boards)
 	if err != nil {
-		return emptyUserBoards, err
+		return entity.UserBoards{}, err
 	}
-	err = carta.Map(rows, &result.Boards)
-	if err != nil {
-		return emptyUserBoards, err
-	}
-	return result, nil
+	return boards, nil
 }

@@ -103,7 +103,7 @@ func configureBoardRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.S
 		"DELETE /api/v1/boards/{board_id}/pins/{pin_id}": h.DeletePinFromBoard,
 	}
 	checkAuthRoutes := map[string]http.HandlerFunc{
-		"GET /api/v1/boards/{board_id}":         h.GetBoard,   // с пагинацией ?
+		"GET /api/v1/boards/{board_id}":         h.GetBoard,   // с пагинацией
 		"GET /api/v1/boards/created/{nickname}": h.UserBoards, // с пагинацией
 	}
 	for pattern, f := range authRoutes {

@@ -14,20 +14,18 @@ const (
 	QueryUpdateUserPassword = `UPDATE public.user SET "password"=$2 WHERE user_id=$1`
 )
 
-var emptyUser = entity.User{}
-
 func (r *DBRepository) GetUserByEmail(ctx context.Context, email string) (entity.User, error) {
 	rows, err := r.db.QueryxContext(ctx, QueryGetUserByEmail, email)
 	// TODO по-хорошему переписать на QueryRowxContext (сложность в том, чтобы переписать все методы, использующие этот)
 	// так как он возвращает ошибку sql.ErrNoRows, а QueryxContext - нет
 	if err != nil {
-		return emptyUser, err
+		return entity.User{}, err
 	}
 	var user entity.User
 	for rows.Next() {
 		err = rows.StructScan(&user)
 		if err != nil {
-			return emptyUser, err
+			return entity.User{}, err
 		}
 	}
 	return user, nil
@@ -36,13 +34,13 @@ func (r *DBRepository) GetUserByEmail(ctx context.Context, email string) (entity
 func (r *DBRepository) GetUserByNickname(ctx context.Context, nickname string) (entity.User, error) {
 	rows, err := r.db.QueryxContext(ctx, QueryGetUserByNickname, nickname)
 	if err != nil {
-		return emptyUser, err
+		return entity.User{}, err
 	}
 	var user entity.User
 	for rows.Next() {
 		err = rows.StructScan(&user)
 		if err != nil {
-			return emptyUser, err
+			return entity.User{}, err
 		}
 	}
 	return user, nil
@@ -51,14 +49,13 @@ func (r *DBRepository) GetUserByNickname(ctx context.Context, nickname string) (
 func (r *DBRepository) GetUserById(ctx context.Context, id entity.UserID) (entity.User, error) {
 	rows, err := r.db.QueryxContext(ctx, QueryGetUserById, id)
 	if err != nil {
-		return emptyUser, err
+		return entity.User{}, err
 	}
-
 	var user entity.User
 	for rows.Next() {
 		err = rows.StructScan(&user)
 		if err != nil {
-			return emptyUser, err
+			return entity.User{}, err
 		}
 	}
 	return user, nil
