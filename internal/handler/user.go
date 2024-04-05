@@ -33,14 +33,19 @@ func (h *APIHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 
 	isOwner := false
 	if ctx.Value("is_auth") == true {
-		userIdFromSession := ctx.Value("user_id").(entity.UserID)
+		userIdFromSession, ok := ctx.Value("user_id").(entity.UserID)
+		if !ok {
+			WriteErrorResponse(w, h.logger, errs.ErrorInfo{
+				LocalErr: errs.ErrTypeConversion,
+			})
+		}
 		isOwner = user.UserID == userIdFromSession
 	}
 
 	userProfile := entity.UserProfileResponse{
-		User:            MakeUserResponse(user),
-		FollowersNumber: 0,
-		IsOwner:         isOwner,
+		User:           MakeUserResponse(user),
+		FollowersCount: 0,
+		IsOwner:        isOwner,
 	}
 	WriteDefaultResponse(w, h.logger, userProfile)
 
@@ -58,7 +63,12 @@ func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userIdFromSession := ctx.Value("user_id").(entity.UserID)
+	userIdFromSession, ok := ctx.Value("user_id").(entity.UserID)
+	if !ok {
+		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
+			LocalErr: errs.ErrTypeConversion,
+		})
+	}
 	if uint64(userIdFromSession) != userIdFromSlug {
 		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
 			LocalErr: errs.ErrDiffUserId,
@@ -109,5 +119,4 @@ func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	WriteDefaultResponse(w, h.logger, MakeUserResponse(updatedUser))
-	//WriteUserResponse(w, h.logger, updatedUser)
 }

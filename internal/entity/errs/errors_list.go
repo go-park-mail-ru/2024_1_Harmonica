@@ -21,6 +21,7 @@ var (
 	ErrLikeAlreadyDeleted = errors.New("like already was deleted")
 	ErrEmptyContentURL    = errors.New("content url can't be empty")
 	ErrServerInternal     = errors.New("internal server error")
+	ErrTypeConversion     = errors.New("type conversion error")
 )
 
 var ErrorCodes = map[error]struct {
@@ -45,4 +46,5 @@ var ErrorCodes = map[error]struct {
 	ErrLikeAlreadyDeleted: {HttpCode: 404, LocalCode: 16},
 	ErrEmptyContentURL:    {HttpCode: 400, LocalCode: 17},
 	ErrServerInternal:     {HttpCode: 500, LocalCode: 18},
+	ErrTypeConversion:     {HttpCode: 400, LocalCode: 19},
 }

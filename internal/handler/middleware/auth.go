@@ -19,14 +19,12 @@ func Auth(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		c, err := r.Cookie("session_token")
 		if err != nil {
-
 			if errors.Is(err, http.ErrNoCookie) {
 				handler.WriteErrorResponse(w, l, errs.ErrorInfo{
 					LocalErr: errs.ErrUnauthorized,
 				})
 				return
 			}
-
 			handler.WriteErrorResponse(w, l, errs.ErrorInfo{
 				GeneralErr: err,
 				LocalErr:   errs.ErrReadCookie,
@@ -36,11 +34,14 @@ func Auth(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
 
 		sessionToken := c.Value
 		s, exists := handler.Sessions.Load(sessionToken)
-		if !exists || s.(handler.Session).IsExpired() {
-			if exists {
-				// не if s.(handler.Session).IsExpired(), так как в этом случае при !exist возникает паника
-				handler.Sessions.Delete(sessionToken)
-			}
+		if !exists {
+			handler.WriteErrorResponse(w, l, errs.ErrorInfo{
+				LocalErr: errs.ErrUnauthorized,
+			})
+			return
+		}
+		if s.(handler.Session).IsExpired() {
+			handler.Sessions.Delete(sessionToken)
 			handler.WriteErrorResponse(w, l, errs.ErrorInfo{
 				LocalErr: errs.ErrUnauthorized,
 			})
@@ -51,7 +52,6 @@ func Auth(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
 		userId := s.(handler.Session).UserId
 		ctx = context.WithValue(ctx, SessionTokenKey, sessionToken)
 		ctx = context.WithValue(ctx, UserIdKey, userId)
-
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 }
@@ -73,17 +73,22 @@ func NotAuth(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
 
 		sessionToken := c.Value
 		s, exists := handler.Sessions.Load(sessionToken)
-		if !exists || s.(handler.Session).IsExpired() {
-			if exists {
-				handler.Sessions.Delete(sessionToken)
-			}
-			next.ServeHTTP(w, r)
+		if exists && !s.(handler.Session).IsExpired() {
+			handler.WriteErrorResponse(w, l, errs.ErrorInfo{
+				LocalErr: errs.ErrAlreadyAuthorized,
+			})
 			return
 		}
 
-		handler.WriteErrorResponse(w, l, errs.ErrorInfo{
-			LocalErr: errs.ErrAlreadyAuthorized,
-		})
+		if !exists {
+			next.ServeHTTP(w, r)
+			return
+		}
+		if s.(handler.Session).IsExpired() {
+			handler.Sessions.Delete(sessionToken)
+			next.ServeHTTP(w, r)
+			return
+		}
 	}
 }
 
@@ -106,10 +111,13 @@ func CheckAuth(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
 
 		sessionToken := c.Value
 		s, exists := handler.Sessions.Load(sessionToken)
-		if !exists || s.(handler.Session).IsExpired() {
-			if exists {
-				handler.Sessions.Delete(sessionToken)
-			}
+		if !exists {
+			ctx = context.WithValue(ctx, IsAuthKey, false)
+			next.ServeHTTP(w, r.WithContext(ctx))
+			return
+		}
+		if s.(handler.Session).IsExpired() {
+			handler.Sessions.Delete(sessionToken)
 			ctx = context.WithValue(ctx, IsAuthKey, false)
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
@@ -119,7 +127,6 @@ func CheckAuth(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
 		ctx = context.WithValue(ctx, IsAuthKey, true)
 		ctx = context.WithValue(ctx, SessionTokenKey, sessionToken)
 		ctx = context.WithValue(ctx, UserIdKey, userId)
-
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 }

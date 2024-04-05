@@ -33,7 +33,7 @@ type UserList struct {
 }
 
 type UserProfileResponse struct {
-	User            UserResponse `json:"user"`
-	FollowersNumber uint64       `json:"followers_number"`
-	IsOwner         bool         `json:"is_owner"`
+	User           UserResponse `json:"user"`
+	FollowersCount uint64       `json:"followers_count"`
+	IsOwner        bool         `json:"is_owner"`
 }
