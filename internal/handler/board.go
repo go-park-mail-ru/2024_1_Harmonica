@@ -6,6 +6,21 @@ import (
 	"net/http"
 )
 
+// CreateBoard Create board.
+//
+//	@Summary		Create board
+//	@Description	Create board by description
+//	@Tags			Pins
+//	@Produce		json
+//	@Accept			multipart/form-data
+//	@Param			Cookie	header		string	true	"session-token"	default(session-token=)
+//	@Param			board		body  entity.Board	string	false	"Board information in json"
+//	@Param			image	formData	file	true	"Board cover"
+//	@Success		200		{object}	entity.FullBoard
+//	@Failure		400		{object}	errs.ErrorResponse	"Possible code responses: ."
+//	@Failure		401		{object}	errs.ErrorResponse	"Possible code responses: ."
+//	@Failure		500		{object}	errs.ErrorResponse	"Possible code responses: 11."
+//	@Router			/boards [post]
 func (h *APIHandler) CreateBoard(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	board := entity.Board{}

@@ -24,7 +24,7 @@ const (
 	QueryUpdatePin = `UPDATE public.pin SET allow_comments=$2, title=$3, "description"=$4, click_url=$5 WHERE pin_id=$1`
 	QueryDeletePin = `DELETE FROM public.pin WHERE pin_id=$1`
 
-	QueryGetPinByIdToCheckExistence = `SELECT pin_id, content_url FROM public.pin WHERE pin_id=$1`
+	QueryCheckPinExistence = `SELECT EXISTS(SELECT 1 FROM public.pin WHERE pin_id=$1)`
 )
 
 func (r *DBRepository) GetFeedPins(ctx context.Context, limit, offset int) (entity.FeedPins, error) {
@@ -79,9 +79,8 @@ func (r *DBRepository) DeletePin(ctx context.Context, id entity.PinID) error {
 	return err
 }
 
-// создан, так как в GetPinById происходит сбор лайков, которые тут не нужны
-func (r *DBRepository) GetPinByIdToCheckExistence(ctx context.Context, id entity.PinID) error {
-	var pin entity.FeedPinResponse
-	err := r.db.QueryRowxContext(ctx, QueryGetPinByIdToCheckExistence, id).StructScan(&pin)
-	return err
+func (r *DBRepository) CheckPinExistence(ctx context.Context, id entity.PinID) (bool, error) {
+	var exists bool
+	err := r.db.QueryRowContext(ctx, QueryCheckPinExistence, id).Scan(&exists)
+	return exists, err
 }

@@ -80,14 +80,19 @@ func configurePinRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.Ser
 		"POST /api/v1/pins/{pin_id}/like":   h.CreateLike,
 		"DELETE /api/v1/pins/{pin_id}/like": h.DeleteLike,
 	}
+	checkAuthRoutes := map[string]http.HandlerFunc{
+		"GET /api/v1/pins/{pin_id}": h.GetPin,
+	}
 	publicRoutes := map[string]http.HandlerFunc{
 		"GET /api/v1/pins":                   h.Feed,
-		"GET /api/v1/pins/{pin_id}":          h.GetPin,
 		"GET /api/v1/pins/created/{user_id}": h.UserPins,
 		"GET /api/v1/likes/{pin_id}/users":   h.UsersLiked,
 	}
 	for pattern, f := range authRoutes {
 		mux.HandleFunc(pattern, middleware.Auth(logger, f))
+	}
+	for pattern, f := range checkAuthRoutes {
+		mux.HandleFunc(pattern, middleware.CheckAuth(logger, f))
 	}
 	for pattern, f := range publicRoutes {
 		mux.HandleFunc(pattern, f)

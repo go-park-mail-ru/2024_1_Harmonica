@@ -16,24 +16,25 @@ var (
 	defaultOffset   = 0
 )
 
-const (
-	UniqueViolationErrCode = pq.ErrorCode("23505")
-)
+const UniqueViolationErrCode = pq.ErrorCode("23505")
 
 func (s *RepositoryService) CreateBoard(ctx context.Context, board entity.Board,
 	userId entity.UserID) (entity.FullBoard, errs.ErrorInfo) {
-	boardId, err := s.repo.CreateBoard(ctx, board, userId)
+	createdBoard, err := s.repo.CreateBoard(ctx, board, userId)
 	if err != nil {
 		return emptyFullBoard, errs.ErrorInfo{
 			GeneralErr: err,
 			LocalErr:   errs.ErrDBInternal,
 		}
 	}
-	res, errInfo := s.GetBoardById(ctx, boardId, userId, defaultLimit, defaultOffset)
-	if errInfo != emptyErrorInfo {
-		return emptyFullBoard, errInfo
-	}
-	return res, emptyErrorInfo
+	fullBoard := entity.FullBoard{Board: createdBoard}
+	author, err := s.repo.GetUserById(ctx, userId)
+	fullBoard.BoardAuthors = append(fullBoard.BoardAuthors, entity.BoardAuthor{
+		UserId:    userId,
+		Nickname:  author.Nickname,
+		AvatarURL: author.AvatarURL,
+	})
+	return fullBoard, emptyErrorInfo
 }
 
 func (s *RepositoryService) GetBoardById(ctx context.Context, boardId entity.BoardID,
@@ -94,41 +95,73 @@ func (s *RepositoryService) GetBoardById(ctx context.Context, boardId entity.Boa
 
 func (s *RepositoryService) UpdateBoard(ctx context.Context, board entity.Board,
 	userId entity.UserID) (entity.FullBoard, errs.ErrorInfo) {
-	// кол-во запросов к базе - 5 :) норм?
-	errInfo := CheckAuthor(s, ctx, board.BoardID, userId) // здесь же происходит проверка на существование доски
-	if errInfo != emptyErrorInfo {
-		return emptyFullBoard, errInfo
-	}
-	err := s.repo.UpdateBoard(ctx, board)
+	isAuthor, err := s.repo.CheckBoardAuthorExistence(ctx, userId, board.BoardID)
 	if err != nil {
 		return emptyFullBoard, errs.ErrorInfo{
 			GeneralErr: err,
 			LocalErr:   errs.ErrDBInternal,
 		}
 	}
-	fullBoard, errInfo := s.GetBoardById(ctx, board.BoardID, userId, defaultLimit, defaultOffset)
-	if errInfo != emptyErrorInfo {
-		return emptyFullBoard, errInfo
+	// здесь же сразу проверяется существование доски (если доски нет, isAuthor = false)
+	if !isAuthor {
+		return emptyFullBoard, errs.ErrorInfo{
+			LocalErr: errs.ErrPermissionDenied,
+		}
+	}
+	updatedBoard, err := s.repo.UpdateBoard(ctx, board)
+	if err != nil {
+		return emptyFullBoard, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrDBInternal,
+		}
+	}
+	authors, err := s.repo.GetBoardAuthors(ctx, board.BoardID)
+	if err != nil {
+		return emptyFullBoard, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrDBInternal,
+		}
+	}
+	pins, err := s.repo.GetBoardPins(ctx, board.BoardID, defaultLimit, defaultOffset)
+	if err != nil {
+		return emptyFullBoard, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrDBInternal,
+		}
+	}
+	fullBoard := entity.FullBoard{
+		Board:        updatedBoard,
+		BoardAuthors: authors,
+		Pins:         pins,
 	}
 	return fullBoard, emptyErrorInfo
 }
 
 func (s *RepositoryService) AddPinToBoard(ctx context.Context, boardId entity.BoardID,
 	pinId entity.PinID, userId entity.UserID) errs.ErrorInfo {
-	err := s.repo.GetPinByIdToCheckExistence(ctx, pinId)
+	exists, err := s.repo.CheckPinExistence(ctx, pinId)
 	if err != nil {
-		localErr := errs.ErrDBInternal
-		if errors.Is(err, sql.ErrNoRows) {
-			localErr = errs.ErrElementNotExist
-		}
 		return errs.ErrorInfo{
 			GeneralErr: err,
-			LocalErr:   localErr,
+			LocalErr:   errs.ErrDBInternal,
 		}
 	}
-	errInfo := CheckAuthor(s, ctx, boardId, userId)
-	if errInfo != emptyErrorInfo {
-		return errInfo
+	if !exists {
+		return errs.ErrorInfo{
+			LocalErr: errs.ErrElementNotExist,
+		}
+	}
+	isAuthor, err := s.repo.CheckBoardAuthorExistence(ctx, userId, boardId)
+	if err != nil {
+		return errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrDBInternal,
+		}
+	}
+	if !isAuthor {
+		return errs.ErrorInfo{
+			LocalErr: errs.ErrPermissionDenied,
+		}
 	}
 	err = s.repo.AddPinToBoard(ctx, boardId, pinId)
 	if err != nil {
@@ -148,20 +181,29 @@ func (s *RepositoryService) AddPinToBoard(ctx context.Context, boardId entity.Bo
 
 func (s *RepositoryService) DeletePinFromBoard(ctx context.Context, boardId entity.BoardID,
 	pinId entity.PinID, userId entity.UserID) errs.ErrorInfo {
-	err := s.repo.GetPinByIdToCheckExistence(ctx, pinId)
+	exists, err := s.repo.CheckPinExistence(ctx, pinId)
 	if err != nil {
-		localErr := errs.ErrDBInternal
-		if errors.Is(err, sql.ErrNoRows) {
-			localErr = errs.ErrElementNotExist
-		}
 		return errs.ErrorInfo{
 			GeneralErr: err,
-			LocalErr:   localErr,
+			LocalErr:   errs.ErrDBInternal,
 		}
 	}
-	errInfo := CheckAuthor(s, ctx, boardId, userId)
-	if errInfo != emptyErrorInfo {
-		return errInfo
+	if !exists {
+		return errs.ErrorInfo{
+			LocalErr: errs.ErrElementNotExist,
+		}
+	}
+	isAuthor, err := s.repo.CheckBoardAuthorExistence(ctx, userId, boardId)
+	if err != nil {
+		return errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrDBInternal,
+		}
+	}
+	if !isAuthor {
+		return errs.ErrorInfo{
+			LocalErr: errs.ErrPermissionDenied,
+		}
 	}
 	err = s.repo.DeletePinFromBoard(ctx, boardId, pinId)
 	if err != nil {
@@ -175,11 +217,19 @@ func (s *RepositoryService) DeletePinFromBoard(ctx context.Context, boardId enti
 
 func (s *RepositoryService) DeleteBoard(ctx context.Context, boardId entity.BoardID,
 	userId entity.UserID) errs.ErrorInfo {
-	errInfo := CheckAuthor(s, ctx, boardId, userId)
-	if errInfo != emptyErrorInfo {
-		return errInfo
+	isAuthor, err := s.repo.CheckBoardAuthorExistence(ctx, userId, boardId)
+	if err != nil {
+		return errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrDBInternal,
+		}
 	}
-	err := s.repo.DeleteBoard(ctx, boardId)
+	if !isAuthor {
+		return errs.ErrorInfo{
+			LocalErr: errs.ErrPermissionDenied,
+		}
+	}
+	err = s.repo.DeleteBoard(ctx, boardId)
 	if err != nil {
 		return errs.ErrorInfo{
 			GeneralErr: err,
@@ -226,26 +276,4 @@ func authorContains(authors []entity.BoardAuthor, userId entity.UserID) bool {
 		}
 	}
 	return false
-}
-
-func CheckAuthor(s *RepositoryService, ctx context.Context, boardId entity.BoardID,
-	userId entity.UserID) errs.ErrorInfo {
-	authors, err := s.repo.GetBoardAuthors(ctx, boardId)
-	if err != nil {
-		return errs.ErrorInfo{
-			GeneralErr: err,
-			LocalErr:   errs.ErrDBInternal,
-		}
-	}
-	if len(authors) == 0 { // это и есть проверка на существование доски
-		return errs.ErrorInfo{
-			LocalErr: errs.ErrElementNotExist,
-		}
-	}
-	if !authorContains(authors, userId) {
-		return errs.ErrorInfo{
-			LocalErr: errs.ErrPermissionDenied,
-		}
-	}
-	return emptyErrorInfo
 }

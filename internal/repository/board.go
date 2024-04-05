@@ -2,12 +2,14 @@ package repository
 
 import (
 	"context"
+	"github.com/jackskj/carta"
 	"harmonica/internal/entity"
 )
 
 const (
 	QueryCreateBoard = `INSERT INTO public.board (title, description, cover_url, visibility_type) 
-    VALUES ($1, $2, $3, $4) RETURNING public.board.board_id`
+    VALUES ($1, $2, $3, $4) RETURNING public.board.board_id, public.board.created_at, public.board.title, 
+    public.board.description, public.board.cover_url, public.board.visibility_type`
 
 	QueryInsertBoardAuthor = `INSERT INTO public.board_author (board_id, author_id) VALUES ($1, $2)`
 
@@ -29,36 +31,39 @@ const (
     WHERE public.board_author.author_id=$1 ORDER BY public.board.created_at DESC LIMIT $2 OFFSET $3`
 
 	QueryUpdateBoard = `UPDATE public.board SET title=$2, description=$3, cover_url=$4, visibility_type=$5 
-    WHERE board_id=$1`
+    WHERE board_id=$1 RETURNING public.board.board_id, public.board.created_at, public.board.title, 
+    public.board.description, public.board.cover_url, public.board.visibility_type`
 
 	QueryAddPinToBoard = `INSERT INTO public.board_pin (board_id, pin_id) VALUES ($1, $2)`
 
 	QueryDeletePinFromBoard = `DELETE FROM public.board_pin WHERE board_id=$1 AND pin_id=$2`
 
 	QueryDeleteBoard = `DELETE FROM public.board WHERE board_id=$1`
+
+	QueryCheckBoardAuthorExistence = `SELECT EXISTS(SELECT 1 FROM public.board_author WHERE author_id=$1 AND board_id=$2)`
 )
 
 func (r *DBRepository) CreateBoard(ctx context.Context, board entity.Board,
-	userId entity.UserID) (entity.BoardID, error) {
-	tx, err := r.db.BeginTx(ctx, nil)
+	userId entity.UserID) (entity.Board, error) {
+	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		return 0, err
+		return entity.Board{}, err
 	}
 	defer tx.Rollback()
-	var boardID entity.BoardID
-	err = tx.QueryRowContext(ctx, QueryCreateBoard, board.Title, board.Description,
-		board.CoverURL, board.VisibilityType).Scan(&boardID)
+	var createdBoard entity.Board
+	err = tx.QueryRowxContext(ctx, QueryCreateBoard, board.Title, board.Description,
+		board.CoverURL, board.VisibilityType).StructScan(&createdBoard)
 	if err != nil {
-		return 0, err
+		return entity.Board{}, err
 	}
-	_, err = tx.ExecContext(ctx, QueryInsertBoardAuthor, boardID, userId)
+	_, err = tx.ExecContext(ctx, QueryInsertBoardAuthor, createdBoard.BoardID, userId)
 	if err != nil {
-		return 0, err
+		return entity.Board{}, err
 	}
 	if err = tx.Commit(); err != nil {
-		return 0, err
+		return entity.Board{}, err
 	}
-	return boardID, nil
+	return createdBoard, nil
 }
 
 func (r *DBRepository) GetBoardById(ctx context.Context, boardId entity.BoardID) (entity.Board, error) {
@@ -88,10 +93,11 @@ func (r *DBRepository) GetBoardPins(ctx context.Context, boardId entity.BoardID,
 	return pins, nil
 }
 
-func (r *DBRepository) UpdateBoard(ctx context.Context, board entity.Board) error {
-	_, err := r.db.ExecContext(ctx, QueryUpdateBoard, board.BoardID, board.Title, board.Description,
-		board.CoverURL, board.VisibilityType)
-	return err
+func (r *DBRepository) UpdateBoard(ctx context.Context, board entity.Board) (entity.Board, error) {
+	var updatedBoard entity.Board
+	err := r.db.QueryRowxContext(ctx, QueryUpdateBoard, board.BoardID, board.Title, board.Description,
+		board.CoverURL, board.VisibilityType).StructScan(&updatedBoard)
+	return updatedBoard, err
 }
 
 func (r *DBRepository) AddPinToBoard(ctx context.Context, boardId entity.BoardID, pinId entity.PinID) error {
@@ -112,9 +118,20 @@ func (r *DBRepository) DeleteBoard(ctx context.Context, boardId entity.BoardID) 
 func (r *DBRepository) GetUserBoards(ctx context.Context, authorId entity.UserID,
 	limit, offset int) (entity.UserBoards, error) {
 	boards := entity.UserBoards{}
-	err := r.db.QueryRowxContext(ctx, QueryGetUserBoards, authorId, limit, offset).StructScan(boards)
+	rows, err := r.db.QueryContext(ctx, QueryGetUserBoards, authorId, limit, offset)
+	if err != nil {
+		return entity.UserBoards{}, err
+	}
+	err = carta.Map(rows, &boards.Boards)
 	if err != nil {
 		return entity.UserBoards{}, err
 	}
 	return boards, nil
+}
+
+func (r *DBRepository) CheckBoardAuthorExistence(ctx context.Context, userId entity.UserID,
+	boardId entity.BoardID) (bool, error) {
+	var exists bool
+	err := r.db.QueryRowContext(ctx, QueryCheckBoardAuthorExistence, userId, boardId).Scan(&exists)
+	return exists, err
 }

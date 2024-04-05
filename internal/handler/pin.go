@@ -103,6 +103,7 @@ func (h *APIHandler) UserPins(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *APIHandler) GetPin(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	pinId, err := ReadInt64Slug(r, "pin_id")
 	if err != nil {
 		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
@@ -111,10 +112,19 @@ func (h *APIHandler) GetPin(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	pin, errInfo := h.service.GetPinById(r.Context(), entity.PinID(pinId))
+	pin, errInfo := h.service.GetPinById(ctx, entity.PinID(pinId))
 	if errInfo != emptyErrorInfo {
-		WriteErrorResponse(w, h.logger, emptyErrorInfo)
+		WriteErrorResponse(w, h.logger, errInfo)
 		return
+	}
+	if ctx.Value("is_auth") == true {
+		userIdFromSession, ok := ctx.Value("user_id").(entity.UserID)
+		if !ok {
+			WriteErrorResponse(w, h.logger, errs.ErrorInfo{
+				LocalErr: errs.ErrTypeConversion,
+			})
+		}
+		pin.IsOwner = pin.PinAuthor.UserId == userIdFromSession
 	}
 	WriteDefaultResponse(w, h.logger, pin)
 }
