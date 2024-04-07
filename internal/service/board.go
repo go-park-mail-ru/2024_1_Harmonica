@@ -75,13 +75,13 @@ func (s *RepositoryService) GetBoardById(ctx context.Context, boardId entity.Boa
 			LocalErr:   errs.ErrDBInternal,
 		}
 	}
-	if board.VisibilityType == entity.VisibilityPrivate && !authorContains(authors, userId) {
+	if board.VisibilityType == entity.VisibilityPrivate && !AuthorContains(authors, userId) {
 		return entity.FullBoard{}, errs.ErrorInfo{
 			LocalErr: errs.ErrPermissionDenied,
 		}
 	}
 
-	//if board.VisibilityType == entity.VisibilityPrivate && (userId == 0 || !authorContains(authors, userId)) {
+	//if board.VisibilityType == entity.VisibilityPrivate && (userId == 0 || !AuthorContains(authors, userId)) {
 	//	return emptyFullBoard, errs.ErrorInfo{
 	//		LocalErr: errs.ErrPermissionDenied,
 	//	}
@@ -278,7 +278,7 @@ func (s *RepositoryService) GetUserBoards(ctx context.Context, authorNickname st
 	return boards, emptyErrorInfo
 }
 
-func authorContains(authors []entity.BoardAuthor, userId entity.UserID) bool {
+func AuthorContains(authors []entity.BoardAuthor, userId entity.UserID) bool {
 	for _, author := range authors {
 		if author.UserId == userId {
 			return true
