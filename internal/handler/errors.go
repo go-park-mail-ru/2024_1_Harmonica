@@ -2,43 +2,17 @@ package handler
 
 import (
 	"encoding/json"
-	"go.uber.org/zap"
-	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"log"
 	"net/http"
-	"time"
+
+	"go.uber.org/zap"
 )
 
-func MakeUserResponse(user entity.User) entity.UserResponse {
-	userResponse := entity.UserResponse{
-		UserId:    user.UserID,
-		Email:     user.Email,
-		Nickname:  user.Nickname,
-		AvatarURL: user.AvatarURL,
-	}
-	return userResponse
-}
-
-func SetSessionTokenCookie(w http.ResponseWriter, sessionToken string, expiresAt time.Time) {
-	http.SetCookie(w, &http.Cookie{
-		Name:     "session_token",
-		Value:    sessionToken,
-		Expires:  expiresAt,
-		HttpOnly: true,
-	})
-}
-
-func WriteDefaultResponse(w http.ResponseWriter, logger *zap.Logger, object any) {
-	w.Header().Set("Content-Type", "application/json")
-	response, _ := json.Marshal(object)
-	_, err := w.Write(response)
-	if err != nil {
-		logger.Error(
-			errs.ErrServerInternal.Error(),
-			zap.Int("local_error_code", errs.ErrorCodes[errs.ErrServerInternal].LocalCode),
-			zap.String("general_error", err.Error()),
-		)
+func MakeErrorInfo(generalErr error, localErr error) errs.ErrorInfo {
+	return errs.ErrorInfo{
+		GeneralErr: generalErr,
+		LocalErr:   localErr,
 	}
 }
 
@@ -53,7 +27,6 @@ func WriteErrorResponse(w http.ResponseWriter, logger *zap.Logger, errInfo errs.
 		zap.Int("local_error_code", errs.ErrorCodes[errInfo.LocalErr].LocalCode),
 		zap.String("general_error", generalErrMessage),
 	)
-
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(errs.ErrorCodes[errInfo.LocalErr].HttpCode)
 

@@ -10,7 +10,7 @@ import (
 const USERS_LIKED_LIMIT = 20
 
 func GetPinAndUserId(r *http.Request, ctx context.Context) (entity.PinID, entity.UserID, errs.ErrorInfo) {
-	id, err := ReadUint64Slug(r, "pin_id")
+	id, err := ReadInt64Slug(r, "pin_id")
 	if err != nil {
 		return entity.PinID(0), entity.UserID(0), errs.ErrorInfo{
 			GeneralErr: err,
@@ -93,7 +93,7 @@ func (h *APIHandler) DeleteLike(w http.ResponseWriter, r *http.Request) {
 func (h *APIHandler) UsersLiked(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	id, err := ReadUint64Slug(r, "pin_id")
+	id, err := ReadInt64Slug(r, "pin_id")
 	if err != nil {
 		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
 			GeneralErr: err,

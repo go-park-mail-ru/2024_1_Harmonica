@@ -2,8 +2,10 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
+	"io"
 	"net/http"
 	"sync"
 	"time"
@@ -40,8 +42,17 @@ var (
 func (h *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	bodyBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrReadingRequestBody,
+		})
+		return
+	}
+
 	var user entity.User
-	err := UnmarshalRequest(r, &user)
+	err = json.Unmarshal(bodyBytes, &user)
 	if err != nil {
 		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
 			GeneralErr: err,
@@ -86,7 +97,7 @@ func (h *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 	Sessions.Store(newSessionToken, s)
 
 	SetSessionTokenCookie(w, newSessionToken, expiresAt)
-	WriteDefaultResponse(w, h.logger, MakeUserResponse(loggedInUser))
+	WriteUserResponse(w, h.logger, loggedInUser)
 }
 
 // Logout
@@ -100,14 +111,26 @@ func (h *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 //	@Failure		400	{object}	errs.ErrorResponse	"Possible code responses: 3."
 //	@Router			/logout [get]
 func (h *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	if ctx.Value("is_auth") == false {
+	c, err := r.Cookie("session_token")
+	if err != nil {
+		if errors.Is(err, http.ErrNoCookie) {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrReadCookie,
+		})
+		return
+	}
+	sessionToken := c.Value
+	_, exists := Sessions.Load(sessionToken)
+	if !exists {
+		SetSessionTokenCookie(w, "", time.Now())
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 
-	sessionToken := ctx.Value("session_token")
 	Sessions.Delete(sessionToken)
 	SetSessionTokenCookie(w, "", time.Now())
 	w.WriteHeader(http.StatusOK)
@@ -130,12 +153,22 @@ func (h *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
 func (h *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var user entity.User
-	err := UnmarshalRequest(r, &user)
+	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
-		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
+		WriteErrorsListResponse(w, h.logger, errs.ErrorInfo{
 			GeneralErr: err,
-			LocalErr:   errs.ErrReadingRequestBody})
+			LocalErr:   errs.ErrReadingRequestBody,
+		})
+		return
+	}
+
+	var user entity.User
+	err = json.Unmarshal(bodyBytes, &user)
+	if err != nil {
+		WriteErrorsListResponse(w, h.logger, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrReadingRequestBody,
+		})
 		return
 	}
 
@@ -186,7 +219,7 @@ func (h *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 	Sessions.Store(newSessionToken, s)
 
 	SetSessionTokenCookie(w, newSessionToken, expiresAt)
-	WriteDefaultResponse(w, h.logger, MakeUserResponse(registeredUser))
+	WriteUserResponse(w, h.logger, registeredUser)
 }
 
 // Check if user is authorized
