@@ -17,12 +17,15 @@ func (s *RepositoryService) GetFeedPins(ctx context.Context, limit, offset int) 
 	return pins, emptyErrorInfo
 }
 
-func (s *RepositoryService) GetUserPins(ctx context.Context, authorId entity.UserID, limit, offset int) (entity.UserPins, errs.ErrorInfo) {
-	// TODO check on user exist and throw 404 not 500
-	pins, err := s.repo.GetUserPins(ctx, authorId, limit, offset)
-	if err != nil {
+func (r *RepositoryService) GetUserPins(ctx context.Context, authorNickname string, limit, offset int) (entity.UserPins, errs.ErrorInfo) {
+	user, err := r.GetUserByNickname(ctx, authorNickname)
+	if err.GeneralErr != nil {
+		return entity.UserPins{}, err
+	}
+	pins, errPin := r.repo.GetUserPins(ctx, user.UserID, limit, offset)
+	if errPin != nil {
 		return entity.UserPins{}, errs.ErrorInfo{
-			GeneralErr: err,
+			GeneralErr: errPin,
 			LocalErr:   errs.ErrDBInternal,
 		}
 	}

@@ -23,6 +23,8 @@ const (
 
 	QueryUpdatePin = `UPDATE public.pin SET allow_comments=$2, title=$3, "description"=$4, click_url=$5 WHERE pin_id=$1`
 	QueryDeletePin = `DELETE FROM public.pin WHERE pin_id=$1`
+
+	QueryCheckPinExistence = `SELECT EXISTS(SELECT 1 FROM public.pin WHERE pin_id=$1)`
 )
 
 func (r *DBRepository) GetFeedPins(ctx context.Context, limit, offset int) (entity.FeedPins, error) {
@@ -75,4 +77,10 @@ func (r *DBRepository) UpdatePin(ctx context.Context, pin entity.Pin) error {
 func (r *DBRepository) DeletePin(ctx context.Context, id entity.PinID) error {
 	_, err := r.db.ExecContext(ctx, QueryDeletePin, id)
 	return err
+}
+
+func (r *DBRepository) CheckPinExistence(ctx context.Context, id entity.PinID) (bool, error) {
+	var exists bool
+	err := r.db.QueryRowContext(ctx, QueryCheckPinExistence, id).Scan(&exists)
+	return exists, err
 }

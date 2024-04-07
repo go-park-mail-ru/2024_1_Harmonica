@@ -2,20 +2,48 @@ package repository
 
 import (
 	"fmt"
+	"harmonica/config"
+
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	"harmonica/config"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
 type Connector struct {
 	db *sqlx.DB
+	s3 *minio.Client
 }
 
-func NewConnector(conf config.DBConf) (*Connector, error) {
+func NewConnector(conf *config.Config) (*Connector, error) {
+	db, err := NewDBConnector(conf.DB)
+	if err != nil {
+		return &Connector{}, err
+	}
+
+	s3, err := NewS3Connector(conf.Minio)
+	if err != nil {
+		return &Connector{}, err
+	}
+
+	return &Connector{db: db, s3: s3}, nil
+}
+
+func NewDBConnector(conf config.DBConf) (*sqlx.DB, error) {
 	psqlConn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		conf.Host, conf.Port, conf.User, conf.Password, conf.DBname)
-	db, err := sqlx.Open("postgres", psqlConn)
-	return &Connector{db: db}, err
+	return sqlx.Open("postgres", psqlConn)
+}
+
+func NewS3Connector(conf config.MinioConf) (*minio.Client, error) {
+	endpoint := conf.Endpoint
+	accessKeyID := conf.AccessKeyID
+	secretAccessKey := conf.SecretAccessKey
+	useSSL := conf.UseSSL
+	return minio.New(endpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(accessKeyID, secretAccessKey, ""),
+		Secure: useSSL,
+	})
 }
 
 func (connector *Connector) Disconnect() error {

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"net/http"
@@ -8,19 +9,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// Get user by id.
-//
-//	@Summary		Get user by id
-//	@Description	Get user by id in the slug
-//	@Tags			Users
-//	@Produce		json
-//	@Param			Cookie	header		string	true	"session-token"	default(session-token=)
-//	@Param			nickname	path		string	true	"User nickname"
-//	@Success		200		{object}	entity.UserProfileResponse
-//	@Failure		400		{object}	errs.ErrorResponse	"Possible code responses: 12, 19."
-//	@Failure		401		{object}	errs.ErrorResponse	"Possible code responses: 7."
-//	@Failure		500		{object}	errs.ErrorResponse	"Possible code responses: 11."
-//	@Router			users/{nickname} [get]
 func (h *APIHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -31,7 +19,6 @@ func (h *APIHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-
 	user, errInfo := h.service.GetUserByNickname(ctx, userNicknameFromSlug)
 	if errInfo != emptyErrorInfo {
 		WriteErrorResponse(w, h.logger, errInfo)
@@ -72,69 +59,67 @@ func (h *APIHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 //	@Produce		json
 //	@Accept			multipart/form-data
 //	@Param			Cookie	header		string	true	"session-token"	default(session-token=)
-//	@Param			user	formData	entity.User   string	false	"User information in json"
+//	@Param			user	formData	string	false	"User information in json"
 //	@Param			image	formData	file	false	"User avatar"
 //	@Success		200		{object}	entity.PinPageResponse
 //	@Failure		400		{object}	errs.ErrorResponse	"Possible code responses: 3, 4, 5, 12, 13, 18"
 //	@Failure		401		{object}	errs.ErrorResponse	"Possible code responses: 2."
 //	@Failure		403		{object}	errs.ErrorResponse	"Possible code responses: 14."
 //	@Failure		500		{object}	errs.ErrorResponse	"Possible code responses: 6, 11."
+//	@Router			/users/{user_id} [post]
 func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	userIdFromSlug, err := ReadUint64Slug(r, "user_id")
 	if err != nil {
-		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
-			GeneralErr: err,
-			LocalErr:   errs.ErrInvalidSlug,
-		})
+		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrInvalidSlug))
 		return
 	}
 
 	userIdFromSession, ok := ctx.Value("user_id").(entity.UserID)
 	if !ok {
-		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
-			LocalErr: errs.ErrTypeConversion,
-		})
+		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrTypeConversion))
 	}
 	if uint64(userIdFromSession) != userIdFromSlug {
-		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
-			LocalErr: errs.ErrPermissionDenied,
-		})
+		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrDiffUserId))
 		return
 	}
 
 	var user entity.User
-	err = UnmarshalRequest(r, &user)
+
+	image, imageHeader, err := r.FormFile("image")
+	if err == nil {
+		name, errUploading := h.service.UploadImage(ctx, image, imageHeader)
+		if errUploading != nil {
+			WriteErrorResponse(w, h.logger, errs.ErrorInfo{
+				GeneralErr: err,
+				LocalErr:   errs.ErrInvalidImg,
+			})
+			return
+		}
+		user.AvatarURL = FormImgURL(name)
+	}
+
+	userParams := r.FormValue("user")
+	err = json.Unmarshal([]byte(userParams), &user)
 	if err != nil {
-		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
-			GeneralErr: err,
-			LocalErr:   errs.ErrReadingRequestBody,
-		})
+		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrReadingRequestBody))
 		return
 	}
-	user.UserID = userIdFromSession // нужно для слоя сервиса! (проверка уникальности ника)
-
+	user.UserID = userIdFromSession
 	if user.Nickname != "" && !ValidateNickname(user.Nickname) {
-		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
-			LocalErr: errs.ErrInvalidInputFormat,
-		})
+		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrInvalidInputFormat))
 		return
 	}
 
 	if user.Password != "" {
 		if !ValidatePassword(user.Password) {
-			WriteErrorResponse(w, h.logger, errs.ErrorInfo{
-				LocalErr: errs.ErrInvalidInputFormat,
-			})
+			WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrInvalidInputFormat))
 			return
 		}
 		hashPassword, errH := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 		if errH != nil {
-			WriteErrorsListResponse(w, h.logger, errs.ErrorInfo{
-				GeneralErr: errH,
-				LocalErr:   errs.ErrHashingPassword,
-			})
+			WriteErrorsListResponse(w, h.logger, MakeErrorInfo(errH, errs.ErrHashingPassword))
 			return
 		}
 		user.Password = string(hashPassword)
@@ -145,6 +130,5 @@ func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, h.logger, errInfo)
 		return
 	}
-
-	WriteDefaultResponse(w, h.logger, MakeUserResponse(updatedUser))
+	WriteUserResponse(w, h.logger, updatedUser)
 }
