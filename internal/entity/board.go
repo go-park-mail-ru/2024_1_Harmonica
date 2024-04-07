@@ -16,7 +16,7 @@ type Board struct {
 	Title          string         `db:"title" json:"title"`
 	CreatedAt      time.Time      `db:"created_at" json:"created_at"`
 	Description    string         `db:"description" json:"description"`
-	CoverURL       string         `db:"cover_url" json:"cover_url"`
+	CoverURL       string         `db:"cover_url" json:"cover_url" swaggerignore:"true"`
 	VisibilityType VisibilityType `db:"visibility_type" json:"visibility_type"`
 	IsOwner        bool           `json:"is_owner"`
 }

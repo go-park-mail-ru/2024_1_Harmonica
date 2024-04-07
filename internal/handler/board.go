@@ -7,18 +7,18 @@ import (
 	"net/http"
 )
 
-// CreateBoard Create board.
+// Create board.
 //
 //	@Summary		Create board
 //	@Description	Create board by description
-//	@Tags			Pins
+//	@Tags			Boards
 //	@Produce		json
 //	@Accept			json
-//	@Param			Cookie	header		string	true	"session-token"	default(session-token=)
-//	@Param			board		body  entity.Board	string	false	"Board information in json"
+//	@Param			Cookie	header		string			true	"session-token"	default(session-token=)
+//	@Param			board	body		entity.Board	false	"Board information"
 //	@Success		200		{object}	entity.FullBoard
-//	@Failure		400		{object}	errs.ErrorResponse	"Possible code responses: ."
-//	@Failure		401		{object}	errs.ErrorResponse	"Possible code responses: ."
+//	@Failure		400		{object}	errs.ErrorResponse	"Possible code responses: 3, 4, 5, 21."
+//	@Failure		401		{object}	errs.ErrorResponse	"Possible code responses: 2."
 //	@Failure		500		{object}	errs.ErrorResponse	"Possible code responses: 11."
 //	@Router			/boards [post]
 func (h *APIHandler) CreateBoard(w http.ResponseWriter, r *http.Request) {
@@ -48,6 +48,21 @@ func (h *APIHandler) CreateBoard(w http.ResponseWriter, r *http.Request) {
 	WriteDefaultResponse(w, h.logger, res)
 }
 
+// Get board.
+//
+//	@Summary		Get board
+//	@Description	Get board by id
+//	@Tags			Boards
+//	@Produce		json
+//	@Accept			json
+//	@Param			Cookie		header		string	true	"session-token"	default(session-token=)
+//	@Param			board_id	path		int		true	"Board ID"
+//	@Success		200			{object}	entity.FullBoard
+//	@Failure		400			{object}	errs.ErrorResponse	"Possible code responses: 4, 12, 21."
+//	@Failure		401			{object}	errs.ErrorResponse	"Possible code responses: 2."
+//	@Failure		403			{object}	errs.ErrorResponse	"Possible code responses: 14."
+//	@Failure		500			{object}	errs.ErrorResponse	"Possible code responses: 11."
+//	@Router			/boards/{board_id}/ [get]
 func (h *APIHandler) GetBoard(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	boardId, err := ReadInt64Slug(r, "board_id")
@@ -78,6 +93,23 @@ func (h *APIHandler) GetBoard(w http.ResponseWriter, r *http.Request) {
 	WriteDefaultResponse(w, h.logger, board)
 }
 
+// Update board.
+//
+//	@Summary		Update board
+//	@Description	Update board by board information
+//	@Tags			Boards
+//	@Produce		json
+//	@Accept			multipart/form-data
+//	@Param			Cookie		header		string	true	"session-token"	default(session-token=)
+//	@Param			board_id	path		int		false	"Board ID"
+//	@Param			image		formData	file	false	"Cover image"
+//	@Param			board		formData	string	false	"Board information in json"
+//	@Success		200			{object}	entity.FullBoard
+//	@Failure		400			{object}	errs.ErrorResponse	"Possible code responses: 4, 12, 17, 18, 21."
+//	@Failure		401			{object}	errs.ErrorResponse	"Possible code responses: 2."
+//	@Failure		403			{object}	errs.ErrorResponse	"Possible code responses: 14."
+//	@Failure		500			{object}	errs.ErrorResponse	"Possible code responses: 11."
+//	@Router			/boards/{board_id}/ [post]
 func (h *APIHandler) UpdateBoard(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -126,6 +158,22 @@ func (h *APIHandler) UpdateBoard(w http.ResponseWriter, r *http.Request) {
 	WriteDefaultResponse(w, h.logger, board)
 }
 
+// Add pin to board.
+//
+//	@Summary		Add pin to board
+//	@Description	Add pin to board by pin id and board id.
+//	@Tags			Boards
+//	@Produce		json
+//	@Accept			json
+//	@Param			Cookie		header		string	true	"session-token"	default(session-token=)
+//	@Param			board_id	path		int		true	"Board ID"
+//	@Param			pin_id		path		int		true	"Board ID"
+//	@Success		200			{object}	interface{}
+//	@Failure		400			{object}	errs.ErrorResponse	"Possible code responses: 4, 12, 21."
+//	@Failure		401			{object}	errs.ErrorResponse	"Possible code responses: 2."
+//	@Failure		403			{object}	errs.ErrorResponse	"Possible code responses: 14."
+//	@Failure		500			{object}	errs.ErrorResponse	"Possible code responses: 11."
+//	@Router			/boards/{board_id}/pins/{pin_id}/ [post]
 func (h *APIHandler) AddPinToBoard(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	boardId, err := ReadInt64Slug(r, "board_id")
@@ -151,6 +199,22 @@ func (h *APIHandler) AddPinToBoard(w http.ResponseWriter, r *http.Request) {
 	WriteDefaultResponse(w, h.logger, nil)
 }
 
+// Delete pin from board.
+//
+//	@Summary		Delete pin from board
+//	@Description	Delete pin from board by pin id and board id.
+//	@Tags			Boards
+//	@Produce		json
+//	@Accept			json
+//	@Param			Cookie		header		string	true	"session-token"	default(session-token=)
+//	@Param			board_id	path		int		true	"Board ID"
+//	@Param			pin_id		path		int		true	"Board ID"
+//	@Success		200			{object}	interface{}
+//	@Failure		400			{object}	errs.ErrorResponse	"Possible code responses: 4, 12, 21."
+//	@Failure		401			{object}	errs.ErrorResponse	"Possible code responses: 2."
+//	@Failure		403			{object}	errs.ErrorResponse	"Possible code responses: 14."
+//	@Failure		500			{object}	errs.ErrorResponse	"Possible code responses: 11."
+//	@Router			/boards/{board_id}/pins/{pin_id}/ [post]
 func (h *APIHandler) DeletePinFromBoard(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	boardId, err := ReadInt64Slug(r, "board_id")
@@ -176,6 +240,20 @@ func (h *APIHandler) DeletePinFromBoard(w http.ResponseWriter, r *http.Request) 
 	WriteDefaultResponse(w, h.logger, nil)
 }
 
+// Delete board.
+//
+//	@Summary		Delete board
+//	@Description	Delete board by board id.
+//	@Tags			Boards
+//	@Produce		json
+//	@Param			Cookie		header		string	true	"session-token"	default(session-token=)
+//	@Param			board_id	path		int		true	"Board ID"
+//	@Success		200			{object}	interface{}
+//	@Failure		400			{object}	errs.ErrorResponse	"Possible code responses: 4, 12, 21."
+//	@Failure		401			{object}	errs.ErrorResponse	"Possible code responses: 2."
+//	@Failure		403			{object}	errs.ErrorResponse	"Possible code responses: 14."
+//	@Failure		500			{object}	errs.ErrorResponse	"Possible code responses: 11."
+//	@Router			/boards/{board_id}/ [delete]
 func (h *APIHandler) DeleteBoard(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	boardId, err := ReadInt64Slug(r, "board_id")
@@ -196,6 +274,20 @@ func (h *APIHandler) DeleteBoard(w http.ResponseWriter, r *http.Request) {
 	WriteDefaultResponse(w, h.logger, nil)
 }
 
+// Get boards created by user.
+//
+//	@Summary		Get boards created by user
+//	@Description	Get boards created by user by user nickname.
+//	@Tags			Boards
+//	@Produce		json
+//	@Param			Cookie		header		string	true	"session-token"	default(session-token=)
+//	@Param			nickname	path		string	true	"user nickname"
+//	@Success		200			{object}	entity.UserBoards
+//	@Failure		400			{object}	errs.ErrorResponse	"Possible code responses: 4, 12, 21."
+//	@Failure		401			{object}	errs.ErrorResponse	"Possible code responses: 2."
+//	@Failure		403			{object}	errs.ErrorResponse	"Possible code responses: 14."
+//	@Failure		500			{object}	errs.ErrorResponse	"Possible code responses: 11."
+//	@Router			/boards/created/{nickname}/ [get]
 func (h *APIHandler) UserBoards(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	authorNickname := r.PathValue("nickname")

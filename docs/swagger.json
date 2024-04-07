@@ -9,6 +9,393 @@
     "host": "https://harmoniums.ru",
     "basePath": "api/v1",
     "paths": {
+        "/boards": {
+            "post": {
+                "description": "Create board by description",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Boards"
+                ],
+                "summary": "Create board",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "session-token=",
+                        "description": "session-token",
+                        "name": "Cookie",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Board information",
+                        "name": "board",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/entity.Board"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/entity.FullBoard"
+                        }
+                    },
+                    "400": {
+                        "description": "Possible code responses: 3, 4, 5, 21.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Possible code responses: 2.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Possible code responses: 11.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/boards/created/{nickname}/": {
+            "get": {
+                "description": "Get boards created by user by user nickname.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Boards"
+                ],
+                "summary": "Get boards created by user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "session-token=",
+                        "description": "session-token",
+                        "name": "Cookie",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "user nickname",
+                        "name": "nickname",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/entity.UserBoards"
+                        }
+                    },
+                    "400": {
+                        "description": "Possible code responses: 4, 12, 21.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Possible code responses: 2.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Possible code responses: 14.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Possible code responses: 11.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/boards/{board_id}/": {
+            "get": {
+                "description": "Get board by id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Boards"
+                ],
+                "summary": "Get board",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "session-token=",
+                        "description": "session-token",
+                        "name": "Cookie",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Board ID",
+                        "name": "board_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/entity.FullBoard"
+                        }
+                    },
+                    "400": {
+                        "description": "Possible code responses: 4, 12, 21.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Possible code responses: 2.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Possible code responses: 14.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Possible code responses: 11.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Update board by board information",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Boards"
+                ],
+                "summary": "Update board",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "session-token=",
+                        "description": "session-token",
+                        "name": "Cookie",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Board ID",
+                        "name": "board_id",
+                        "in": "path"
+                    },
+                    {
+                        "type": "file",
+                        "description": "Cover image",
+                        "name": "image",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Board information in json",
+                        "name": "board",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/entity.FullBoard"
+                        }
+                    },
+                    "400": {
+                        "description": "Possible code responses: 4, 12, 17, 18, 21.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Possible code responses: 2.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Possible code responses: 14.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Possible code responses: 11.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete board by board id.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Boards"
+                ],
+                "summary": "Delete board",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "session-token=",
+                        "description": "session-token",
+                        "name": "Cookie",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Board ID",
+                        "name": "board_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Possible code responses: 4, 12, 21.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Possible code responses: 2.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Possible code responses: 14.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Possible code responses: 11.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/boards/{board_id}/pins/{pin_id}/": {
+            "post": {
+                "description": "Delete pin from board by pin id and board id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Boards"
+                ],
+                "summary": "Delete pin from board",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "session-token=",
+                        "description": "session-token",
+                        "name": "Cookie",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Board ID",
+                        "name": "board_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Board ID",
+                        "name": "pin_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Possible code responses: 4, 12, 21.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Possible code responses: 2.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Possible code responses: 14.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Possible code responses: 11.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/is_auth": {
             "get": {
                 "description": "Get user by request cookie",
@@ -709,6 +1096,57 @@
         }
     },
     "definitions": {
+        "entity.Board": {
+            "type": "object",
+            "properties": {
+                "board_id": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "is_owner": {
+                    "type": "boolean"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "visibility_type": {
+                    "$ref": "#/definitions/entity.VisibilityType"
+                }
+            }
+        },
+        "entity.BoardAuthor": {
+            "type": "object",
+            "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
+                "nickname": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "entity.BoardPinResponse": {
+            "type": "object",
+            "properties": {
+                "author": {
+                    "$ref": "#/definitions/entity.PinAuthor"
+                },
+                "content_url": {
+                    "type": "string"
+                },
+                "pin_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "entity.FeedPinResponse": {
             "description": "PinResponse information with author, pin id and content URL.",
             "type": "object",
@@ -732,6 +1170,26 @@
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/entity.FeedPinResponse"
+                    }
+                }
+            }
+        },
+        "entity.FullBoard": {
+            "type": "object",
+            "properties": {
+                "authors": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/entity.BoardAuthor"
+                    }
+                },
+                "board": {
+                    "$ref": "#/definitions/entity.Board"
+                },
+                "pins": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/entity.BoardPinResponse"
                     }
                 }
             }
@@ -819,6 +1277,17 @@
                 }
             }
         },
+        "entity.UserBoards": {
+            "type": "object",
+            "properties": {
+                "boards": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/entity.Board"
+                    }
+                }
+            }
+        },
         "entity.UserList": {
             "description": "User information with user id, email, nickname and avatar_url",
             "type": "object",
@@ -848,6 +1317,17 @@
                     "type": "integer"
                 }
             }
+        },
+        "entity.VisibilityType": {
+            "type": "string",
+            "enum": [
+                "public",
+                "private"
+            ],
+            "x-enum-varnames": [
+                "VisibilityPublic",
+                "VisibilityPrivate"
+            ]
         },
         "errs.ErrorResponse": {
             "type": "object",

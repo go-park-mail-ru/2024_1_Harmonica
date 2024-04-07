@@ -1,5 +1,38 @@
 basePath: api/v1
 definitions:
+  entity.Board:
+    properties:
+      board_id:
+        type: integer
+      created_at:
+        type: string
+      description:
+        type: string
+      is_owner:
+        type: boolean
+      title:
+        type: string
+      visibility_type:
+        $ref: '#/definitions/entity.VisibilityType'
+    type: object
+  entity.BoardAuthor:
+    properties:
+      avatar_url:
+        type: string
+      nickname:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  entity.BoardPinResponse:
+    properties:
+      author:
+        $ref: '#/definitions/entity.PinAuthor'
+      content_url:
+        type: string
+      pin_id:
+        type: integer
+    type: object
   entity.FeedPinResponse:
     description: PinResponse information with author, pin id and content URL.
     properties:
@@ -16,6 +49,19 @@ definitions:
       pins:
         items:
           $ref: '#/definitions/entity.FeedPinResponse'
+        type: array
+    type: object
+  entity.FullBoard:
+    properties:
+      authors:
+        items:
+          $ref: '#/definitions/entity.BoardAuthor'
+        type: array
+      board:
+        $ref: '#/definitions/entity.Board'
+      pins:
+        items:
+          $ref: '#/definitions/entity.BoardPinResponse'
         type: array
     type: object
   entity.Pin:
@@ -73,6 +119,13 @@ definitions:
       password:
         type: string
     type: object
+  entity.UserBoards:
+    properties:
+      boards:
+        items:
+          $ref: '#/definitions/entity.Board'
+        type: array
+    type: object
   entity.UserList:
     description: User information with user id, email, nickname and avatar_url
     properties:
@@ -93,6 +146,14 @@ definitions:
       user_id:
         type: integer
     type: object
+  entity.VisibilityType:
+    enum:
+    - public
+    - private
+    type: string
+    x-enum-varnames:
+    - VisibilityPublic
+    - VisibilityPrivate
   errs.ErrorResponse:
     properties:
       code:
@@ -107,6 +168,266 @@ info:
   title: Harmonium backend API
   version: "1.0"
 paths:
+  /boards:
+    post:
+      consumes:
+      - application/json
+      description: Create board by description
+      parameters:
+      - default: session-token=
+        description: session-token
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: Board information
+        in: body
+        name: board
+        schema:
+          $ref: '#/definitions/entity.Board'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.FullBoard'
+        "400":
+          description: 'Possible code responses: 3, 4, 5, 21.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "401":
+          description: 'Possible code responses: 2.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "500":
+          description: 'Possible code responses: 11.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+      summary: Create board
+      tags:
+      - Boards
+  /boards/{board_id}/:
+    delete:
+      description: Delete board by board id.
+      parameters:
+      - default: session-token=
+        description: session-token
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: Board ID
+        in: path
+        name: board_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "400":
+          description: 'Possible code responses: 4, 12, 21.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "401":
+          description: 'Possible code responses: 2.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "403":
+          description: 'Possible code responses: 14.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "500":
+          description: 'Possible code responses: 11.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+      summary: Delete board
+      tags:
+      - Boards
+    get:
+      consumes:
+      - application/json
+      description: Get board by id
+      parameters:
+      - default: session-token=
+        description: session-token
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: Board ID
+        in: path
+        name: board_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.FullBoard'
+        "400":
+          description: 'Possible code responses: 4, 12, 21.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "401":
+          description: 'Possible code responses: 2.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "403":
+          description: 'Possible code responses: 14.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "500":
+          description: 'Possible code responses: 11.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+      summary: Get board
+      tags:
+      - Boards
+    post:
+      consumes:
+      - multipart/form-data
+      description: Update board by board information
+      parameters:
+      - default: session-token=
+        description: session-token
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: Board ID
+        in: path
+        name: board_id
+        type: integer
+      - description: Cover image
+        in: formData
+        name: image
+        type: file
+      - description: Board information in json
+        in: formData
+        name: board
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.FullBoard'
+        "400":
+          description: 'Possible code responses: 4, 12, 17, 18, 21.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "401":
+          description: 'Possible code responses: 2.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "403":
+          description: 'Possible code responses: 14.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "500":
+          description: 'Possible code responses: 11.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+      summary: Update board
+      tags:
+      - Boards
+  /boards/{board_id}/pins/{pin_id}/:
+    post:
+      consumes:
+      - application/json
+      description: Delete pin from board by pin id and board id.
+      parameters:
+      - default: session-token=
+        description: session-token
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: Board ID
+        in: path
+        name: board_id
+        required: true
+        type: integer
+      - description: Board ID
+        in: path
+        name: pin_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "400":
+          description: 'Possible code responses: 4, 12, 21.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "401":
+          description: 'Possible code responses: 2.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "403":
+          description: 'Possible code responses: 14.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "500":
+          description: 'Possible code responses: 11.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+      summary: Delete pin from board
+      tags:
+      - Boards
+  /boards/created/{nickname}/:
+    get:
+      description: Get boards created by user by user nickname.
+      parameters:
+      - default: session-token=
+        description: session-token
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      - description: user nickname
+        in: path
+        name: nickname
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.UserBoards'
+        "400":
+          description: 'Possible code responses: 4, 12, 21.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "401":
+          description: 'Possible code responses: 2.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "403":
+          description: 'Possible code responses: 14.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+        "500":
+          description: 'Possible code responses: 11.'
+          schema:
+            $ref: '#/definitions/errs.ErrorResponse'
+      summary: Get boards created by user
+      tags:
+      - Boards
   /is_auth:
     get:
       description: Get user by request cookie
