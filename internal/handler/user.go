@@ -9,6 +9,67 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+func MakeUserResponse(user entity.User) entity.UserResponse {
+	userResponse := entity.UserResponse{
+		UserId:    user.UserID,
+		Email:     user.Email,
+		Nickname:  user.Nickname,
+		AvatarURL: user.AvatarURL,
+	}
+	return userResponse
+}
+
+// Update user.
+//
+//	@Summary		Update user
+//	@Description	Update user by description and user id.
+//	@Tags			Users
+//	@Produce		json
+//	@Accept			json
+//	@Param			Cookie		header		string	true	"session-token"	default(session-token=)
+//	@Param			nickname	path		string	true	"User nickname"
+//	@Success		200			{object}	entity.UserProfileResponse
+//	@Failure		400			{object}	errs.ErrorResponse	"Possible code responses: 3, 4, 5, 12, 13, 18"
+//	@Failure		401			{object}	errs.ErrorResponse	"Possible code responses: 2."
+//	@Failure		403			{object}	errs.ErrorResponse	"Possible code responses: 14."
+//	@Failure		500			{object}	errs.ErrorResponse	"Possible code responses: 6, 11."
+//	@Router			/users/{nickname}/ [get]
+func (h *APIHandler) GetUser(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	userNicknameFromSlug := r.PathValue("nickname")
+	if !ValidateNickname(userNicknameFromSlug) {
+		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
+			LocalErr: errs.ErrInvalidSlug,
+		})
+		return
+	}
+	user, errInfo := h.service.GetUserByNickname(ctx, userNicknameFromSlug)
+	if errInfo != emptyErrorInfo {
+		WriteErrorResponse(w, h.logger, errInfo)
+		return
+	}
+	if user == emptyUser {
+		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
+			LocalErr: errs.ErrUserNotExist,
+		})
+		return
+	}
+
+	isOwner := false
+	userIdFromSession, ok := ctx.Value("user_id").(entity.UserID)
+	if ok {
+		isOwner = user.UserID == userIdFromSession
+	}
+
+	userProfile := entity.UserProfileResponse{
+		User:           MakeUserResponse(user),
+		FollowersCount: 0,
+		IsOwner:        isOwner,
+	}
+	WriteDefaultResponse(w, h.logger, userProfile)
+}
+
 // Update user.
 //
 //	@Summary		Update user

@@ -44,7 +44,6 @@ var ErrorCodes = map[error]struct {
 	ErrDBUniqueNickname:   {HttpCode: 500, LocalCode: 10},
 	ErrDBInternal:         {HttpCode: 500, LocalCode: 11},
 	ErrInvalidSlug:        {HttpCode: 400, LocalCode: 12},
-	ErrDiffUserId:         {HttpCode: 400, LocalCode: 13},
 	ErrPermissionDenied:   {HttpCode: 403, LocalCode: 14},
 	ErrContentUrlRequired: {HttpCode: 400, LocalCode: 15},
 	ErrEmptyContentURL:    {HttpCode: 400, LocalCode: 16},

@@ -1031,6 +1031,70 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/{nickname}/": {
+            "get": {
+                "description": "Update user by description and user id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Update user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "session-token=",
+                        "description": "session-token",
+                        "name": "Cookie",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "User nickname",
+                        "name": "nickname",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/entity.UserProfileResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Possible code responses: 3, 4, 5, 12, 13, 18",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Possible code responses: 2.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Possible code responses: 14.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Possible code responses: 6, 11.",
+                        "schema": {
+                            "$ref": "#/definitions/errs.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/users/{user_id}": {
             "post": {
                 "description": "Update user by description and user id.",
@@ -1303,6 +1367,20 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/entity.UserResponse"
                     }
+                }
+            }
+        },
+        "entity.UserProfileResponse": {
+            "type": "object",
+            "properties": {
+                "followers_count": {
+                    "type": "integer"
+                },
+                "is_owner": {
+                    "type": "boolean"
+                },
+                "user": {
+                    "$ref": "#/definitions/entity.UserResponse"
                 }
             }
         },

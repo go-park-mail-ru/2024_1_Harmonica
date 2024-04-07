@@ -23,11 +23,15 @@ type UserResponse struct {
 	AvatarURL string `json:"avatar_url"`
 }
 
-// ответ - для хэндлера => в сторону хэндлера перенести
-
 // User list response model
 // @Description User information
 // @Description with user id, email, nickname and avatar_url
 type UserList struct {
 	Users []UserResponse `json:"users"`
+}
+
+type UserProfileResponse struct {
+	User           UserResponse `json:"user"`
+	FollowersCount uint64       `json:"followers_count"`
+	IsOwner        bool         `json:"is_owner"`
 }

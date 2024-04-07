@@ -13,7 +13,6 @@ import (
 const (
 	SessionTokenKey = "session_token"
 	UserIdKey       = "user_id"
-	IsAuthKey       = "is_auth"
 )
 
 func CheckSession(r *http.Request) (*http.Request, error) {
