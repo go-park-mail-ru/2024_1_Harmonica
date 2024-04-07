@@ -4,6 +4,9 @@ import (
 	"context"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
+	"mime/multipart"
+
+	"github.com/minio/minio-go/v7"
 )
 
 type IService interface {
@@ -14,7 +17,7 @@ type IService interface {
 	UpdateUser(ctx context.Context, user entity.User) (entity.User, errs.ErrorInfo)
 
 	GetFeedPins(ctx context.Context, limit, offset int) (entity.FeedPins, errs.ErrorInfo)
-	GetUserPins(ctx context.Context, authorId entity.UserID, limit, offset int) (entity.UserPins, errs.ErrorInfo)
+	GetUserPins(ctx context.Context, authorNickname string, limit, offset int) (entity.UserPins, errs.ErrorInfo)
 	GetPinById(ctx context.Context, id entity.PinID) (entity.PinPageResponse, errs.ErrorInfo)
 	CreatePin(ctx context.Context, pin entity.Pin) (entity.PinPageResponse, errs.ErrorInfo)
 	UpdatePin(ctx context.Context, pin entity.Pin) (entity.PinPageResponse, errs.ErrorInfo)
@@ -31,4 +34,7 @@ type IService interface {
 	SetLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) errs.ErrorInfo
 	ClearLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) errs.ErrorInfo
 	GetUsersLiked(ctx context.Context, pinId entity.PinID, limit int) (entity.UserList, errs.ErrorInfo)
+
+	UploadImage(ctx context.Context, file multipart.File, fileHeader *multipart.FileHeader) (string, error)
+	GetImage(ctx context.Context, name string) (*minio.Object, error)
 }

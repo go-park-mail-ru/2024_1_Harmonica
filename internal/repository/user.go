@@ -12,6 +12,7 @@ const (
 	QueryRegisterUser       = `INSERT INTO public.user ("email", "nickname", "password") VALUES($1, $2, $3)`
 	QueryUpdateUserNickname = `UPDATE public.user SET nickname=$2 WHERE user_id=$1`
 	QueryUpdateUserPassword = `UPDATE public.user SET "password"=$2 WHERE user_id=$1`
+	QueryUpdateUserAvatar   = `UPDATE public.user SET "avatar_url"=$2 WHERE user_id=$1`
 )
 
 func (r *DBRepository) GetUserByEmail(ctx context.Context, email string) (entity.User, error) {
@@ -75,6 +76,12 @@ func (r *DBRepository) UpdateUser(ctx context.Context, user entity.User) error {
 	}
 	if user.Password != "" {
 		_, err := r.db.ExecContext(ctx, QueryUpdateUserPassword, user.UserID, user.Password)
+		if err != nil {
+			return err
+		}
+	}
+	if user.AvatarURL != "" {
+		_, err := r.db.ExecContext(ctx, QueryUpdateUserAvatar, user.UserID, user.AvatarURL)
 		if err != nil {
 			return err
 		}

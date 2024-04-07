@@ -26,7 +26,7 @@ CREATE TYPE VISIBILITY AS ENUM('private', 'public');
 DROP TABLE IF EXISTS public.board;
 CREATE TABLE public.board (
 	board_id bigint NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	title bigint NOT NULL,
+	title TEXT NOT NULL,
 	created_at timestamptz NULL DEFAULT CURRENT_TIMESTAMP,
 	description TEXT NOT NULL DEFAULT '',
 	cover_url TEXT NULL DEFAULT '',

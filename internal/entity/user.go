@@ -9,7 +9,7 @@ type User struct {
 	Email      string    `db:"email" json:"email"`
 	Nickname   string    `db:"nickname" json:"nickname"`
 	Password   string    `db:"password" json:"password"`
-	AvatarURL  string    `db:"avatar_url" json:"avatar_url"`
+	AvatarURL  string    `db:"avatar_url" json:"avatar_url" swaggerignore:"true"`
 	RegisterAt time.Time `db:"register_at" json:"register_at" swaggerignore:"true"`
 }
 

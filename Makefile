@@ -9,3 +9,6 @@ test:
 
 lint:
 	golangci-lint run -c linter/.golangci.toml
+	
+swag:
+	swag init -g ./cmd/main.go

@@ -2,10 +2,11 @@ package handler
 
 import (
 	"encoding/json"
-	"go.uber.org/zap"
 	"harmonica/internal/entity/errs"
 	"log"
 	"net/http"
+
+	"go.uber.org/zap"
 )
 
 func MakeErrorInfo(generalErr error, localErr error) errs.ErrorInfo {
@@ -26,7 +27,6 @@ func WriteErrorResponse(w http.ResponseWriter, logger *zap.Logger, errInfo errs.
 		zap.Int("local_error_code", errs.ErrorCodes[errInfo.LocalErr].LocalCode),
 		zap.String("general_error", generalErrMessage),
 	)
-
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(errs.ErrorCodes[errInfo.LocalErr].HttpCode)
 

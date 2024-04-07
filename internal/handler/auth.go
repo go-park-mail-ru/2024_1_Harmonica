@@ -3,13 +3,14 @@ package handler
 import (
 	"encoding/json"
 	"errors"
-	"go.uber.org/zap"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"io"
 	"net/http"
 	"sync"
 	"time"
+
+	"go.uber.org/zap"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -28,15 +29,16 @@ var (
 //	@Summary		Login user
 //	@Description	Login user by request.body json
 //	@Tags			Authorization
-//
-// @Param 		 Cookie header string  false "session-token"     default(session-token=)
-// @Success		200		{object}	interface{}
-// @Failure		400		{object}	errs.ErrorResponse
-// @Failure		401		{object}	errs.ErrorResponse
-// @Failure		403		{object}	errs.ErrorResponse
-// @Failure		500		{object}	errs.ErrorResponse
-// @Header			200		{string}	Set-Cookie	"session-token"
-// @Router			/login [post]
+//	@Produce		json
+//	@Accept			json
+//	@Header			200		{string}	Set-Cookie	"session-token"
+//	@Param			Cookie	header		string		false	"session-token"	default(session-token=)
+//	@Success		200		{object}	entity.User
+//	@Failure		400		{object}	errs.ErrorResponse	"Possible code responses: 3, 4, 5."
+//	@Failure		401		{object}	errs.ErrorResponse	"Possible code responses: 7, 8."
+//	@Failure		403		{object}	errs.ErrorResponse	"Possible code responses: 1."
+//	@Failure		500		{object}	errs.ErrorResponse	"Possible code responses: 11."
+//	@Router			/login [post]
 func (h *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -103,12 +105,10 @@ func (h *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 //	@Summary		Logout user
 //	@Description	Logout user by their session cookie
 //	@Tags			Authorization
-//
-// @Param 		 Cookie header string  true "session-token"     default(session-token=)
-//
-//	@Success		200		{object}	interface{}
-//	@Failure		400		{object}	errs.ErrorResponse
+//	@Param			Cookie	header		string		false	"session-token"	default(session-token=)
 //	@Header			200		{string}	Set-Cookie	"session-token"
+//	@Success		200
+//	@Failure		400	{object}	errs.ErrorResponse	"Possible code responses: 3."
 //	@Router			/logout [get]
 func (h *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	c, err := r.Cookie("session_token")
@@ -143,12 +143,13 @@ func (h *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
 //	@Tags			Authorization
 //	@Produce		json
 //	@Accept			json
-//	@Param			request	body		repository.User	true	"json"
+//	@Param			request	body		entity.User	true	"json"
 //	@Success		200		{object}	entity.UserResponse
-//	@Failure		400		{object}	entity.ErrorsListResponse
-//	@Failure		403		{object}	entity.ErrorsListResponse
-//	@Failure		500		{object}	entity.ErrorsListResponse
-//	@Router			/register [post]
+//	@Failure		400		{object}	errs.ErrorResponse	"Possible code responses: 3, 4, 5."
+//	@Failure		401		{object}	errs.ErrorResponse	"Possible code responses: 7, 8."
+//	@Failure		403		{object}	errs.ErrorResponse	"Possible code responses: 1."
+//	@Failure		500		{object}	errs.ErrorResponse	"Possible code responses: 11."
+//	@Router			/users [post]
 func (h *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -226,14 +227,12 @@ func (h *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 //	@Summary		Get auth status
 //	@Description	Get user by request cookie
 //	@Tags			Authorization
-//
-// @Param 		 Cookie header string  false "session-token"     default(session-token=)
-//
+//	@Param			Cookie	header	string	false	"session-token"	default(session-token=)
 //	@Produce		json
 //	@Success		200	{object}	entity.UserResponse
-//	@Failure		400	{object}	errs.ErrorResponse
-//	@Failure		401	{object}	errs.ErrorResponse
-//	@Failure		500	{object}	errs.ErrorResponse
+//	@Failure		400	{object}	errs.ErrorResponse	"Possible code responses: 3."
+//	@Failure		401	{object}	errs.ErrorResponse	"Possible code responses: 2."
+//	@Failure		500	{object}	errs.ErrorResponse	"Possible code responses: 11."
 //	@Router			/is_auth [get]
 func (h *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -261,9 +260,10 @@ func (h *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
 func WriteUserResponse(w http.ResponseWriter, logger *zap.Logger, user entity.User) {
 	w.Header().Set("Content-Type", "application/json")
 	userResponse := entity.UserResponse{
-		UserId:   user.UserID,
-		Email:    user.Email,
-		Nickname: user.Nickname,
+		UserId:    user.UserID,
+		Email:     user.Email,
+		Nickname:  user.Nickname,
+		AvatarURL: user.AvatarURL,
 	}
 	response, _ := json.Marshal(userResponse)
 	_, err := w.Write(response)
