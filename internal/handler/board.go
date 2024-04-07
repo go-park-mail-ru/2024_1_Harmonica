@@ -175,23 +175,13 @@ func (h *APIHandler) UpdateBoard(w http.ResponseWriter, r *http.Request) {
 //	@Failure		500			{object}	errs.ErrorResponse	"Possible code responses: 11."
 //	@Router			/boards/{board_id}/pins/{pin_id}/ [post]
 func (h *APIHandler) AddPinToBoard(w http.ResponseWriter, r *http.Request) {
+	boardId, pinId, userId, err := GetInfoFromSlugAndContext(r)
+	if err != emptyErrorInfo {
+		WriteErrorResponse(w, h.logger, err)
+		return
+	}
 	ctx := r.Context()
-	boardId, err := ReadInt64Slug(r, "board_id")
-	if err != nil {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrInvalidSlug))
-		return
-	}
-	pinId, err := ReadInt64Slug(r, "pin_id")
-	if err != nil {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrInvalidSlug))
-		return
-	}
-	userId, ok := ctx.Value("user_id").(entity.UserID)
-	if !ok {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
-		return
-	}
-	errInfo := h.service.AddPinToBoard(ctx, entity.BoardID(boardId), entity.PinID(pinId), userId)
+	errInfo := h.service.AddPinToBoard(ctx, boardId, pinId, userId)
 	if errInfo != emptyErrorInfo {
 		WriteErrorResponse(w, h.logger, errInfo)
 		return
@@ -216,23 +206,13 @@ func (h *APIHandler) AddPinToBoard(w http.ResponseWriter, r *http.Request) {
 //	@Failure		500			{object}	errs.ErrorResponse	"Possible code responses: 11."
 //	@Router			/boards/{board_id}/pins/{pin_id}/ [post]
 func (h *APIHandler) DeletePinFromBoard(w http.ResponseWriter, r *http.Request) {
+	boardId, pinId, userId, err := GetInfoFromSlugAndContext(r)
+	if err != emptyErrorInfo {
+		WriteErrorResponse(w, h.logger, err)
+		return
+	}
 	ctx := r.Context()
-	boardId, err := ReadInt64Slug(r, "board_id")
-	if err != nil {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrInvalidSlug))
-		return
-	}
-	pinId, err := ReadInt64Slug(r, "pin_id")
-	if err != nil {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrInvalidSlug))
-		return
-	}
-	userId, ok := ctx.Value("user_id").(entity.UserID)
-	if !ok {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
-		return
-	}
-	errInfo := h.service.DeletePinFromBoard(ctx, entity.BoardID(boardId), entity.PinID(pinId), userId)
+	errInfo := h.service.DeletePinFromBoard(ctx, boardId, pinId, userId)
 	if errInfo != emptyErrorInfo {
 		WriteErrorResponse(w, h.logger, errInfo)
 		return
@@ -316,4 +296,23 @@ func (h *APIHandler) UserBoards(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	WriteDefaultResponse(w, h.logger, boards)
+}
+
+func GetInfoFromSlugAndContext(r *http.Request) (entity.BoardID, entity.PinID, entity.UserID, errs.ErrorInfo) {
+	ctx := r.Context()
+	boardStringId, err := ReadInt64Slug(r, "board_id")
+	if err != nil {
+		return 0, 0, 0, MakeErrorInfo(err, errs.ErrInvalidSlug)
+	}
+	pinStringId, err := ReadInt64Slug(r, "pin_id")
+	if err != nil {
+		return 0, 0, 0, MakeErrorInfo(err, errs.ErrInvalidSlug)
+	}
+	boardId := entity.BoardID(boardStringId)
+	pinId := entity.PinID(pinStringId)
+	userId, ok := ctx.Value("user_id").(entity.UserID)
+	if !ok {
+		return 0, 0, 0, MakeErrorInfo(nil, errs.ErrTypeConversion)
+	}
+	return boardId, pinId, userId, errs.ErrorInfo{}
 }
