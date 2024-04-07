@@ -139,15 +139,17 @@ func (h *APIHandler) GetPin(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, h.logger, errInfo)
 		return
 	}
-	if ctx.Value("is_auth") == true {
-		userIdFromSession, ok := ctx.Value("user_id").(entity.UserID)
-		if !ok {
-			WriteErrorResponse(w, h.logger, errs.ErrorInfo{
-				LocalErr: errs.ErrTypeConversion,
-			})
-		}
-		pin.IsOwner = pin.PinAuthor.UserId == userIdFromSession
+	userIdFromSession := ctx.Value("user_id")
+	if userIdFromSession == nil {
+		WriteDefaultResponse(w, h.logger, pin)
+		return
 	}
+	userIdFromSession, ok := userIdFromSession.(entity.UserID)
+	if !ok {
+		WriteDefaultResponse(w, h.logger, pin)
+		return
+	}
+	pin.IsOwner = pin.PinAuthor.UserId == userIdFromSession
 	WriteDefaultResponse(w, h.logger, pin)
 }
 

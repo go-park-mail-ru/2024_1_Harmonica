@@ -61,10 +61,10 @@ func configureUserRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.Se
 		"GET /api/v1/logout": h.Logout,
 	}
 	for pattern, f := range authRoutes {
-		mux.HandleFunc(pattern, middleware.Auth(logger, f))
+		mux.HandleFunc(pattern, middleware.AuthRequired(logger, f))
 	}
 	for pattern, f := range notAuthRoutes {
-		mux.HandleFunc(pattern, middleware.NotAuth(logger, f))
+		mux.HandleFunc(pattern, middleware.NoAuthRequired(logger, f))
 	}
 	for pattern, f := range publicRoutes {
 		mux.HandleFunc(pattern, f)
@@ -88,7 +88,7 @@ func configurePinRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.Ser
 		"GET /api/v1/likes/{pin_id}/users":    h.UsersLiked,
 	}
 	for pattern, f := range authRoutes {
-		mux.HandleFunc(pattern, middleware.Auth(logger, f))
+		mux.HandleFunc(pattern, middleware.AuthRequired(logger, f))
 	}
 	for pattern, f := range checkAuthRoutes {
 		mux.HandleFunc(pattern, middleware.CheckAuth(logger, f))
@@ -111,7 +111,7 @@ func configureBoardRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.S
 		"GET /api/v1/boards/created/{nickname}": h.UserBoards, // с пагинацией
 	}
 	for pattern, f := range authRoutes {
-		mux.HandleFunc(pattern, middleware.Auth(logger, f))
+		mux.HandleFunc(pattern, middleware.AuthRequired(logger, f))
 	}
 	for pattern, f := range checkAuthRoutes {
 		mux.HandleFunc(pattern, middleware.CheckAuth(logger, f))

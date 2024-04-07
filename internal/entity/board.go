@@ -18,6 +18,7 @@ type Board struct {
 	Description    string         `db:"description" json:"description"`
 	CoverURL       string         `db:"cover_url" json:"cover_url"`
 	VisibilityType VisibilityType `db:"visibility_type" json:"visibility_type"`
+	IsOwner        bool           `json:"is_owner"`
 }
 
 type UserBoards struct {

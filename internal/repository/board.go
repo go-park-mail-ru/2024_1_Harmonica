@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	QueryCreateBoard = `INSERT INTO public.board (title, description, cover_url, visibility_type) 
-    VALUES ($1, $2, $3, $4) RETURNING public.board.board_id, public.board.created_at, public.board.title, 
+	QueryCreateBoard = `INSERT INTO public.board (title, description, visibility_type) 
+    VALUES ($1, $2, $3) RETURNING public.board.board_id, public.board.created_at, public.board.title, 
     public.board.description, public.board.cover_url, public.board.visibility_type`
 
 	QueryInsertBoardAuthor = `INSERT INTO public.board_author (board_id, author_id) VALUES ($1, $2)`
@@ -52,7 +52,7 @@ func (r *DBRepository) CreateBoard(ctx context.Context, board entity.Board,
 	defer tx.Rollback()
 	var createdBoard entity.Board
 	err = tx.QueryRowxContext(ctx, QueryCreateBoard, board.Title, board.Description,
-		board.CoverURL, board.VisibilityType).StructScan(&createdBoard)
+		board.VisibilityType).StructScan(&createdBoard)
 	if err != nil {
 		return entity.Board{}, err
 	}

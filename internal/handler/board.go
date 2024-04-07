@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"net/http"
@@ -12,10 +13,9 @@ import (
 //	@Description	Create board by description
 //	@Tags			Pins
 //	@Produce		json
-//	@Accept			multipart/form-data
+//	@Accept			json
 //	@Param			Cookie	header		string	true	"session-token"	default(session-token=)
 //	@Param			board		body  entity.Board	string	false	"Board information in json"
-//	@Param			image	formData	file	true	"Board cover"
 //	@Success		200		{object}	entity.FullBoard
 //	@Failure		400		{object}	errs.ErrorResponse	"Possible code responses: ."
 //	@Failure		401		{object}	errs.ErrorResponse	"Possible code responses: ."
@@ -24,12 +24,13 @@ import (
 func (h *APIHandler) CreateBoard(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	board := entity.Board{}
+	board.VisibilityType = "public"
 	err := UnmarshalRequest(r, &board)
+
 	if err != nil {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrReadingRequestBody))
 		return
 	}
-	// нужна нормальная валидация ?
 	if !ValidateBoard(board) {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrInvalidInputFormat))
 		return
@@ -37,6 +38,7 @@ func (h *APIHandler) CreateBoard(w http.ResponseWriter, r *http.Request) {
 	userId, ok := ctx.Value("user_id").(entity.UserID)
 	if !ok {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
+		return
 	}
 	res, errInfo := h.service.CreateBoard(ctx, board, userId)
 	if errInfo != emptyErrorInfo {
@@ -53,15 +55,15 @@ func (h *APIHandler) GetBoard(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrInvalidSlug))
 		return
 	}
-	var (
-		userId entity.UserID
-		ok     bool
-	)
-	if ctx.Value("is_auth") == true {
-		userId, ok = ctx.Value("user_id").(entity.UserID)
-		if !ok {
-			WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
-		}
+	userStringId := ctx.Value("user_id")
+	if userStringId == nil {
+		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrUnauthorized))
+		return
+	}
+	userId, ok := userStringId.(entity.UserID)
+	if !ok {
+		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
+		return
 	}
 	limit, offset, err := GetLimitAndOffset(r)
 	if err != nil {
@@ -78,13 +80,17 @@ func (h *APIHandler) GetBoard(w http.ResponseWriter, r *http.Request) {
 
 func (h *APIHandler) UpdateBoard(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+
 	boardId, err := ReadInt64Slug(r, "board_id")
 	if err != nil {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrInvalidSlug))
 		return
 	}
 	var newBoard entity.Board
-	err = UnmarshalRequest(r, &newBoard)
+	newBoard.VisibilityType = "public"
+
+	boardParams := r.FormValue("board")
+	err = json.Unmarshal([]byte(boardParams), &newBoard)
 	if err != nil {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrReadingRequestBody))
 		return
@@ -96,6 +102,20 @@ func (h *APIHandler) UpdateBoard(w http.ResponseWriter, r *http.Request) {
 	userId, ok := ctx.Value("user_id").(entity.UserID)
 	if !ok {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
+		return
+	}
+	newBoard.CoverURL = ""
+	image, imageHeader, err := r.FormFile("image")
+	if err == nil {
+		name, errUploading := h.service.UploadImage(ctx, image, imageHeader)
+		if errUploading != nil {
+			WriteErrorResponse(w, h.logger, errs.ErrorInfo{
+				GeneralErr: err,
+				LocalErr:   errs.ErrInvalidImg,
+			})
+			return
+		}
+		newBoard.CoverURL = FormImgURL(name)
 	}
 	newBoard.BoardID = entity.BoardID(boardId)
 	board, errInfo := h.service.UpdateBoard(ctx, newBoard, userId)
@@ -121,6 +141,7 @@ func (h *APIHandler) AddPinToBoard(w http.ResponseWriter, r *http.Request) {
 	userId, ok := ctx.Value("user_id").(entity.UserID)
 	if !ok {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
+		return
 	}
 	errInfo := h.service.AddPinToBoard(ctx, entity.BoardID(boardId), entity.PinID(pinId), userId)
 	if errInfo != emptyErrorInfo {
@@ -145,6 +166,7 @@ func (h *APIHandler) DeletePinFromBoard(w http.ResponseWriter, r *http.Request) 
 	userId, ok := ctx.Value("user_id").(entity.UserID)
 	if !ok {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
+		return
 	}
 	errInfo := h.service.DeletePinFromBoard(ctx, entity.BoardID(boardId), entity.PinID(pinId), userId)
 	if errInfo != emptyErrorInfo {
@@ -164,6 +186,7 @@ func (h *APIHandler) DeleteBoard(w http.ResponseWriter, r *http.Request) {
 	userId, ok := ctx.Value("user_id").(entity.UserID)
 	if !ok {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
+		return
 	}
 	errInfo := h.service.DeleteBoard(ctx, entity.BoardID(boardId), userId)
 	if errInfo != emptyErrorInfo {
@@ -180,15 +203,15 @@ func (h *APIHandler) UserBoards(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrInvalidSlug))
 		return
 	}
-	var (
-		userId entity.UserID
-		ok     bool
-	)
-	if ctx.Value("is_auth") == true {
-		userId, ok = ctx.Value("user_id").(entity.UserID)
-		if !ok {
-			WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
-		}
+	userStringId := ctx.Value("user_id")
+	if userStringId == nil {
+		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrUnauthorized))
+		return
+	}
+	userId, ok := userStringId.(entity.UserID)
+	if !ok {
+		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
+		return
 	}
 	limit, offset, err := GetLimitAndOffset(r)
 	if err != nil {
