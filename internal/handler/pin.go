@@ -125,6 +125,7 @@ func (h *APIHandler) UserPins(w http.ResponseWriter, r *http.Request) {
 //	@Failure		500		{object}	errs.ErrorResponse	"Possible code responses: 11."
 //	@Router			/pins/{pin_id} [get]
 func (h *APIHandler) GetPin(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	pinId, err := ReadInt64Slug(r, "pin_id")
 	if err != nil {
 		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
@@ -133,31 +134,22 @@ func (h *APIHandler) GetPin(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	pin, errInfo := h.service.GetPinById(r.Context(), entity.PinID(pinId))
+	pin, errInfo := h.service.GetPinById(ctx, entity.PinID(pinId))
 	if errInfo != emptyErrorInfo {
 		WriteErrorResponse(w, h.logger, errInfo)
 		return
 	}
-
-	c, err := r.Cookie("session_token")
-	if err != nil {
+	userIdFromSession := ctx.Value("user_id")
+	if userIdFromSession == nil {
 		WriteDefaultResponse(w, h.logger, pin)
 		return
 	}
-	sessionToken := c.Value
-	s, exists := Sessions.Load(sessionToken)
-	if !exists {
+	userIdFromSession, ok := userIdFromSession.(entity.UserID)
+	if !ok {
 		WriteDefaultResponse(w, h.logger, pin)
 		return
 	}
-	if s.(Session).IsExpired() {
-		WriteDefaultResponse(w, h.logger, pin)
-		return
-	}
-	userId := s.(Session).UserId
-	if userId == pin.PinAuthor.UserId {
-		pin.IsOwner = true
-	}
+	pin.IsOwner = pin.PinAuthor.UserId == userIdFromSession
 	WriteDefaultResponse(w, h.logger, pin)
 }
 
@@ -202,7 +194,7 @@ func (h *APIHandler) CreatePin(w http.ResponseWriter, r *http.Request) {
 
 	res, errInfo := h.service.CreatePin(ctx, pin)
 	if errInfo != emptyErrorInfo {
-		WriteErrorResponse(w, h.logger, emptyErrorInfo)
+		WriteErrorResponse(w, h.logger, errInfo)
 		return
 	}
 	WriteDefaultResponse(w, h.logger, res)

@@ -30,18 +30,16 @@ func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	userIdFromSlug, err := ReadInt64Slug(r, "user_id")
 	if err != nil {
-		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
-			GeneralErr: err,
-			LocalErr:   errs.ErrInvalidSlug,
-		})
+		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrInvalidSlug))
 		return
 	}
 
-	userIdFromSession := ctx.Value("user_id").(entity.UserID)
+	userIdFromSession, ok := ctx.Value("user_id").(entity.UserID)
+	if !ok {
+		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrTypeConversion))
+	}
 	if uint64(userIdFromSession) != userIdFromSlug {
-		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
-			LocalErr: errs.ErrDiffUserId,
-		})
+		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrDiffUserId))
 		return
 	}
 
@@ -63,33 +61,23 @@ func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	userParams := r.FormValue("user")
 	err = json.Unmarshal([]byte(userParams), &user)
 	if err != nil {
-		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
-			GeneralErr: err,
-			LocalErr:   errs.ErrReadingRequestBody,
-		})
+		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrReadingRequestBody))
 		return
 	}
 	user.UserID = userIdFromSession
 	if user.Nickname != "" && !ValidateNickname(user.Nickname) {
-		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
-			LocalErr: errs.ErrInvalidInputFormat,
-		})
+		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrInvalidInputFormat))
 		return
 	}
 
 	if user.Password != "" {
 		if !ValidatePassword(user.Password) {
-			WriteErrorResponse(w, h.logger, errs.ErrorInfo{
-				LocalErr: errs.ErrInvalidInputFormat,
-			})
+			WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrInvalidInputFormat))
 			return
 		}
 		hashPassword, errH := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 		if errH != nil {
-			WriteErrorsListResponse(w, h.logger, errs.ErrorInfo{
-				GeneralErr: errH,
-				LocalErr:   errs.ErrHashingPassword,
-			})
+			WriteErrorsListResponse(w, h.logger, MakeErrorInfo(errH, errs.ErrHashingPassword))
 			return
 		}
 		user.Password = string(hashPassword)

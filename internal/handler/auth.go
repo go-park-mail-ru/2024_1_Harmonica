@@ -237,7 +237,10 @@ func (h *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 func (h *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	userIdFromSession := ctx.Value("user_id").(entity.UserID)
+	userIdFromSession, ok := ctx.Value("user_id").(entity.UserID)
+	if !ok {
+		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
+	}
 
 	// Checking the existence of user with userId associated with session
 	user, errInfo := h.service.GetUserById(ctx, userIdFromSession)
