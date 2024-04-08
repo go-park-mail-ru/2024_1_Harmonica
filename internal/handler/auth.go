@@ -41,10 +41,11 @@ var (
 //	@Router			/login [post]
 func (h *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	requestId := ctx.Value("request_id").(string)
 
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
-		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{
 			GeneralErr: err,
 			LocalErr:   errs.ErrReadingRequestBody,
 		})
@@ -54,7 +55,7 @@ func (h *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var user entity.User
 	err = json.Unmarshal(bodyBytes, &user)
 	if err != nil {
-		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{
 			GeneralErr: err,
 			LocalErr:   errs.ErrReadingRequestBody})
 		return
@@ -62,7 +63,7 @@ func (h *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	if !ValidateEmail(user.Email) ||
 		!ValidatePassword(user.Password) {
-		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{
 			LocalErr: errs.ErrInvalidInputFormat,
 		})
 		return
@@ -70,11 +71,11 @@ func (h *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	loggedInUser, errInfo := h.service.GetUserByEmail(ctx, user.Email)
 	if errInfo != emptyErrorInfo {
-		WriteErrorResponse(w, h.logger, errInfo)
+		WriteErrorResponse(w, h.logger, requestId, errInfo)
 		return
 	}
 	if loggedInUser == emptyUser {
-		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{
 			LocalErr: errs.ErrUserNotExist,
 		})
 		return
@@ -82,7 +83,7 @@ func (h *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	err = bcrypt.CompareHashAndPassword([]byte(loggedInUser.Password), []byte(user.Password))
 	if err != nil {
-		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{
 			GeneralErr: err,
 			LocalErr:   errs.ErrWrongPassword})
 		return
@@ -111,13 +112,16 @@ func (h *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 //	@Failure		400	{object}	errs.ErrorResponse	"Possible code responses: 3."
 //	@Router			/logout [get]
 func (h *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	requestId := ctx.Value("request_id").(string)
+
 	c, err := r.Cookie("session_token")
 	if err != nil {
 		if errors.Is(err, http.ErrNoCookie) {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
-		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{
 			GeneralErr: err,
 			LocalErr:   errs.ErrReadCookie,
 		})
@@ -152,10 +156,11 @@ func (h *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
 //	@Router			/users [post]
 func (h *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	requestId := ctx.Value("request_id").(string)
 
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
-		WriteErrorsListResponse(w, h.logger, errs.ErrorInfo{
+		WriteErrorsListResponse(w, h.logger, requestId, errs.ErrorInfo{
 			GeneralErr: err,
 			LocalErr:   errs.ErrReadingRequestBody,
 		})
@@ -165,7 +170,7 @@ func (h *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var user entity.User
 	err = json.Unmarshal(bodyBytes, &user)
 	if err != nil {
-		WriteErrorsListResponse(w, h.logger, errs.ErrorInfo{
+		WriteErrorsListResponse(w, h.logger, requestId, errs.ErrorInfo{
 			GeneralErr: err,
 			LocalErr:   errs.ErrReadingRequestBody,
 		})
@@ -175,7 +180,7 @@ func (h *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 	if !ValidateEmail(user.Email) ||
 		!ValidateNickname(user.Nickname) ||
 		!ValidatePassword(user.Password) {
-		WriteErrorsListResponse(w, h.logger, errs.ErrorInfo{
+		WriteErrorsListResponse(w, h.logger, requestId, errs.ErrorInfo{
 			LocalErr: errs.ErrInvalidInputFormat,
 		})
 		return
@@ -183,7 +188,7 @@ func (h *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
-		WriteErrorsListResponse(w, h.logger, errs.ErrorInfo{
+		WriteErrorsListResponse(w, h.logger, requestId, errs.ErrorInfo{
 			GeneralErr: err,
 			LocalErr:   errs.ErrHashingPassword,
 		})
@@ -193,18 +198,18 @@ func (h *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	errsList := h.service.RegisterUser(ctx, user)
 	if len(errsList) != 0 {
-		WriteErrorsListResponse(w, h.logger, errsList...)
+		WriteErrorsListResponse(w, h.logger, requestId, errsList...)
 		return
 	}
 
 	// Search for user by email (to get user id)
 	registeredUser, errInfo := h.service.GetUserByEmail(ctx, user.Email)
 	if errInfo != emptyErrorInfo {
-		WriteErrorsListResponse(w, h.logger, errInfo)
+		WriteErrorsListResponse(w, h.logger, requestId, errInfo)
 		return
 	}
 	if registeredUser == emptyUser {
-		WriteErrorsListResponse(w, h.logger, errs.ErrorInfo{
+		WriteErrorsListResponse(w, h.logger, requestId, errs.ErrorInfo{
 			LocalErr: errs.ErrUserNotExist,
 		})
 		return
@@ -236,20 +241,21 @@ func (h *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 //	@Router			/is_auth [get]
 func (h *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	requestId := ctx.Value("request_id").(string)
 
 	userIdFromSession, ok := ctx.Value("user_id").(entity.UserID)
 	if !ok {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
+		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrTypeConversion))
 	}
 
 	// Checking the existence of user with userId associated with session
 	user, errInfo := h.service.GetUserById(ctx, userIdFromSession)
 	if errInfo != emptyErrorInfo {
-		WriteErrorResponse(w, h.logger, errInfo)
+		WriteErrorResponse(w, h.logger, requestId, errInfo)
 		return
 	}
 	if user == emptyUser {
-		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{
 			LocalErr: errs.ErrUnauthorized})
 		return
 	}

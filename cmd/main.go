@@ -41,11 +41,16 @@ func runServer(addr string) {
 	mux.Handle("GET /swagger/", v3.NewHandler("My API", "/docs/swagger.json", "/swagger"))
 	mux.HandleFunc("GET /img/{image_name}", h.GetImage)
 
+	//http.Handle("/pins", middleware.AccessLog(logger, mux))
+	loggedMux := middleware.Logging(logger, mux)
+
 	server := http.Server{
-		Addr:    addr,
-		Handler: middleware.CORS(mux),
+		Addr: addr,
+		//Handler: middleware.CORS(mux),
+		Handler: middleware.CORS(loggedMux),
 	}
-	server.ListenAndServeTLS("/etc/letsencrypt/live/harmoniums.ru/fullchain.pem", "/etc/letsencrypt/live/harmoniums.ru/privkey.pem")
+	server.ListenAndServe()
+	//server.ListenAndServeTLS("/etc/letsencrypt/live/harmoniums.ru/fullchain.pem", "/etc/letsencrypt/live/harmoniums.ru/privkey.pem")
 }
 
 func configureUserRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.ServeMux) {
