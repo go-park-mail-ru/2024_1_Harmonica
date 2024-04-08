@@ -25,7 +25,7 @@ func runServer(addr string) {
 		return
 	}
 	defer connector.Disconnect()
-	r := repository.NewRepository(connector)
+	r := repository.NewRepository(connector, logger)
 	s := service.NewService(r)
 	h := handler.NewAPIHandler(s, logger)
 

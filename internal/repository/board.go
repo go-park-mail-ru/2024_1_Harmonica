@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/jackskj/carta"
 	"harmonica/internal/entity"
+	"time"
 )
 
 const (
@@ -50,16 +51,23 @@ func (r *DBRepository) CreateBoard(ctx context.Context, board entity.Board,
 		return entity.Board{}, err
 	}
 	defer tx.Rollback()
+
 	var createdBoard entity.Board
+	start := time.Now()
 	err = tx.QueryRowxContext(ctx, QueryCreateBoard, board.Title, board.Description,
 		board.VisibilityType).StructScan(&createdBoard)
+	LogDBQuery(r, ctx, QueryCreateBoard, time.Since(start))
 	if err != nil {
 		return entity.Board{}, err
 	}
+
+	start = time.Now()
 	_, err = tx.ExecContext(ctx, QueryInsertBoardAuthor, createdBoard.BoardID, userId)
+	LogDBQuery(r, ctx, QueryInsertBoardAuthor, time.Since(start))
 	if err != nil {
 		return entity.Board{}, err
 	}
+
 	if err = tx.Commit(); err != nil {
 		return entity.Board{}, err
 	}
@@ -68,7 +76,9 @@ func (r *DBRepository) CreateBoard(ctx context.Context, board entity.Board,
 
 func (r *DBRepository) GetBoardById(ctx context.Context, boardId entity.BoardID) (entity.Board, error) {
 	board := entity.Board{}
+	start := time.Now()
 	err := r.db.QueryRowxContext(ctx, QueryGetBoardById, boardId).StructScan(&board)
+	LogDBQuery(r, ctx, QueryGetBoardById, time.Since(start))
 	if err != nil {
 		return entity.Board{}, err
 	}
@@ -77,7 +87,9 @@ func (r *DBRepository) GetBoardById(ctx context.Context, boardId entity.BoardID)
 
 func (r *DBRepository) GetBoardAuthors(ctx context.Context, boardId entity.BoardID) ([]entity.BoardAuthor, error) {
 	var authors []entity.BoardAuthor
+	start := time.Now()
 	err := r.db.SelectContext(ctx, &authors, QueryGetBoardAuthors, boardId)
+	LogDBQuery(r, ctx, QueryGetBoardAuthors, time.Since(start))
 	if err != nil {
 		return []entity.BoardAuthor{}, err
 	}
@@ -86,7 +98,9 @@ func (r *DBRepository) GetBoardAuthors(ctx context.Context, boardId entity.Board
 
 func (r *DBRepository) GetBoardPins(ctx context.Context, boardId entity.BoardID, limit, offset int) ([]entity.BoardPinResponse, error) {
 	var pins []entity.BoardPinResponse
+	start := time.Now()
 	err := r.db.SelectContext(ctx, &pins, QueryGetBoardPins, boardId, limit, offset)
+	LogDBQuery(r, ctx, QueryGetBoardPins, time.Since(start))
 	if err != nil {
 		return []entity.BoardPinResponse{}, err
 	}
@@ -95,30 +109,40 @@ func (r *DBRepository) GetBoardPins(ctx context.Context, boardId entity.BoardID,
 
 func (r *DBRepository) UpdateBoard(ctx context.Context, board entity.Board) (entity.Board, error) {
 	var updatedBoard entity.Board
+	start := time.Now()
 	err := r.db.QueryRowxContext(ctx, QueryUpdateBoard, board.BoardID, board.Title, board.Description,
 		board.CoverURL, board.VisibilityType).StructScan(&updatedBoard)
+	LogDBQuery(r, ctx, QueryUpdateBoard, time.Since(start))
 	return updatedBoard, err
 }
 
 func (r *DBRepository) AddPinToBoard(ctx context.Context, boardId entity.BoardID, pinId entity.PinID) error {
+	start := time.Now()
 	_, err := r.db.ExecContext(ctx, QueryAddPinToBoard, boardId, pinId)
+	LogDBQuery(r, ctx, QueryAddPinToBoard, time.Since(start))
 	return err
 }
 
 func (r *DBRepository) DeletePinFromBoard(ctx context.Context, boardId entity.BoardID, pinId entity.PinID) error {
+	start := time.Now()
 	_, err := r.db.ExecContext(ctx, QueryDeletePinFromBoard, boardId, pinId)
+	LogDBQuery(r, ctx, QueryDeletePinFromBoard, time.Since(start))
 	return err
 }
 
 func (r *DBRepository) DeleteBoard(ctx context.Context, boardId entity.BoardID) error {
+	start := time.Now()
 	_, err := r.db.ExecContext(ctx, QueryDeleteBoard, boardId)
+	LogDBQuery(r, ctx, QueryDeleteBoard, time.Since(start))
 	return err
 }
 
 func (r *DBRepository) GetUserBoards(ctx context.Context, authorId entity.UserID,
 	limit, offset int) (entity.UserBoards, error) {
 	boards := entity.UserBoards{}
+	start := time.Now()
 	rows, err := r.db.QueryContext(ctx, QueryGetUserBoards, authorId, limit, offset)
+	LogDBQuery(r, ctx, QueryGetUserBoards, time.Since(start))
 	if err != nil {
 		return entity.UserBoards{}, err
 	}
@@ -132,6 +156,8 @@ func (r *DBRepository) GetUserBoards(ctx context.Context, authorId entity.UserID
 func (r *DBRepository) CheckBoardAuthorExistence(ctx context.Context, userId entity.UserID,
 	boardId entity.BoardID) (bool, error) {
 	var exists bool
+	start := time.Now()
 	err := r.db.QueryRowContext(ctx, QueryCheckBoardAuthorExistence, userId, boardId).Scan(&exists)
+	LogDBQuery(r, ctx, QueryCheckBoardAuthorExistence, time.Since(start))
 	return exists, err
 }

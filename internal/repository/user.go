@@ -2,7 +2,9 @@ package repository
 
 import (
 	"context"
+	"go.uber.org/zap"
 	"harmonica/internal/entity"
+	"time"
 )
 
 const (
@@ -16,7 +18,9 @@ const (
 )
 
 func (r *DBRepository) GetUserByEmail(ctx context.Context, email string) (entity.User, error) {
+	start := time.Now()
 	rows, err := r.db.QueryxContext(ctx, QueryGetUserByEmail, email)
+	LogDBQuery(r, ctx, QueryGetUserByEmail, time.Since(start))
 	// TODO по-хорошему переписать на QueryRowxContext (сложность в том, чтобы переписать все методы, использующие этот)
 	// так как он возвращает ошибку sql.ErrNoRows, а QueryxContext - нет
 	if err != nil {
@@ -33,7 +37,9 @@ func (r *DBRepository) GetUserByEmail(ctx context.Context, email string) (entity
 }
 
 func (r *DBRepository) GetUserByNickname(ctx context.Context, nickname string) (entity.User, error) {
+	start := time.Now()
 	rows, err := r.db.QueryxContext(ctx, QueryGetUserByNickname, nickname)
+	LogDBQuery(r, ctx, QueryGetUserByNickname, time.Since(start))
 	if err != nil {
 		return entity.User{}, err
 	}
@@ -48,7 +54,9 @@ func (r *DBRepository) GetUserByNickname(ctx context.Context, nickname string) (
 }
 
 func (r *DBRepository) GetUserById(ctx context.Context, id entity.UserID) (entity.User, error) {
+	start := time.Now()
 	rows, err := r.db.QueryxContext(ctx, QueryGetUserById, id)
+	LogDBQuery(r, ctx, QueryGetUserById, time.Since(start))
 	if err != nil {
 		return entity.User{}, err
 	}
@@ -63,28 +71,45 @@ func (r *DBRepository) GetUserById(ctx context.Context, id entity.UserID) (entit
 }
 
 func (r *DBRepository) RegisterUser(ctx context.Context, user entity.User) error {
+	start := time.Now()
 	_, err := r.db.ExecContext(ctx, QueryRegisterUser, user.Email, user.Nickname, user.Password)
+	LogDBQuery(r, ctx, QueryRegisterUser, time.Since(start))
 	return err
 }
 
 func (r *DBRepository) UpdateUser(ctx context.Context, user entity.User) error {
 	if user.Nickname != "" {
+		start := time.Now()
 		_, err := r.db.ExecContext(ctx, QueryUpdateUserNickname, user.UserID, user.Nickname)
+		LogDBQuery(r, ctx, QueryUpdateUserNickname, time.Since(start))
 		if err != nil {
 			return err
 		}
 	}
 	if user.Password != "" {
+		start := time.Now()
 		_, err := r.db.ExecContext(ctx, QueryUpdateUserPassword, user.UserID, user.Password)
+		LogDBQuery(r, ctx, QueryUpdateUserPassword, time.Since(start))
 		if err != nil {
 			return err
 		}
 	}
 	if user.AvatarURL != "" {
+		start := time.Now()
 		_, err := r.db.ExecContext(ctx, QueryUpdateUserAvatar, user.UserID, user.AvatarURL)
+		LogDBQuery(r, ctx, QueryUpdateUserAvatar, time.Since(start))
 		if err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func LogDBQuery(r *DBRepository, ctx context.Context, query string, duration time.Duration) {
+	requestId := ctx.Value("request_id").(string)
+	r.logger.Info("DB query handled",
+		zap.String("request_id", requestId),
+		zap.String("query", query),
+		zap.String("duration", duration.String()),
+	)
 }

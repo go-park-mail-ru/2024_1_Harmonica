@@ -29,7 +29,7 @@ func Logging(l *zap.Logger, next http.Handler) http.Handler {
 		wrappedWriter := &WrappedResponseWriter{ResponseWriter: w, StatusCode: http.StatusOK}
 		next.ServeHTTP(wrappedWriter, r.WithContext(ctx))
 
-		l.Info("Request handled",
+		l.Info("request handled",
 			zap.String("request_id", requestId),
 			zap.String("method", r.Method),
 			zap.String("path", r.URL.Path),
