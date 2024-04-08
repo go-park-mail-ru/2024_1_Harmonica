@@ -2,7 +2,6 @@ package test_service
 
 import (
 	"context"
-	"fmt"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"harmonica/internal/service"
@@ -349,7 +348,7 @@ func TestUpdatePin(t *testing.T) {
 			NotExpectUpdatePin: true,
 		},
 		{
-			Name:           "Uncorrect test 3",
+			Name:           "Uncorrect test 4",
 			MockGetPinByID: []mockGetPinByID{GetPinByIDCorrectValues[0], GetPinByIDUncorrectValues[0]},
 			MockArgs: mockArgs{
 				context.Background(),
@@ -377,7 +376,6 @@ func TestUpdatePin(t *testing.T) {
 			repo.EXPECT().GetPinById(request.Args.Ctx, request.Args.PinId).Return(
 				request.Return.Pin, request.Return.Err)
 		}
-		fmt.Println(test.Name)
 		if !test.NotExpectUpdatePin {
 			repo.EXPECT().UpdatePin(test.MockArgs.Ctx, test.MockArgs.Pin).Return(test.MockReturn.Err)
 		}
