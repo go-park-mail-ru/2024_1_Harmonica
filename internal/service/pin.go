@@ -35,7 +35,7 @@ func (r *RepositoryService) GetUserPins(ctx context.Context, authorNickname stri
 	return pins, emptyErrorInfo
 }
 
-func (s *RepositoryService) GetPinById(ctx context.Context, pinId entity.PinID) (entity.PinPageResponse, errs.ErrorInfo) {
+func (s *RepositoryService) GetPinById(ctx context.Context, pinId entity.PinID, userId entity.UserID) (entity.PinPageResponse, errs.ErrorInfo) {
 	pin, err := s.repo.GetPinById(ctx, pinId)
 	if err != nil {
 		return entity.PinPageResponse{}, errs.ErrorInfo{
@@ -43,6 +43,14 @@ func (s *RepositoryService) GetPinById(ctx context.Context, pinId entity.PinID) 
 			LocalErr:   errs.ErrDBInternal,
 		}
 	}
+	isLiked, err := s.repo.CheckIsLiked(ctx, pinId, userId)
+	if err != nil {
+		return entity.PinPageResponse{}, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrDBInternal,
+		}
+	}
+	pin.IsLiked = isLiked
 	return pin, emptyErrorInfo
 }
 

@@ -66,6 +66,21 @@ func (mr *MockIRepositoryMockRecorder) CheckBoardAuthorExistence(ctx, userId, bo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckBoardAuthorExistence", reflect.TypeOf((*MockIRepository)(nil).CheckBoardAuthorExistence), ctx, userId, boardId)
 }
 
+// CheckIsLiked mocks base method.
+func (m *MockIRepository) CheckIsLiked(ctx context.Context, pinId entity.PinID, userId entity.UserID) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckIsLiked", ctx, pinId, userId)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CheckIsLiked indicates an expected call of CheckIsLiked.
+func (mr *MockIRepositoryMockRecorder) CheckIsLiked(ctx, pinId, userId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckIsLiked", reflect.TypeOf((*MockIRepository)(nil).CheckIsLiked), ctx, pinId, userId)
+}
+
 // CheckPinExistence mocks base method.
 func (m *MockIRepository) CheckPinExistence(ctx context.Context, id entity.PinID) (bool, error) {
 	m.ctrl.T.Helper()
@@ -243,18 +258,18 @@ func (mr *MockIRepositoryMockRecorder) GetImage(ctx, name interface{}) *gomock.C
 }
 
 // GetPinById mocks base method.
-func (m *MockIRepository) GetPinById(ctx context.Context, id entity.PinID) (entity.PinPageResponse, error) {
+func (m *MockIRepository) GetPinById(ctx context.Context, PinId entity.PinID) (entity.PinPageResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPinById", ctx, id)
+	ret := m.ctrl.Call(m, "GetPinById", ctx, PinId)
 	ret0, _ := ret[0].(entity.PinPageResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetPinById indicates an expected call of GetPinById.
-func (mr *MockIRepositoryMockRecorder) GetPinById(ctx, id interface{}) *gomock.Call {
+func (mr *MockIRepositoryMockRecorder) GetPinById(ctx, PinId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPinById", reflect.TypeOf((*MockIRepository)(nil).GetPinById), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPinById", reflect.TypeOf((*MockIRepository)(nil).GetPinById), ctx, PinId)
 }
 
 // GetUserBoards mocks base method.

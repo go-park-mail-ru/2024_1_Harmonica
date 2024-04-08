@@ -65,6 +65,9 @@ func TestCorrectGetPinById(t *testing.T) {
 		MockGetPinByID     mockGetPinByID
 		FuncArgs           funcArgs
 		ExpectedFuncReturn funcReturn
+		waitCheckCall      bool
+		CheckReturn        bool
+		ErrCheckReturn     error
 	}
 	tests := []test{
 		{
@@ -75,6 +78,7 @@ func TestCorrectGetPinById(t *testing.T) {
 				PinId: 1,
 			},
 			ExpectedFuncReturn: funcReturn{},
+			waitCheckCall:      true,
 		},
 		{
 			Name:           "Error work test 1",
@@ -91,14 +95,35 @@ func TestCorrectGetPinById(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name:           "Error work test 2",
+			MockGetPinByID: GetPinByIDCorrectValues[0],
+			FuncArgs: funcArgs{
+				Ctx:   context.Background(),
+				PinId: 1,
+			},
+			ExpectedFuncReturn: funcReturn{
+				Pin: entity.PinPageResponse{},
+				Err: errs.ErrorInfo{
+					GeneralErr: errs.ErrDBInternal,
+					LocalErr:   errs.ErrDBInternal,
+				},
+			},
+			ErrCheckReturn: errs.ErrDBInternal,
+			waitCheckCall:  true,
+		},
 	}
 	ctrl := gomock.NewController(t)
 	repo := mock_repository.NewMockIRepository(ctrl)
 	for _, test := range tests {
 		repo.EXPECT().GetPinById(test.MockGetPinByID.Args.Ctx, test.MockGetPinByID.Args.PinId).Return(
 			test.MockGetPinByID.Return.Pin, test.MockGetPinByID.Return.Err)
+		if test.waitCheckCall {
+			repo.EXPECT().CheckIsLiked(test.MockGetPinByID.Args.Ctx, test.MockGetPinByID.Args.PinId, entity.UserID(1)).Return(
+				test.CheckReturn, test.ErrCheckReturn)
+		}
 		service := service.NewService(repo)
-		res, err := service.GetPinById(test.FuncArgs.Ctx, test.FuncArgs.PinId)
+		res, err := service.GetPinById(test.FuncArgs.Ctx, test.FuncArgs.PinId, entity.UserID(1))
 		assert.Equal(t, test.ExpectedFuncReturn.Pin, res)
 		assert.Equal(t, test.ExpectedFuncReturn.Err, err)
 	}

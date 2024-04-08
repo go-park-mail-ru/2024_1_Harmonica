@@ -184,18 +184,18 @@ func (mr *MockIServiceMockRecorder) GetImage(ctx, name interface{}) *gomock.Call
 }
 
 // GetPinById mocks base method.
-func (m *MockIService) GetPinById(ctx context.Context, id entity.PinID) (entity.PinPageResponse, errs.ErrorInfo) {
+func (m *MockIService) GetPinById(ctx context.Context, PinId entity.PinID, UserId entity.UserID) (entity.PinPageResponse, errs.ErrorInfo) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPinById", ctx, id)
+	ret := m.ctrl.Call(m, "GetPinById", ctx, PinId, UserId)
 	ret0, _ := ret[0].(entity.PinPageResponse)
 	ret1, _ := ret[1].(errs.ErrorInfo)
 	return ret0, ret1
 }
 
 // GetPinById indicates an expected call of GetPinById.
-func (mr *MockIServiceMockRecorder) GetPinById(ctx, id interface{}) *gomock.Call {
+func (mr *MockIServiceMockRecorder) GetPinById(ctx, PinId, UserId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPinById", reflect.TypeOf((*MockIService)(nil).GetPinById), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPinById", reflect.TypeOf((*MockIService)(nil).GetPinById), ctx, PinId, UserId)
 }
 
 // GetUserBoards mocks base method.
