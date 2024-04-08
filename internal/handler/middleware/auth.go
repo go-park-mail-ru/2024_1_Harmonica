@@ -7,6 +7,7 @@ import (
 	"harmonica/internal/handler"
 	"net/http"
 
+	"github.com/gorilla/csrf"
 	"go.uber.org/zap"
 )
 
@@ -36,6 +37,8 @@ func CheckSession(r *http.Request) (*http.Request, error) {
 
 func AuthRequired(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-CSRF-Token", csrf.Token(r))
+		w.Header().Set("Access-Control-Expose-Headers", "X-CSRF-Token")
 		request, err := CheckSession(r)
 		if err != nil {
 			if errs.ErrorCodes[err].HttpCode != 0 {
@@ -54,6 +57,8 @@ func AuthRequired(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
 
 func NoAuthRequired(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-CSRF-Token", csrf.Token(r))
+		w.Header().Set("Access-Control-Expose-Headers", "X-CSRF-Token")
 		_, err := CheckSession(r)
 		if err != nil {
 			next.ServeHTTP(w, r)
@@ -67,6 +72,8 @@ func NoAuthRequired(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
 
 func CheckAuth(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-CSRF-Token", csrf.Token(r))
+		w.Header().Set("Access-Control-Expose-Headers", "X-CSRF-Token")
 		request, err := CheckSession(r)
 		if err != nil {
 			request = r
