@@ -55,6 +55,7 @@ func (s *RepositoryService) GetPinById(ctx context.Context, pinId entity.PinID, 
 }
 
 func (s *RepositoryService) CreatePin(ctx context.Context, pin entity.Pin) (entity.PinPageResponse, errs.ErrorInfo) {
+	pin.Sanitize()
 	pinId, errCreate := s.repo.CreatePin(ctx, pin)
 	if errCreate != nil {
 		return entity.PinPageResponse{}, errs.ErrorInfo{

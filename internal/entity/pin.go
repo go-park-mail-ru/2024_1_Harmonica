@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"html"
 	"time"
 )
 
@@ -17,13 +18,23 @@ type Pin struct {
 	ContentUrl    string    `db:"content_url" json:"content_url" swaggerignore:"true"`
 }
 
+func (p *Pin) Sanitize() {
+	p.Title = html.EscapeString(p.Title)
+	p.Description = html.EscapeString(p.Description)
+	p.ClickUrl = html.EscapeString(p.ClickUrl)
+}
+
 // Pin response author model
 // @Description User-author information
 // @Description with user id, nickname and avatar
-type PinAuthor struct {
+type PinAuthor struct { // TODO: PinAuthor == BoardAuthor, replace to just Author
 	UserId    UserID `db:"user_id" json:"user_id"`
 	Nickname  string `db:"nickname" json:"nickname"`
 	AvatarURL string `db:"avatar_url" json:"avatar_url"`
+}
+
+func (p *PinAuthor) Sanitize() {
+	p.Nickname = html.EscapeString(p.Nickname)
 }
 
 // Pin page response model
@@ -42,6 +53,13 @@ type PinPageResponse struct {
 	PinAuthor     `json:"author"`
 }
 
+func (p *PinPageResponse) Sanitize() {
+	p.Title = html.EscapeString(p.Title)
+	p.Description = html.EscapeString(p.Description)
+	p.ClickUrl = html.EscapeString(p.ClickUrl)
+	p.PinAuthor.Sanitize()
+}
+
 // Feed pin response model
 // @Description PinResponse information
 // @Description with author, pin id and content URL.
@@ -51,10 +69,20 @@ type FeedPinResponse struct {
 	PinAuthor  `json:"author"`
 }
 
+func (p *FeedPinResponse) Sanitize() {
+	p.PinAuthor.Sanitize()
+}
+
 // Pins model
 // @Description Pins array of FeedPinResponse
 type FeedPins struct {
 	Pins []FeedPinResponse `json:"pins"`
+}
+
+func (p *FeedPins) Sanitize() {
+	for _, pin := range p.Pins {
+		pin.Sanitize()
+	}
 }
 
 type UserPinResponse struct {

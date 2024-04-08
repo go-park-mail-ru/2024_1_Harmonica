@@ -42,6 +42,7 @@ func (s *RepositoryService) GetUserById(ctx context.Context, id entity.UserID) (
 }
 
 func (s *RepositoryService) RegisterUser(ctx context.Context, user entity.User) []errs.ErrorInfo {
+	user.Sanitize()
 	var errsList []errs.ErrorInfo
 
 	// Checking for unique fields
@@ -91,6 +92,7 @@ func (s *RepositoryService) RegisterUser(ctx context.Context, user entity.User) 
 }
 
 func (s *RepositoryService) UpdateUser(ctx context.Context, user entity.User) (entity.User, errs.ErrorInfo) {
+	user.Sanitize()
 	if user.Nickname != "" {
 		checkUser, err := s.repo.GetUserByNickname(ctx, user.Nickname)
 		if err != nil {
