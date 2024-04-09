@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
@@ -70,21 +71,10 @@ func (h *APIHandler) GetBoard(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrInvalidSlug))
 		return
 	}
-
-	// исправление: доступ к доске для неавторизованных
-	userIdString := ctx.Value("user_id")
-	var (
-		userId entity.UserID
-		ok     bool
-	)
-	if userIdString != nil {
-		userId, ok = userIdString.(entity.UserID)
-		if !ok {
-			WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
-			return
-		}
+	userId, errInfo := CheckAuth(ctx)
+	if errInfo != emptyErrorInfo {
+		WriteErrorResponse(w, h.logger, errInfo)
 	}
-
 	limit, offset, err := GetLimitAndOffset(r)
 	if err != nil {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrReadingRequestBody))
@@ -280,21 +270,10 @@ func (h *APIHandler) UserBoards(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrInvalidSlug))
 		return
 	}
-
-	// исправление: доступ к доскам для неавторизованных
-	userIdString := ctx.Value("user_id")
-	var (
-		userId entity.UserID
-		ok     bool
-	)
-	if userIdString != nil {
-		userId, ok = userIdString.(entity.UserID)
-		if !ok {
-			WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
-			return
-		}
+	userId, errInfo := CheckAuth(ctx)
+	if errInfo != emptyErrorInfo {
+		WriteErrorResponse(w, h.logger, errInfo)
 	}
-
 	limit, offset, err := GetLimitAndOffset(r)
 	if err != nil {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrReadingRequestBody))
@@ -325,4 +304,19 @@ func GetInfoFromSlugAndContext(r *http.Request) (entity.BoardID, entity.PinID, e
 		return 0, 0, 0, MakeErrorInfo(nil, errs.ErrTypeConversion)
 	}
 	return boardId, pinId, userId, errs.ErrorInfo{}
+}
+
+func CheckAuth(ctx context.Context) (entity.UserID, errs.ErrorInfo) {
+	userIdString := ctx.Value("user_id")
+	var (
+		userId entity.UserID
+		ok     bool
+	)
+	if userIdString != nil {
+		userId, ok = userIdString.(entity.UserID)
+		if !ok {
+			return 0, errs.ErrorInfo{LocalErr: errs.ErrTypeConversion}
+		}
+	}
+	return userId, emptyErrorInfo
 }

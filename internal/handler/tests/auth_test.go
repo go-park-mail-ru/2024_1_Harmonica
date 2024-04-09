@@ -45,18 +45,6 @@ var users = []entity.User{
 	},
 }
 
-//type testInfo struct {
-//	Name string
-//	Code int
-//}
-//loginTestsNames := []{
-//"Correct test 1", "Correct test 2", "Correct test 3",
-//}
-//
-//loginTestsCodes := []int {
-//200, 200, 200
-//}
-
 func MakeUserResponseBody(user entity.User) string {
 	return fmt.Sprintf(`{"user_id":%d,"email":"%s","nickname":"%s","avatar_url":"%s"}`,
 		user.UserID, user.Email, user.Nickname, user.AvatarURL)
@@ -91,7 +79,6 @@ func MakeErrorListResponse(errsList ...error) string {
 
 func TestLogin(t *testing.T) {
 	type mockArgs struct {
-		Ctx   context.Context
 		Email string
 	}
 	type mockReturn struct {
@@ -111,9 +98,8 @@ func TestLogin(t *testing.T) {
 	}
 	tests := []test{
 		{
-			Name: "Correct request 1",
+			Name: "Correct test 1",
 			MockArgs: mockArgs{
-				Ctx:   context.Background(),
 				Email: users[0].Email,
 			},
 			MockReturn: mockReturn{
@@ -126,9 +112,8 @@ func TestLogin(t *testing.T) {
 			},
 		},
 		{
-			Name: "Correct request 2",
+			Name: "Correct test 2",
 			MockArgs: mockArgs{
-				Ctx:   context.Background(),
 				Email: users[1].Email,
 			},
 			MockReturn: mockReturn{
@@ -141,9 +126,8 @@ func TestLogin(t *testing.T) {
 			},
 		},
 		{
-			Name: "Correct request 3",
+			Name: "Correct test 3",
 			MockArgs: mockArgs{
-				Ctx:   context.Background(),
 				Email: users[2].Email,
 			},
 			MockReturn: mockReturn{
@@ -156,9 +140,8 @@ func TestLogin(t *testing.T) {
 			},
 		},
 		{
-			Name: "Incorrect request 1",
+			Name: "Incorrect test 1",
 			MockArgs: mockArgs{
-				Ctx:   context.Background(),
 				Email: users[3].Email,
 			},
 			MockReturn: mockReturn{
@@ -171,9 +154,8 @@ func TestLogin(t *testing.T) {
 			},
 		},
 		{
-			Name: "Incorrect request 2",
+			Name: "Incorrect test 2",
 			MockArgs: mockArgs{
-				Ctx:   context.Background(),
 				Email: users[0].Email,
 			},
 			MockReturn: mockReturn{
@@ -198,7 +180,7 @@ func TestLogin(t *testing.T) {
 		curTest.MockReturn.User.Password = string(curHashedPassword)
 		r := httptest.NewRequest(http.MethodPost, "/api/v1/login", bytes.NewBuffer(curTest.Request))
 		w := httptest.NewRecorder()
-		serviceMock.EXPECT().GetUserByEmail(curTest.MockArgs.Ctx, curTest.MockArgs.Email).
+		serviceMock.EXPECT().GetUserByEmail(context.Background(), curTest.MockArgs.Email).
 			Return(curTest.MockReturn.User, curTest.MockReturn.Err).MaxTimes(1)
 		h.Login(w, r)
 		assert.Equal(t, w.Code, curTest.ExpectedResponse.Code)
@@ -218,13 +200,13 @@ func TestLogout(t *testing.T) {
 	}
 	tests := []test{
 		{
-			Name: "Correct request 1",
+			Name: "Correct test 1",
 			ExpectedResponse: expectedResponse{
 				Code: 200,
 			},
 		},
 		{
-			Name: "Correct request 1",
+			Name: "Correct test 1",
 			ExpectedResponse: expectedResponse{
 				Code: 200,
 			},
@@ -238,7 +220,7 @@ func TestLogout(t *testing.T) {
 	serviceMock := mock_service.NewMockIService(ctrl)
 	h := handler.NewAPIHandler(serviceMock, zap.L())
 	for _, curTest := range tests {
-		r := httptest.NewRequest(http.MethodPost, "/api/v1/logout", nil)
+		r := httptest.NewRequest(http.MethodGet, "/api/v1/logout", nil)
 		if curTest.Cookie != nil {
 			r.AddCookie(curTest.Cookie)
 		}
@@ -251,7 +233,6 @@ func TestLogout(t *testing.T) {
 
 func TestRegister(t *testing.T) {
 	type mockArgs struct {
-		Ctx  context.Context
 		User entity.User
 	}
 	type mockReturn struct {
@@ -272,9 +253,8 @@ func TestRegister(t *testing.T) {
 	}
 	tests := []test{
 		{
-			Name: "Correct request 1",
+			Name: "Correct test 1",
 			MockArgs: mockArgs{
-				Ctx:  context.Background(),
 				User: users[0],
 			},
 			MockReturn: mockReturn{
@@ -288,9 +268,8 @@ func TestRegister(t *testing.T) {
 			},
 		},
 		{
-			Name: "Correct request 2",
+			Name: "Correct test 2",
 			MockArgs: mockArgs{
-				Ctx:  context.Background(),
 				User: users[1],
 			},
 			MockReturn: mockReturn{
@@ -304,9 +283,8 @@ func TestRegister(t *testing.T) {
 			},
 		},
 		{
-			Name: "Incorrect request 1",
+			Name: "Incorrect test 1",
 			MockArgs: mockArgs{
-				Ctx:  context.Background(),
 				User: users[2],
 			},
 			MockReturn: mockReturn{
@@ -323,9 +301,8 @@ func TestRegister(t *testing.T) {
 			},
 		},
 		{
-			Name: "Incorrect request 2",
+			Name: "Incorrect test 2",
 			MockArgs: mockArgs{
-				Ctx:  context.Background(),
 				User: users[0],
 			},
 			MockReturn: mockReturn{
@@ -339,7 +316,7 @@ func TestRegister(t *testing.T) {
 			},
 		},
 		{
-			Name:       "Incorrect request 3",
+			Name:       "Incorrect test 3",
 			MockArgs:   mockArgs{},
 			MockReturn: mockReturn{},
 			Request: []byte(fmt.Sprintf(`{"email":"%s","nickname":"%s","password":"%s"}`,
@@ -350,7 +327,7 @@ func TestRegister(t *testing.T) {
 			},
 		},
 		{
-			Name:       "Incorrect request 4",
+			Name:       "Incorrect test 4",
 			MockArgs:   mockArgs{},
 			MockReturn: mockReturn{},
 			Request:    []byte(`{"blabla"")`),
@@ -366,9 +343,9 @@ func TestRegister(t *testing.T) {
 	for _, curTest := range tests {
 		r := httptest.NewRequest(http.MethodPost, "/api/v1/register", bytes.NewBuffer(curTest.Request))
 		w := httptest.NewRecorder()
-		serviceMock.EXPECT().RegisterUser(curTest.MockArgs.Ctx, gomock.Any()).
+		serviceMock.EXPECT().RegisterUser(context.Background(), gomock.Any()).
 			Return(curTest.MockReturn.RegisterErrs).MaxTimes(1)
-		serviceMock.EXPECT().GetUserByEmail(curTest.MockArgs.Ctx, curTest.MockArgs.User.Email).
+		serviceMock.EXPECT().GetUserByEmail(context.Background(), curTest.MockArgs.User.Email).
 			Return(curTest.MockReturn.User, curTest.MockReturn.GetUserErr).MaxTimes(1)
 		h.Register(w, r)
 		assert.Equal(t, w.Code, curTest.ExpectedResponse.Code)
@@ -378,7 +355,6 @@ func TestRegister(t *testing.T) {
 
 func TestIsAuth(t *testing.T) {
 	type mockArgs struct {
-		Ctx  context.Context
 		User entity.User
 	}
 	type mockReturn struct {
@@ -398,26 +374,21 @@ func TestIsAuth(t *testing.T) {
 	}
 	tests := []test{
 		{
-			Name: "Correct request 1",
+			Name: "Correct test 1",
 			MockArgs: mockArgs{
-				//Ctx:  context.WithValue(context.Background(), "user_id", users[0].UserID),
-				Ctx:  context.Background(),
 				User: users[0],
 			},
 			MockReturn: mockReturn{
 				User: users[0],
 			},
-			//RequestCtx: context.WithValue(context.Background(), "user_id", users[0].UserID),
 			ExpectedResponse: expectedResponse{
 				Body: MakeUserResponseBody(users[0]),
 				Code: 200,
 			},
 		},
 		{
-			Name: "Incorrect request 1",
-			MockArgs: mockArgs{
-				Ctx: context.Background(),
-			},
+			Name:       "Incorrect test 1",
+			MockArgs:   mockArgs{},
 			MockReturn: mockReturn{},
 			ExpectedResponse: expectedResponse{
 				Body: MakeErrorResponse(errs.ErrUnauthorized),
@@ -425,9 +396,8 @@ func TestIsAuth(t *testing.T) {
 			},
 		},
 		{
-			Name: "Incorrect request 2",
+			Name: "Incorrect test 2",
 			MockArgs: mockArgs{
-				Ctx:  context.Background(),
 				User: users[0],
 			},
 

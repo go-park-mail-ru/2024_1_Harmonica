@@ -17,11 +17,6 @@ import (
 	"testing"
 )
 
-//func MakeBoardResponseBody(user entity.User) string {
-//	return fmt.Sprintf(`{"user_id":%d,"email":"%s","nickname":"%s","avatar_url":"%s"}`,
-//		user.UserID, user.Email, user.Nickname, user.AvatarURL)
-//}
-
 var boards = []entity.Board{
 	{
 		BoardID:        1,
@@ -70,10 +65,6 @@ var fullBoards = []entity.FullBoard{
 	},
 }
 
-var userBoards = entity.UserBoards{
-	Boards: []entity.Board{boards[0], boards[1]},
-}
-
 func MakeDefaultResponse(t *testing.T, response any) string {
 	jsonBodyBytes, err := json.Marshal(response)
 	if err != nil {
@@ -106,7 +97,7 @@ func TestCreateBoard(t *testing.T) {
 	}
 	tests := []test{
 		{
-			Name: "Correct 1",
+			Name: "Correct test 1",
 			MockArgs: mockArgs{
 				Board:  boards[0],
 				UserId: users[0].UserID,
@@ -127,7 +118,7 @@ func TestCreateBoard(t *testing.T) {
 			},
 		},
 		{
-			Name:       "Incorrect 1",
+			Name:       "Incorrect test 1",
 			MockArgs:   mockArgs{},
 			MockReturn: mockReturn{},
 			Request: []byte(fmt.Sprintf(`{
@@ -142,7 +133,7 @@ func TestCreateBoard(t *testing.T) {
 			},
 		},
 		{
-			Name:     "Incorrect 2",
+			Name:     "Incorrect test 2",
 			MockArgs: mockArgs{Times: 1},
 			MockReturn: mockReturn{
 				FullBoard: entity.FullBoard{},
@@ -268,7 +259,7 @@ func TestGetBoard(t *testing.T) {
 	serviceMock := mock_service.NewMockIService(ctrl)
 	h := handler.NewAPIHandler(serviceMock, zap.L())
 	for _, curTest := range tests {
-		r := httptest.NewRequest(http.MethodGet, "/api/v1/boards/", nil)
+		r := httptest.NewRequest(http.MethodGet, "/api/v1/boards/{board_id}", nil)
 		w := httptest.NewRecorder()
 		r.SetPathValue("board_id", fmt.Sprintf(`%d`, curTest.Slug))
 		if len(curTest.Query) != 0 {
