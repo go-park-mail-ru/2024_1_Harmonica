@@ -40,12 +40,12 @@ func (h *APIHandler) CreateBoard(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
 		return
 	}
-	res, errInfo := h.service.CreateBoard(ctx, board, userId)
+	fullBoard, errInfo := h.service.CreateBoard(ctx, board, userId)
 	if errInfo != emptyErrorInfo {
 		WriteErrorResponse(w, h.logger, errInfo)
 		return
 	}
-	WriteDefaultResponse(w, h.logger, res)
+	WriteDefaultResponse(w, h.logger, fullBoard)
 }
 
 // Get board.
