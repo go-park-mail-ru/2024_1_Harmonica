@@ -40,7 +40,7 @@ func (s *RepositoryService) GetPinById(ctx context.Context, pinId entity.PinID, 
 	if err != nil {
 		return entity.PinPageResponse{}, errs.ErrorInfo{
 			GeneralErr: err,
-			LocalErr:   errs.ErrDBInternal,
+			LocalErr:   errs.ErrElementNotExist,
 		}
 	}
 	isLiked, err := s.repo.CheckIsLiked(ctx, pinId, userId)
@@ -77,7 +77,7 @@ func (s *RepositoryService) UpdatePin(ctx context.Context, pin entity.Pin) (enti
 	if err != nil {
 		return entity.PinPageResponse{}, errs.ErrorInfo{
 			GeneralErr: err,
-			LocalErr:   errs.ErrDBInternal,
+			LocalErr:   errs.ErrElementNotExist,
 		}
 	}
 	if oldPin.PinAuthor.UserId != pin.AuthorId {
@@ -108,7 +108,7 @@ func (s *RepositoryService) DeletePin(ctx context.Context, pin entity.Pin) errs.
 	if err != nil {
 		return errs.ErrorInfo{
 			GeneralErr: err,
-			LocalErr:   errs.ErrDBInternal,
+			LocalErr:   errs.ErrElementNotExist,
 		}
 	}
 	if oldPin.PinAuthor.UserId != pin.AuthorId {
