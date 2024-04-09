@@ -17,7 +17,7 @@ type IRepository interface {
 
 	GetFeedPins(ctx context.Context, limit, offset int) (entity.FeedPins, error)
 	GetUserPins(ctx context.Context, authorId entity.UserID, limit, offset int) (entity.UserPins, error)
-	GetPinById(ctx context.Context, id entity.PinID) (entity.PinPageResponse, error)
+	GetPinById(ctx context.Context, PinId entity.PinID) (entity.PinPageResponse, error)
 	CreatePin(ctx context.Context, pin entity.Pin) (entity.PinID, error)
 	UpdatePin(ctx context.Context, pin entity.Pin) error
 	DeletePin(ctx context.Context, id entity.PinID) error
@@ -37,6 +37,7 @@ type IRepository interface {
 	SetLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) error
 	ClearLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) error
 	GetUsersLiked(ctx context.Context, pinId entity.PinID, limit int) (entity.UserList, error)
+	CheckIsLiked(ctx context.Context, pinId entity.PinID, userId entity.UserID) (bool, error)
 
 	UploadImage(ctx context.Context, file multipart.File, fileHeader *multipart.FileHeader) (string, error)
 	GetImage(ctx context.Context, name string) (*minio.Object, error)

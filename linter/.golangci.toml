@@ -21,3 +21,4 @@ disable = [
 
 [issues]
 exclude-use-default = false
+exclude-dirs = '(tests|mocks)'

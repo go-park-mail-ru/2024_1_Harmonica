@@ -5,10 +5,10 @@ import (
 )
 
 type RepositoryService struct {
-	repo *repository.Repository
+	repo repository.IRepository
 }
 
-func NewRepositoryService(r *repository.Repository) *RepositoryService {
+func NewRepositoryService(r repository.IRepository) *RepositoryService {
 	return &RepositoryService{repo: r}
 }
 
@@ -16,7 +16,7 @@ type Service struct {
 	IService
 }
 
-func NewService(r *repository.Repository) *Service {
+func NewService(r repository.IRepository) *Service {
 	return &Service{
 		IService: NewRepositoryService(r),
 	}

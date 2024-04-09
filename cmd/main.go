@@ -51,13 +51,13 @@ func runServer(addr string) {
 func configureUserRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.ServeMux) {
 	authRoutes := map[string]http.HandlerFunc{
 		"POST /api/v1/users/{user_id}": h.UpdateUser,
-		"GET /api/v1/is_auth":          h.IsAuth,
 	}
 	notAuthRoutes := map[string]http.HandlerFunc{
 		"POST /api/v1/login": h.Login,
 		"POST /api/v1/users": h.Register,
 	}
 	checkAuthRoutes := map[string]http.HandlerFunc{
+		"GET /api/v1/is_auth":          h.IsAuth,
 		"GET /api/v1/logout":           h.Logout,
 		"GET /api/v1/users/{nickname}": h.GetUser,
 	}

@@ -134,22 +134,20 @@ func (h *APIHandler) GetPin(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	pin, errInfo := h.service.GetPinById(ctx, entity.PinID(pinId))
+	var userId entity.UserID
+	userIdFromSession := ctx.Value("user_id")
+	if userIdFromSession != nil {
+		id, ok := userIdFromSession.(entity.UserID)
+		if ok {
+			userId = id
+		}
+	}
+	pin, errInfo := h.service.GetPinById(ctx, entity.PinID(pinId), userId)
 	if errInfo != emptyErrorInfo {
 		WriteErrorResponse(w, h.logger, errInfo)
 		return
 	}
-	userIdFromSession := ctx.Value("user_id")
-	if userIdFromSession == nil {
-		WriteDefaultResponse(w, h.logger, pin)
-		return
-	}
-	userIdFromSession, ok := userIdFromSession.(entity.UserID)
-	if !ok {
-		WriteDefaultResponse(w, h.logger, pin)
-		return
-	}
-	pin.IsOwner = pin.PinAuthor.UserId == userIdFromSession
+	pin.IsOwner = pin.PinAuthor.UserId == userId
 	WriteDefaultResponse(w, h.logger, pin)
 }
 

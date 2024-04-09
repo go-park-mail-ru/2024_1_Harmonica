@@ -12,6 +12,7 @@ const (
 	QueryClearLike     = `DELETE FROM public.like WHERE pin_id=$1 AND user_id=$2`
 	QueryGetUsersLiked = `SELECT nickname, avatar_url FROM public.user WHERE(user_id IN (SELECT user_id FROM public.like WHERE pin_id=$1)) LIMIT $2`
 	QueryFindLike      = `SELECT EXISTS(SELECT pin_id, user_id FROM public.like WHERE pin_id=$1 AND user_id=$2)`
+	QueryIsLiked       = `SELECT EXISTS(SELECT 1 FROM public.like WHERE user_id=$2 AND pin_id=$1)`
 )
 
 func (r *DBRepository) SetLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) error {
@@ -35,4 +36,13 @@ func (r *DBRepository) GetUsersLiked(ctx context.Context, pinId entity.PinID, li
 		return entity.UserList{}, err
 	}
 	return result, nil
+}
+
+func (r *DBRepository) CheckIsLiked(ctx context.Context, pinId entity.PinID, userId entity.UserID) (bool, error) {
+	var res bool
+	err := r.db.QueryRowxContext(ctx, QueryIsLiked, pinId, userId).Scan(&res)
+	if err != nil {
+		return false, err
+	}
+	return res, nil
 }
