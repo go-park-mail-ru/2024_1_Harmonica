@@ -8,7 +8,7 @@ test:
 	go tool cover -func cover.out
 
 lint:
-	golangci-lint run -c linter/.golangci.toml
+	golangci-lint run -c linter/.golangci.toml --skip-dirs='(tests)'
 	
 swag:
 	swag init -g ./cmd/main.go

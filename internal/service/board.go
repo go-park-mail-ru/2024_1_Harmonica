@@ -19,6 +19,7 @@ const UniqueViolationErrCode = pq.ErrorCode("23505")
 
 func (s *RepositoryService) CreateBoard(ctx context.Context, board entity.Board,
 	userId entity.UserID) (entity.FullBoard, errs.ErrorInfo) {
+	board.Sanitize()
 	createdBoard, err := s.repo.CreateBoard(ctx, board, userId)
 	if err != nil {
 		return entity.FullBoard{}, errs.ErrorInfo{
@@ -104,6 +105,7 @@ func (s *RepositoryService) GetBoardById(ctx context.Context, boardId entity.Boa
 
 func (s *RepositoryService) UpdateBoard(ctx context.Context, board entity.Board,
 	userId entity.UserID) (entity.FullBoard, errs.ErrorInfo) {
+	board.Sanitize()
 	isAuthor, err := s.repo.CheckBoardAuthorExistence(ctx, userId, board.BoardID)
 	if err != nil {
 		return entity.FullBoard{}, errs.ErrorInfo{

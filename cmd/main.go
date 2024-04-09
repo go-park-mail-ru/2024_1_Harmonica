@@ -43,7 +43,7 @@ func runServer(addr string) {
 
 	server := http.Server{
 		Addr:    addr,
-		Handler: middleware.CORS(mux),
+		Handler: middleware.CSRF(middleware.CORS(mux)),
 	}
 	server.ListenAndServeTLS("/etc/letsencrypt/live/harmoniums.ru/fullchain.pem", "/etc/letsencrypt/live/harmoniums.ru/privkey.pem")
 }
