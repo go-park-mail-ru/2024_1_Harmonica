@@ -70,16 +70,21 @@ func (h *APIHandler) GetBoard(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrInvalidSlug))
 		return
 	}
-	userStringId := ctx.Value("user_id")
-	if userStringId == nil {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrUnauthorized))
-		return
+
+	// исправление: доступ к доске для неавторизованных
+	userIdString := ctx.Value("user_id")
+	var (
+		userId entity.UserID
+		ok     bool
+	)
+	if userIdString != nil {
+		userId, ok = userIdString.(entity.UserID)
+		if !ok {
+			WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
+			return
+		}
 	}
-	userId, ok := userStringId.(entity.UserID)
-	if !ok {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
-		return
-	}
+
 	limit, offset, err := GetLimitAndOffset(r)
 	if err != nil {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrReadingRequestBody))
@@ -275,16 +280,21 @@ func (h *APIHandler) UserBoards(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrInvalidSlug))
 		return
 	}
-	userStringId := ctx.Value("user_id")
-	if userStringId == nil {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrUnauthorized))
-		return
+
+	// исправление: доступ к доскам для неавторизованных
+	userIdString := ctx.Value("user_id")
+	var (
+		userId entity.UserID
+		ok     bool
+	)
+	if userIdString != nil {
+		userId, ok = userIdString.(entity.UserID)
+		if !ok {
+			WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
+			return
+		}
 	}
-	userId, ok := userStringId.(entity.UserID)
-	if !ok {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
-		return
-	}
+
 	limit, offset, err := GetLimitAndOffset(r)
 	if err != nil {
 		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrReadingRequestBody))
