@@ -50,7 +50,7 @@ var GetPinByIDUncorrectValues = []mockGetPinByID{
 	},
 }
 
-func TestCorrectGetPinById(t *testing.T) {
+func TestGetPinById(t *testing.T) {
 	type funcArgs struct {
 		Ctx   context.Context
 		PinId entity.PinID
@@ -90,7 +90,7 @@ func TestCorrectGetPinById(t *testing.T) {
 				Pin: entity.PinPageResponse{},
 				Err: errs.ErrorInfo{
 					GeneralErr: errs.ErrDBInternal,
-					LocalErr:   errs.ErrDBInternal,
+					LocalErr:   errs.ErrElementNotExist,
 				},
 			},
 		},
@@ -321,7 +321,7 @@ func TestUpdatePin(t *testing.T) {
 				Pin: entity.PinPageResponse{},
 				Err: errs.ErrorInfo{
 					GeneralErr: errs.ErrDBInternal,
-					LocalErr:   errs.ErrDBInternal,
+					LocalErr:   errs.ErrElementNotExist,
 				},
 			},
 			NotExpectUpdatePin: true,
@@ -461,7 +461,7 @@ func TestDeletePin(t *testing.T) {
 			ExpectedFuncReturn: funcReturn{
 				Err: errs.ErrorInfo{
 					GeneralErr: errs.ErrDBInternal,
-					LocalErr:   errs.ErrDBInternal,
+					LocalErr:   errs.ErrElementNotExist,
 				},
 			},
 			NotExpectDeletePin: true,

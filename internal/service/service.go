@@ -21,3 +21,9 @@ func NewService(r repository.IRepository) *Service {
 		IService: NewRepositoryService(r),
 	}
 }
+
+func NewServiceForTests(s IService) *Service {
+	return &Service{
+		IService: s,
+	}
+}
