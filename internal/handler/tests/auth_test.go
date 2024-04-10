@@ -5,10 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
-	"golang.org/x/crypto/bcrypt"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"harmonica/internal/handler"
@@ -16,6 +12,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var users = []entity.User{
@@ -95,6 +96,7 @@ func TestLogin(t *testing.T) {
 		MockReturn       mockReturn
 		Request          []byte
 		ExpectedResponse expectedResponse
+		Ctx              context.Context
 	}
 	tests := []test{
 		{
@@ -110,6 +112,7 @@ func TestLogin(t *testing.T) {
 				Body: MakeUserResponseBody(users[0]),
 				Code: 200,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 		{
 			Name: "Correct test 2",
@@ -124,6 +127,7 @@ func TestLogin(t *testing.T) {
 				Body: MakeUserResponseBody(users[1]),
 				Code: 200,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 		{
 			Name: "Correct test 3",
@@ -138,6 +142,7 @@ func TestLogin(t *testing.T) {
 				Body: MakeUserResponseBody(users[2]),
 				Code: 200,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 		{
 			Name: "Incorrect test 1",
@@ -152,6 +157,7 @@ func TestLogin(t *testing.T) {
 				Body: MakeErrorResponse(errs.ErrInvalidInputFormat),
 				Code: 400,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 		{
 			Name: "Incorrect test 2",
@@ -166,6 +172,7 @@ func TestLogin(t *testing.T) {
 				Body: MakeErrorResponse(errs.ErrReadingRequestBody),
 				Code: 400,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 	}
 	ctrl := gomock.NewController(t)
@@ -179,8 +186,9 @@ func TestLogin(t *testing.T) {
 		}
 		curTest.MockReturn.User.Password = string(curHashedPassword)
 		r := httptest.NewRequest(http.MethodPost, "/api/v1/login", bytes.NewBuffer(curTest.Request))
+		r = r.WithContext(curTest.Ctx)
 		w := httptest.NewRecorder()
-		serviceMock.EXPECT().GetUserByEmail(context.Background(), curTest.MockArgs.Email).
+		serviceMock.EXPECT().GetUserByEmail(curTest.Ctx, curTest.MockArgs.Email).
 			Return(curTest.MockReturn.User, curTest.MockReturn.Err).MaxTimes(1)
 		h.Login(w, r)
 		assert.Equal(t, w.Code, curTest.ExpectedResponse.Code)
@@ -197,6 +205,7 @@ func TestLogout(t *testing.T) {
 		Name             string
 		ExpectedResponse expectedResponse
 		Cookie           *http.Cookie
+		Ctx              context.Context
 	}
 	tests := []test{
 		{
@@ -204,6 +213,7 @@ func TestLogout(t *testing.T) {
 			ExpectedResponse: expectedResponse{
 				Code: 200,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 		{
 			Name: "Correct test 1",
@@ -214,6 +224,7 @@ func TestLogout(t *testing.T) {
 				Name:  "session_token",
 				Value: "token",
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 	}
 	ctrl := gomock.NewController(t)
@@ -224,6 +235,7 @@ func TestLogout(t *testing.T) {
 		if curTest.Cookie != nil {
 			r.AddCookie(curTest.Cookie)
 		}
+		r = r.WithContext(curTest.Ctx)
 		w := httptest.NewRecorder()
 		h.Logout(w, r)
 		assert.Equal(t, w.Code, curTest.ExpectedResponse.Code)
@@ -250,6 +262,7 @@ func TestRegister(t *testing.T) {
 		MockReturn       mockReturn
 		Request          []byte
 		ExpectedResponse expectedResponse
+		Ctx              context.Context
 	}
 	tests := []test{
 		{
@@ -266,6 +279,7 @@ func TestRegister(t *testing.T) {
 				Body: MakeUserResponseBody(users[0]),
 				Code: 200,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 		{
 			Name: "Correct test 2",
@@ -281,6 +295,7 @@ func TestRegister(t *testing.T) {
 				Body: MakeUserResponseBody(users[1]),
 				Code: 200,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 		{
 			Name: "Incorrect test 1",
@@ -299,6 +314,7 @@ func TestRegister(t *testing.T) {
 				Body: MakeErrorListResponse(errs.ErrDBUniqueEmail, errs.ErrDBUniqueEmail),
 				Code: 500,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 		{
 			Name: "Incorrect test 2",
@@ -314,6 +330,7 @@ func TestRegister(t *testing.T) {
 				Body: MakeErrorListResponse(errs.ErrUserNotExist),
 				Code: 404,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 		{
 			Name:       "Incorrect test 3",
@@ -325,6 +342,7 @@ func TestRegister(t *testing.T) {
 				Body: MakeErrorListResponse(errs.ErrInvalidInputFormat),
 				Code: 400,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 		{
 			Name:       "Incorrect test 4",
@@ -335,6 +353,7 @@ func TestRegister(t *testing.T) {
 				Body: MakeErrorListResponse(errs.ErrReadingRequestBody),
 				Code: 400,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 	}
 	ctrl := gomock.NewController(t)
@@ -342,10 +361,11 @@ func TestRegister(t *testing.T) {
 	h := handler.NewAPIHandler(serviceMock, zap.L())
 	for _, curTest := range tests {
 		r := httptest.NewRequest(http.MethodPost, "/api/v1/register", bytes.NewBuffer(curTest.Request))
+		r = r.WithContext(curTest.Ctx)
 		w := httptest.NewRecorder()
-		serviceMock.EXPECT().RegisterUser(context.Background(), gomock.Any()).
+		serviceMock.EXPECT().RegisterUser(curTest.Ctx, gomock.Any()).
 			Return(curTest.MockReturn.RegisterErrs).MaxTimes(1)
-		serviceMock.EXPECT().GetUserByEmail(context.Background(), curTest.MockArgs.User.Email).
+		serviceMock.EXPECT().GetUserByEmail(curTest.Ctx, curTest.MockArgs.User.Email).
 			Return(curTest.MockReturn.User, curTest.MockReturn.GetUserErr).MaxTimes(1)
 		h.Register(w, r)
 		assert.Equal(t, w.Code, curTest.ExpectedResponse.Code)
@@ -371,6 +391,7 @@ func TestIsAuth(t *testing.T) {
 		MockReturn       mockReturn
 		RequestCtx       context.Context
 		ExpectedResponse expectedResponse
+		Ctx              context.Context
 	}
 	tests := []test{
 		{
@@ -385,6 +406,7 @@ func TestIsAuth(t *testing.T) {
 				Body: MakeUserResponseBody(users[0]),
 				Code: 200,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 		{
 			Name:       "Incorrect test 1",
@@ -394,6 +416,7 @@ func TestIsAuth(t *testing.T) {
 				Body: MakeErrorResponse(errs.ErrUnauthorized),
 				Code: 401,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 		{
 			Name: "Incorrect test 2",
@@ -406,6 +429,7 @@ func TestIsAuth(t *testing.T) {
 				Body: MakeErrorResponse(errs.ErrUnauthorized),
 				Code: 401,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 	}
 	ctrl := gomock.NewController(t)
@@ -414,12 +438,12 @@ func TestIsAuth(t *testing.T) {
 	for _, curTest := range tests {
 		r := httptest.NewRequest(http.MethodPost, "/api/v1/is_auth", nil)
 		w := httptest.NewRecorder()
-		ctx := context.WithValue(context.Background(), "user_id", curTest.MockArgs.User.UserID)
+		ctx := context.WithValue(curTest.Ctx, "user_id", curTest.MockArgs.User.UserID)
 		r = r.WithContext(ctx)
 		serviceMock.EXPECT().GetUserById(ctx, curTest.MockArgs.User.UserID).
 			Return(curTest.MockReturn.User, curTest.MockReturn.Err).MaxTimes(1)
 		h.IsAuth(w, r)
-		assert.Equal(t, w.Code, curTest.ExpectedResponse.Code)
+		assert.Equal(t, w.Code, curTest.ExpectedResponse.Code, curTest.Name)
 		assert.Equal(t, w.Body.String(), curTest.ExpectedResponse.Body)
 	}
 }

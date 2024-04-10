@@ -97,9 +97,10 @@ func TestCreateLike(t *testing.T) {
 	for _, curTest := range tests {
 		r := httptest.NewRequest(http.MethodPost, "/api/v1/pins/", nil)
 		r.SetPathValue("pin_id", fmt.Sprintf(`%d`, curTest.MockArgs.Slug))
-		r = r.WithContext(curTest.MockArgs.Ctx)
+		ctx := context.WithValue(curTest.MockArgs.Ctx, "request_id", "req_id")
+		r = r.WithContext(ctx)
 		w := httptest.NewRecorder()
-		serviceMock.EXPECT().SetLike(curTest.MockArgs.Ctx, curTest.MockArgs.PinId, curTest.MockArgs.UserId).
+		serviceMock.EXPECT().SetLike(ctx, curTest.MockArgs.PinId, curTest.MockArgs.UserId).
 			Return(curTest.MockReturn.Err).Times(curTest.MockArgs.Times)
 		h.CreateLike(w, r)
 		assert.Equal(t, curTest.ExpectedResponse.Code, w.Code)
@@ -188,9 +189,10 @@ func TestDeleteLike(t *testing.T) {
 	for _, curTest := range tests {
 		r := httptest.NewRequest(http.MethodPost, "/api/v1/pins/", nil)
 		r.SetPathValue("pin_id", fmt.Sprintf(`%d`, curTest.MockArgs.Slug))
-		r = r.WithContext(curTest.MockArgs.Ctx)
+		ctx := context.WithValue(curTest.MockArgs.Ctx, "request_id", "req_id")
+		r = r.WithContext(ctx)
 		w := httptest.NewRecorder()
-		serviceMock.EXPECT().ClearLike(curTest.MockArgs.Ctx, curTest.MockArgs.PinId, curTest.MockArgs.UserId).
+		serviceMock.EXPECT().ClearLike(ctx, curTest.MockArgs.PinId, curTest.MockArgs.UserId).
 			Return(curTest.MockReturn.Err).Times(curTest.MockArgs.Times)
 		h.DeleteLike(w, r)
 		assert.Equal(t, curTest.ExpectedResponse.Code, w.Code)
@@ -280,9 +282,10 @@ func TestUsersLiked(t *testing.T) {
 	for _, curTest := range tests {
 		r := httptest.NewRequest(http.MethodPost, "/api/v1/pins/", nil)
 		r.SetPathValue("pin_id", fmt.Sprintf(`%d`, curTest.MockArgs.Slug))
-		r = r.WithContext(curTest.MockArgs.Ctx)
+		ctx := context.WithValue(curTest.MockArgs.Ctx, "request_id", "req_id")
+		r = r.WithContext(ctx)
 		w := httptest.NewRecorder()
-		serviceMock.EXPECT().GetUsersLiked(curTest.MockArgs.Ctx, curTest.MockArgs.PinId, curTest.MockArgs.Limit).
+		serviceMock.EXPECT().GetUsersLiked(ctx, curTest.MockArgs.PinId, curTest.MockArgs.Limit).
 			Return(curTest.MockReturn.List, curTest.MockReturn.Err).Times(curTest.MockArgs.Times)
 		h.UsersLiked(w, r)
 		assert.Equal(t, curTest.ExpectedResponse.Code, w.Code)

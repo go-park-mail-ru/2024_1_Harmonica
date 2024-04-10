@@ -94,6 +94,7 @@ func TestCreateBoard(t *testing.T) {
 		MockReturn       mockReturn
 		Request          []byte
 		ExpectedResponse expectedResponse
+		Ctx              context.Context
 	}
 	tests := []test{
 		{
@@ -116,6 +117,7 @@ func TestCreateBoard(t *testing.T) {
 				Body: MakeDefaultResponse(t, fullBoards[0]),
 				Code: 200,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 		{
 			Name:       "Incorrect test 1",
@@ -131,6 +133,7 @@ func TestCreateBoard(t *testing.T) {
 				Body: MakeErrorResponse(errs.ErrInvalidInputFormat),
 				Code: 400,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 		{
 			Name:     "Incorrect test 2",
@@ -149,6 +152,7 @@ func TestCreateBoard(t *testing.T) {
 				Body: MakeErrorResponse(errs.ErrDBInternal),
 				Code: 500,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 		{
 			Name:       "Incorrect test 2",
@@ -159,6 +163,7 @@ func TestCreateBoard(t *testing.T) {
 				Body: MakeErrorResponse(errs.ErrReadingRequestBody),
 				Code: 400,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 	}
 	ctrl := gomock.NewController(t)
@@ -167,7 +172,7 @@ func TestCreateBoard(t *testing.T) {
 	for _, curTest := range tests {
 		r := httptest.NewRequest(http.MethodPost, "/api/v1/boards", bytes.NewBuffer(curTest.Request))
 		w := httptest.NewRecorder()
-		ctx := context.WithValue(context.Background(), "user_id", curTest.MockArgs.UserId)
+		ctx := context.WithValue(curTest.Ctx, "user_id", curTest.MockArgs.UserId)
 		r = r.WithContext(ctx)
 		serviceMock.EXPECT().CreateBoard(ctx, gomock.Any(), curTest.MockArgs.UserId).
 			Return(curTest.MockReturn.FullBoard, curTest.MockReturn.Err).Times(curTest.MockArgs.Times)
@@ -197,6 +202,7 @@ func TestGetBoard(t *testing.T) {
 		Slug             any
 		Query            string
 		ExpectedResponse expectedResponse
+		Ctx              context.Context
 	}
 	tests := []test{
 		{
@@ -213,6 +219,7 @@ func TestGetBoard(t *testing.T) {
 				Body: MakeDefaultResponse(t, fullBoards[0]),
 				Code: 200,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 		{
 			Name: "Incorrect test 1",
@@ -229,6 +236,7 @@ func TestGetBoard(t *testing.T) {
 				Body: MakeErrorResponse(errs.ErrDBInternal),
 				Code: 500,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 		{
 			Name: "Incorrect test 2",
@@ -242,6 +250,7 @@ func TestGetBoard(t *testing.T) {
 				Body: MakeErrorResponse(errs.ErrInvalidSlug),
 				Code: 400,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 		{
 			Name:       "Incorrect test 3",
@@ -253,6 +262,7 @@ func TestGetBoard(t *testing.T) {
 				Body: MakeErrorResponse(errs.ErrReadingRequestBody),
 				Code: 400,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 	}
 	ctrl := gomock.NewController(t)
@@ -267,7 +277,7 @@ func TestGetBoard(t *testing.T) {
 			q.Set("page", curTest.Query)
 			r.URL.RawQuery = q.Encode()
 		}
-		ctx := context.WithValue(context.Background(), "user_id", curTest.MockArgs.UserId)
+		ctx := context.WithValue(curTest.Ctx, "user_id", curTest.MockArgs.UserId)
 		r = r.WithContext(ctx)
 		serviceMock.EXPECT().GetBoardById(ctx, curTest.MockArgs.BoardId, curTest.MockArgs.UserId,
 			gomock.Any(), gomock.Any()).Return(curTest.MockReturn.FullBoard, curTest.MockReturn.Err).MaxTimes(1)
@@ -298,6 +308,7 @@ func TestAddPinToBoard(t *testing.T) {
 		SlugPinId        any
 		SlugBoardId      any
 		ExpectedResponse expectedResponse
+		Ctx              context.Context
 	}
 	tests := []test{
 		{
@@ -315,6 +326,7 @@ func TestAddPinToBoard(t *testing.T) {
 				Body: "null",
 				Code: 200,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 		{
 			Name: "Incorrect test 1",
@@ -329,6 +341,7 @@ func TestAddPinToBoard(t *testing.T) {
 				Body: MakeErrorResponse(errs.ErrInvalidSlug),
 				Code: 400,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 		{
 			Name: "Incorrect test 2",
@@ -343,6 +356,7 @@ func TestAddPinToBoard(t *testing.T) {
 				Body: MakeErrorResponse(errs.ErrInvalidSlug),
 				Code: 400,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 		{
 			Name: "Incorrect test 3",
@@ -361,6 +375,7 @@ func TestAddPinToBoard(t *testing.T) {
 				Body: MakeErrorResponse(errs.ErrDBInternal),
 				Code: 500,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 	}
 	ctrl := gomock.NewController(t)
@@ -371,7 +386,7 @@ func TestAddPinToBoard(t *testing.T) {
 		w := httptest.NewRecorder()
 		r.SetPathValue("board_id", fmt.Sprintf(`%d`, curTest.SlugPinId))
 		r.SetPathValue("pin_id", fmt.Sprintf(`%d`, curTest.SlugBoardId))
-		ctx := context.WithValue(context.Background(), "user_id", curTest.MockArgs.UserId)
+		ctx := context.WithValue(curTest.Ctx, "user_id", curTest.MockArgs.UserId)
 		r = r.WithContext(ctx)
 		serviceMock.EXPECT().AddPinToBoard(ctx, curTest.MockArgs.BoardId, curTest.MockArgs.PinId,
 			curTest.MockArgs.UserId).Return(curTest.MockReturn.Err).Times(curTest.MockArgs.Times)
@@ -402,6 +417,7 @@ func TestDeletePinFromBoard(t *testing.T) {
 		SlugPinId        any
 		SlugBoardId      any
 		ExpectedResponse expectedResponse
+		Ctx              context.Context
 	}
 	tests := []test{
 		{
@@ -419,6 +435,7 @@ func TestDeletePinFromBoard(t *testing.T) {
 				Body: "null",
 				Code: 200,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 		{
 			Name: "Incorrect test 1",
@@ -433,6 +450,7 @@ func TestDeletePinFromBoard(t *testing.T) {
 				Body: MakeErrorResponse(errs.ErrInvalidSlug),
 				Code: 400,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 		{
 			Name: "Incorrect test 2",
@@ -447,6 +465,7 @@ func TestDeletePinFromBoard(t *testing.T) {
 				Body: MakeErrorResponse(errs.ErrInvalidSlug),
 				Code: 400,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 		{
 			Name: "Incorrect test 3",
@@ -465,6 +484,7 @@ func TestDeletePinFromBoard(t *testing.T) {
 				Body: MakeErrorResponse(errs.ErrElementNotExist),
 				Code: 400,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 	}
 	ctrl := gomock.NewController(t)
@@ -475,7 +495,7 @@ func TestDeletePinFromBoard(t *testing.T) {
 		w := httptest.NewRecorder()
 		r.SetPathValue("board_id", fmt.Sprintf(`%d`, curTest.SlugBoardId))
 		r.SetPathValue("pin_id", fmt.Sprintf(`%d`, curTest.SlugPinId))
-		ctx := context.WithValue(context.Background(), "user_id", curTest.MockArgs.UserId)
+		ctx := context.WithValue(curTest.Ctx, "user_id", curTest.MockArgs.UserId)
 		r = r.WithContext(ctx)
 		serviceMock.EXPECT().DeletePinFromBoard(ctx, curTest.MockArgs.BoardId, curTest.MockArgs.PinId,
 			curTest.MockArgs.UserId).Return(curTest.MockReturn.Err).Times(curTest.MockArgs.Times)
@@ -504,6 +524,7 @@ func TestDeleteBoard(t *testing.T) {
 		MockReturn       mockReturn
 		Slug             any
 		ExpectedResponse expectedResponse
+		Ctx              context.Context
 	}
 	tests := []test{
 		{
@@ -519,6 +540,7 @@ func TestDeleteBoard(t *testing.T) {
 				Body: "null",
 				Code: 200,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 		{
 			Name: "Incorrect test 1",
@@ -535,6 +557,7 @@ func TestDeleteBoard(t *testing.T) {
 				Body: MakeErrorResponse(errs.ErrDBInternal),
 				Code: 500,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 		{
 			Name: "Incorrect test 2",
@@ -548,6 +571,7 @@ func TestDeleteBoard(t *testing.T) {
 				Body: MakeErrorResponse(errs.ErrInvalidSlug),
 				Code: 400,
 			},
+			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 	}
 	ctrl := gomock.NewController(t)
@@ -557,7 +581,7 @@ func TestDeleteBoard(t *testing.T) {
 		r := httptest.NewRequest(http.MethodDelete, "/api/v1/boards/", nil)
 		w := httptest.NewRecorder()
 		r.SetPathValue("board_id", fmt.Sprintf(`%d`, curTest.Slug))
-		ctx := context.WithValue(context.Background(), "user_id", curTest.MockArgs.UserId)
+		ctx := context.WithValue(curTest.Ctx, "user_id", curTest.MockArgs.UserId)
 		r = r.WithContext(ctx)
 		serviceMock.EXPECT().DeleteBoard(ctx, curTest.MockArgs.BoardId, curTest.MockArgs.UserId).
 			Return(curTest.MockReturn.Err).Times(curTest.MockArgs.Times)

@@ -141,9 +141,11 @@ func TestGetPin(t *testing.T) {
 	h := handler.NewAPIHandler(serviceMock, zap.L())
 	for _, curTest := range tests {
 		r := httptest.NewRequest(http.MethodGet, "/api/v1/pins/", nil)
+		ctx := context.WithValue(curTest.MockArgs.Ctx, "request_id", "req_id")
+		r = r.WithContext(ctx)
 		r.SetPathValue("pin_id", fmt.Sprintf(`%d`, curTest.MockArgs.Slug))
 		w := httptest.NewRecorder()
-		serviceMock.EXPECT().GetPinById(curTest.MockArgs.Ctx, curTest.MockArgs.PinId, curTest.MockArgs.UserId).
+		serviceMock.EXPECT().GetPinById(ctx, curTest.MockArgs.PinId, curTest.MockArgs.UserId).
 			Return(curTest.MockReturn.Pin, curTest.MockReturn.Err).Times(curTest.MockArgs.Times)
 		h.GetPin(w, r)
 		assert.Equal(t, curTest.ExpectedResponse.Code, w.Code)
@@ -253,9 +255,10 @@ func TestUpdatePin(t *testing.T) {
 		}
 		r := httptest.NewRequest(http.MethodPost, "/api/v1/pins/", bytes.NewBuffer(reqBytes))
 		r.SetPathValue("pin_id", fmt.Sprintf(`%d`, curTest.MockArgs.Slug))
-		r = r.WithContext(curTest.MockArgs.Ctx)
+		ctx := context.WithValue(curTest.MockArgs.Ctx, "request_id", "req_id")
+		r = r.WithContext(ctx)
 		w := httptest.NewRecorder()
-		serviceMock.EXPECT().UpdatePin(curTest.MockArgs.Ctx, curTest.MockArgs.Pin).
+		serviceMock.EXPECT().UpdatePin(ctx, curTest.MockArgs.Pin).
 			Return(curTest.MockReturn.Pin, curTest.MockReturn.Err).Times(curTest.MockArgs.Times)
 		h.UpdatePin(w, r)
 		assert.Equal(t, curTest.ExpectedResponse.Code, w.Code)
@@ -350,9 +353,10 @@ func TestDeletePin(t *testing.T) {
 	for _, curTest := range tests {
 		r := httptest.NewRequest(http.MethodDelete, "/api/v1/pins/", nil)
 		r.SetPathValue("pin_id", fmt.Sprintf(`%d`, curTest.MockArgs.Slug))
-		r = r.WithContext(curTest.MockArgs.Ctx)
+		ctx := context.WithValue(curTest.MockArgs.Ctx, "request_id", "req_id")
+		r = r.WithContext(ctx)
 		w := httptest.NewRecorder()
-		serviceMock.EXPECT().DeletePin(curTest.MockArgs.Ctx, curTest.MockArgs.Pin).
+		serviceMock.EXPECT().DeletePin(ctx, curTest.MockArgs.Pin).
 			Return(curTest.MockReturn.Err).Times(curTest.MockArgs.Times)
 		h.DeletePin(w, r)
 		assert.Equal(t, curTest.ExpectedResponse.Code, w.Code)
