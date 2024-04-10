@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"harmonica/internal/entity"
+	"time"
 
 	"github.com/jackskj/carta"
 )
@@ -29,7 +30,9 @@ const (
 
 func (r *DBRepository) GetFeedPins(ctx context.Context, limit, offset int) (entity.FeedPins, error) {
 	result := entity.FeedPins{}
+	start := time.Now()
 	rows, err := r.db.QueryContext(ctx, QueryGetPinsFeed, limit, offset)
+	LogDBQuery(r, ctx, QueryGetPinsFeed, time.Since(start))
 	if err != nil {
 		return entity.FeedPins{}, err
 	}
@@ -42,7 +45,9 @@ func (r *DBRepository) GetFeedPins(ctx context.Context, limit, offset int) (enti
 
 func (r *DBRepository) GetUserPins(ctx context.Context, authorId entity.UserID, limit, offset int) (entity.UserPins, error) {
 	result := entity.UserPins{}
+	start := time.Now()
 	rows, err := r.db.QueryContext(ctx, QueryGetUserPins, authorId, limit, offset)
+	LogDBQuery(r, ctx, QueryGetUserPins, time.Since(start))
 	if err != nil {
 		return entity.UserPins{}, err
 	}
@@ -55,7 +60,9 @@ func (r *DBRepository) GetUserPins(ctx context.Context, authorId entity.UserID, 
 
 func (r *DBRepository) GetPinById(ctx context.Context, pinId entity.PinID) (entity.PinPageResponse, error) {
 	result := entity.PinPageResponse{}
+	start := time.Now()
 	err := r.db.QueryRowxContext(ctx, QueryGetPinById, pinId).StructScan(&result)
+	LogDBQuery(r, ctx, QueryGetPinById, time.Since(start))
 	if err != nil {
 		return entity.PinPageResponse{}, err
 	}
@@ -64,23 +71,31 @@ func (r *DBRepository) GetPinById(ctx context.Context, pinId entity.PinID) (enti
 
 func (r *DBRepository) CreatePin(ctx context.Context, pin entity.Pin) (entity.PinID, error) {
 	res := entity.PinID(0)
+	start := time.Now()
 	err := r.db.QueryRowContext(ctx, QueryCreatePin, pin.AuthorId, pin.ContentUrl, pin.ClickUrl, pin.Title,
 		pin.Description, pin.AllowComments).Scan(&res)
+	LogDBQuery(r, ctx, QueryCreatePin, time.Since(start))
 	return res, err
 }
 
 func (r *DBRepository) UpdatePin(ctx context.Context, pin entity.Pin) error {
+	start := time.Now()
 	_, err := r.db.ExecContext(ctx, QueryUpdatePin, pin.PinId, pin.AllowComments, pin.Title, pin.Description, pin.ClickUrl)
+	LogDBQuery(r, ctx, QueryUpdatePin, time.Since(start))
 	return err
 }
 
 func (r *DBRepository) DeletePin(ctx context.Context, id entity.PinID) error {
+	start := time.Now()
 	_, err := r.db.ExecContext(ctx, QueryDeletePin, id)
+	LogDBQuery(r, ctx, QueryDeletePin, time.Since(start))
 	return err
 }
 
 func (r *DBRepository) CheckPinExistence(ctx context.Context, id entity.PinID) (bool, error) {
 	var exists bool
+	start := time.Now()
 	err := r.db.QueryRowContext(ctx, QueryCheckPinExistence, id).Scan(&exists)
+	LogDBQuery(r, ctx, QueryCheckPinExistence, time.Since(start))
 	return exists, err
 }
