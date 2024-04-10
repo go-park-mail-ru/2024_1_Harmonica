@@ -16,7 +16,7 @@ func MakeErrorInfo(generalErr error, localErr error) errs.ErrorInfo {
 	}
 }
 
-func WriteErrorResponse(w http.ResponseWriter, logger *zap.Logger, errInfo errs.ErrorInfo) {
+func WriteErrorResponse(w http.ResponseWriter, logger *zap.Logger, requestId string, errInfo errs.ErrorInfo) {
 	generalErrMessage := "no general error"
 	if errInfo.GeneralErr != nil {
 		generalErrMessage = errInfo.GeneralErr.Error()
@@ -24,6 +24,7 @@ func WriteErrorResponse(w http.ResponseWriter, logger *zap.Logger, errInfo errs.
 
 	logger.Error(
 		errInfo.LocalErr.Error(),
+		zap.String("request_id", requestId),
 		zap.Int("local_error_code", errs.ErrorCodes[errInfo.LocalErr].LocalCode),
 		zap.String("general_error", generalErrMessage),
 	)
@@ -41,7 +42,7 @@ func WriteErrorResponse(w http.ResponseWriter, logger *zap.Logger, errInfo errs.
 	}
 }
 
-func WriteErrorsListResponse(w http.ResponseWriter, logger *zap.Logger, errors ...errs.ErrorInfo) {
+func WriteErrorsListResponse(w http.ResponseWriter, logger *zap.Logger, requestId string, errors ...errs.ErrorInfo) {
 	var list []errs.ErrorResponse
 	for _, err := range errors {
 		list = append(list, errs.ErrorResponse{
@@ -56,6 +57,7 @@ func WriteErrorsListResponse(w http.ResponseWriter, logger *zap.Logger, errors .
 
 		logger.Error(
 			err.LocalErr.Error(),
+			zap.String("request_id", requestId),
 			zap.Int("local_error_code", errs.ErrorCodes[err.LocalErr].LocalCode),
 			zap.String("general_error", generalErrMessage),
 		)

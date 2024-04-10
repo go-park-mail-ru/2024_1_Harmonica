@@ -23,26 +23,28 @@ import (
 //	@Router			/boards [post]
 func (h *APIHandler) CreateBoard(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	requestId := r.Context().Value("request_id").(string)
+
 	board := entity.Board{}
 	board.VisibilityType = "public"
 	err := UnmarshalRequest(r, &board)
 
 	if err != nil {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrReadingRequestBody))
+		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(err, errs.ErrReadingRequestBody))
 		return
 	}
 	if !ValidateBoard(board) {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrInvalidInputFormat))
+		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrInvalidInputFormat))
 		return
 	}
 	userId, ok := ctx.Value("user_id").(entity.UserID)
 	if !ok {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
+		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrTypeConversion))
 		return
 	}
 	res, errInfo := h.service.CreateBoard(ctx, board, userId)
 	if errInfo != emptyErrorInfo {
-		WriteErrorResponse(w, h.logger, errInfo)
+		WriteErrorResponse(w, h.logger, requestId, errInfo)
 		return
 	}
 	WriteDefaultResponse(w, h.logger, res)
@@ -65,29 +67,43 @@ func (h *APIHandler) CreateBoard(w http.ResponseWriter, r *http.Request) {
 //	@Router			/boards/{board_id}/ [get]
 func (h *APIHandler) GetBoard(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	requestId := r.Context().Value("request_id").(string)
+
 	boardId, err := ReadInt64Slug(r, "board_id")
 	if err != nil {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrInvalidSlug))
+		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(err, errs.ErrInvalidSlug))
 		return
 	}
 	userStringId := ctx.Value("user_id")
-	if userStringId == nil {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrUnauthorized))
-		return
+	var (
+		userId entity.UserID
+		ok     bool
+	)
+	//if userStringId == nil {
+	//	WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrUnauthorized))
+	//	return
+	//}
+	//userId, ok := userStringId.(entity.UserID)
+	//if !ok {
+	//	WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
+	//	return
+	//}
+	if userStringId != nil {
+		userId, ok = userStringId.(entity.UserID)
+		if !ok {
+			WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrTypeConversion))
+			return
+		}
 	}
-	userId, ok := userStringId.(entity.UserID)
-	if !ok {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
-		return
-	}
+
 	limit, offset, err := GetLimitAndOffset(r)
 	if err != nil {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrReadingRequestBody))
+		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(err, errs.ErrReadingRequestBody))
 		return
 	}
 	board, errInfo := h.service.GetBoardById(ctx, entity.BoardID(boardId), userId, limit, offset)
 	if errInfo != emptyErrorInfo {
-		WriteErrorResponse(w, h.logger, errInfo)
+		WriteErrorResponse(w, h.logger, requestId, errInfo)
 		return
 	}
 	WriteDefaultResponse(w, h.logger, board)
@@ -112,10 +128,11 @@ func (h *APIHandler) GetBoard(w http.ResponseWriter, r *http.Request) {
 //	@Router			/boards/{board_id}/ [post]
 func (h *APIHandler) UpdateBoard(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	requestId := r.Context().Value("request_id").(string)
 
 	boardId, err := ReadInt64Slug(r, "board_id")
 	if err != nil {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrInvalidSlug))
+		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(err, errs.ErrInvalidSlug))
 		return
 	}
 	var newBoard entity.Board
@@ -124,16 +141,16 @@ func (h *APIHandler) UpdateBoard(w http.ResponseWriter, r *http.Request) {
 	boardParams := r.FormValue("board")
 	err = json.Unmarshal([]byte(boardParams), &newBoard)
 	if err != nil {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrReadingRequestBody))
+		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(err, errs.ErrReadingRequestBody))
 		return
 	}
 	if !ValidateBoard(newBoard) {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrInvalidInputFormat))
+		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrInvalidInputFormat))
 		return
 	}
 	userId, ok := ctx.Value("user_id").(entity.UserID)
 	if !ok {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
+		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrTypeConversion))
 		return
 	}
 	newBoard.CoverURL = ""
@@ -141,10 +158,7 @@ func (h *APIHandler) UpdateBoard(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		name, errUploading := h.service.UploadImage(ctx, image, imageHeader)
 		if errUploading != nil {
-			WriteErrorResponse(w, h.logger, errs.ErrorInfo{
-				GeneralErr: err,
-				LocalErr:   errs.ErrInvalidImg,
-			})
+			WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrInvalidImg))
 			return
 		}
 		newBoard.CoverURL = FormImgURL(name)
@@ -152,7 +166,7 @@ func (h *APIHandler) UpdateBoard(w http.ResponseWriter, r *http.Request) {
 	newBoard.BoardID = entity.BoardID(boardId)
 	board, errInfo := h.service.UpdateBoard(ctx, newBoard, userId)
 	if errInfo != emptyErrorInfo {
-		WriteErrorResponse(w, h.logger, errInfo)
+		WriteErrorResponse(w, h.logger, requestId, errInfo)
 		return
 	}
 	WriteDefaultResponse(w, h.logger, board)
@@ -175,15 +189,17 @@ func (h *APIHandler) UpdateBoard(w http.ResponseWriter, r *http.Request) {
 //	@Failure		500			{object}	errs.ErrorResponse	"Possible code responses: 11."
 //	@Router			/boards/{board_id}/pins/{pin_id}/ [post]
 func (h *APIHandler) AddPinToBoard(w http.ResponseWriter, r *http.Request) {
-	boardId, pinId, userId, err := GetInfoFromSlugAndContext(r)
-	if err != emptyErrorInfo {
-		WriteErrorResponse(w, h.logger, err)
+	ctx := r.Context()
+	requestId := ctx.Value("request_id").(string)
+
+	boardId, pinId, userId, errInfo := GetInfoFromSlugAndContext(r)
+	if errInfo != emptyErrorInfo {
+		WriteErrorResponse(w, h.logger, requestId, errInfo)
 		return
 	}
-	ctx := r.Context()
-	errInfo := h.service.AddPinToBoard(ctx, boardId, pinId, userId)
+	errInfo = h.service.AddPinToBoard(ctx, boardId, pinId, userId)
 	if errInfo != emptyErrorInfo {
-		WriteErrorResponse(w, h.logger, errInfo)
+		WriteErrorResponse(w, h.logger, requestId, errInfo)
 		return
 	}
 	WriteDefaultResponse(w, h.logger, nil)
@@ -206,15 +222,17 @@ func (h *APIHandler) AddPinToBoard(w http.ResponseWriter, r *http.Request) {
 //	@Failure		500			{object}	errs.ErrorResponse	"Possible code responses: 11."
 //	@Router			/boards/{board_id}/pins/{pin_id}/ [post]
 func (h *APIHandler) DeletePinFromBoard(w http.ResponseWriter, r *http.Request) {
-	boardId, pinId, userId, err := GetInfoFromSlugAndContext(r)
-	if err != emptyErrorInfo {
-		WriteErrorResponse(w, h.logger, err)
+	ctx := r.Context()
+	requestId := ctx.Value("request_id").(string)
+
+	boardId, pinId, userId, errInfo := GetInfoFromSlugAndContext(r)
+	if errInfo != emptyErrorInfo {
+		WriteErrorResponse(w, h.logger, requestId, errInfo)
 		return
 	}
-	ctx := r.Context()
-	errInfo := h.service.DeletePinFromBoard(ctx, boardId, pinId, userId)
+	errInfo = h.service.DeletePinFromBoard(ctx, boardId, pinId, userId)
 	if errInfo != emptyErrorInfo {
-		WriteErrorResponse(w, h.logger, errInfo)
+		WriteErrorResponse(w, h.logger, requestId, errInfo)
 		return
 	}
 	WriteDefaultResponse(w, h.logger, nil)
@@ -236,19 +254,21 @@ func (h *APIHandler) DeletePinFromBoard(w http.ResponseWriter, r *http.Request) 
 //	@Router			/boards/{board_id}/ [delete]
 func (h *APIHandler) DeleteBoard(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	requestId := r.Context().Value("request_id").(string)
+
 	boardId, err := ReadInt64Slug(r, "board_id")
 	if err != nil {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrInvalidSlug))
+		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(err, errs.ErrInvalidSlug))
 		return
 	}
 	userId, ok := ctx.Value("user_id").(entity.UserID)
 	if !ok {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
+		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrTypeConversion))
 		return
 	}
 	errInfo := h.service.DeleteBoard(ctx, entity.BoardID(boardId), userId)
 	if errInfo != emptyErrorInfo {
-		WriteErrorResponse(w, h.logger, errInfo)
+		WriteErrorResponse(w, h.logger, requestId, errInfo)
 		return
 	}
 	WriteDefaultResponse(w, h.logger, nil)
@@ -270,29 +290,43 @@ func (h *APIHandler) DeleteBoard(w http.ResponseWriter, r *http.Request) {
 //	@Router			/boards/created/{nickname}/ [get]
 func (h *APIHandler) UserBoards(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	requestId := r.Context().Value("request_id").(string)
+
 	authorNickname := r.PathValue("nickname")
 	if !ValidateNickname(authorNickname) {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrInvalidSlug))
+		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrInvalidSlug))
 		return
 	}
 	userStringId := ctx.Value("user_id")
-	if userStringId == nil {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrUnauthorized))
-		return
+	//if userStringId == nil {
+	//	WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrUnauthorized))
+	//	return
+	//}
+	//userId, ok := userStringId.(entity.UserID)
+	//if !ok {
+	//	WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
+	//	return
+	//}
+	var (
+		userId entity.UserID
+		ok     bool
+	)
+	if userStringId != nil {
+		userId, ok = userStringId.(entity.UserID)
+		if !ok {
+			WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrTypeConversion))
+			return
+		}
 	}
-	userId, ok := userStringId.(entity.UserID)
-	if !ok {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
-		return
-	}
+
 	limit, offset, err := GetLimitAndOffset(r)
 	if err != nil {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrReadingRequestBody))
+		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(err, errs.ErrReadingRequestBody))
 		return
 	}
 	boards, errInfo := h.service.GetUserBoards(ctx, authorNickname, userId, limit, offset)
 	if errInfo != emptyErrorInfo {
-		WriteErrorResponse(w, h.logger, errInfo)
+		WriteErrorResponse(w, h.logger, requestId, errInfo)
 		return
 	}
 	WriteDefaultResponse(w, h.logger, boards)

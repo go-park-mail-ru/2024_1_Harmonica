@@ -1,8 +1,8 @@
 package test_repository
 
 import (
-	"context"
 	"database/sql/driver"
+	"go.uber.org/zap"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"harmonica/internal/repository"
@@ -18,21 +18,21 @@ func TestGetUserByEmail(t *testing.T) {
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
-	r := repository.NewDBRepository(sqlx.NewDb(db, "postgres"), nil)
+	r := repository.NewDBRepository(sqlx.NewDb(db, "postgres"), nil, zap.L())
 	email := "emaiiil@godot.com"
 	// Good test
 	mock.ExpectQuery(repository.QueryGetUserByEmail).WillReturnRows(sqlmock.NewRows([]string{"nickname"}).AddRow("Nikoin"))
-	res, err := r.GetUserByEmail(context.Background(), email)
+	res, err := r.GetUserByEmail(CtxWithRequestId, email)
 	assert.Equal(t, entity.User{Nickname: "Nikoin"}, res)
 	assert.Equal(t, nil, err)
 	// Error test 1
 	mock.ExpectQuery(repository.QueryGetUserByEmail).WillReturnError(errs.ErrDBInternal)
-	res, err = r.GetUserByEmail(context.Background(), email)
+	res, err = r.GetUserByEmail(CtxWithRequestId, email)
 	assert.Equal(t, entity.User{}, res)
 	assert.Equal(t, errs.ErrDBInternal, err)
 	// Error test 2
 	mock.ExpectQuery(repository.QueryGetUserByEmail).WillReturnRows(sqlmock.NewRows([]string{"err"}).AddRow("err"))
-	res, err = r.GetUserByEmail(context.Background(), email)
+	res, err = r.GetUserByEmail(CtxWithRequestId, email)
 	assert.Equal(t, entity.User{}, res)
 	assert.Error(t, err)
 }
@@ -42,21 +42,21 @@ func TestGetUserByNickname(t *testing.T) {
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
-	r := repository.NewDBRepository(sqlx.NewDb(db, "postgres"), nil)
+	r := repository.NewDBRepository(sqlx.NewDb(db, "postgres"), nil, zap.L())
 	nickname := "Nikoin"
 	// Good test
 	mock.ExpectQuery(repository.QueryGetUserByNickname).WillReturnRows(sqlmock.NewRows([]string{"email"}).AddRow("emaiiil@godot.com"))
-	res, err := r.GetUserByNickname(context.Background(), nickname)
+	res, err := r.GetUserByNickname(CtxWithRequestId, nickname)
 	assert.Equal(t, entity.User{Email: "emaiiil@godot.com"}, res)
 	assert.Equal(t, nil, err)
 	// Error test 1
 	mock.ExpectQuery(repository.QueryGetUserByNickname).WillReturnError(errs.ErrDBInternal)
-	res, err = r.GetUserByNickname(context.Background(), nickname)
+	res, err = r.GetUserByNickname(CtxWithRequestId, nickname)
 	assert.Equal(t, entity.User{}, res)
 	assert.Equal(t, errs.ErrDBInternal, err)
 	// Error test 2
 	mock.ExpectQuery(repository.QueryGetUserByNickname).WillReturnRows(sqlmock.NewRows([]string{"err"}).AddRow("err"))
-	res, err = r.GetUserByNickname(context.Background(), nickname)
+	res, err = r.GetUserByNickname(CtxWithRequestId, nickname)
 	assert.Equal(t, entity.User{}, res)
 	assert.Error(t, err)
 }
@@ -66,21 +66,21 @@ func TestGetUserById(t *testing.T) {
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
-	r := repository.NewDBRepository(sqlx.NewDb(db, "postgres"), nil)
+	r := repository.NewDBRepository(sqlx.NewDb(db, "postgres"), nil, zap.L())
 	id := entity.UserID(1)
 	// Good test
 	mock.ExpectQuery(repository.QueryGetUserById).WillReturnRows(sqlmock.NewRows([]string{"email"}).AddRow("emaiiil@godot.com"))
-	res, err := r.GetUserById(context.Background(), id)
+	res, err := r.GetUserById(CtxWithRequestId, id)
 	assert.Equal(t, entity.User{Email: "emaiiil@godot.com"}, res)
 	assert.Equal(t, nil, err)
 	// Error test 1
 	mock.ExpectQuery(repository.QueryGetUserById).WillReturnError(errs.ErrDBInternal)
-	res, err = r.GetUserById(context.Background(), id)
+	res, err = r.GetUserById(CtxWithRequestId, id)
 	assert.Equal(t, entity.User{}, res)
 	assert.Equal(t, errs.ErrDBInternal, err)
 	// Error test 2
 	mock.ExpectQuery(repository.QueryGetUserById).WillReturnRows(sqlmock.NewRows([]string{"err"}).AddRow("err"))
-	res, err = r.GetUserById(context.Background(), id)
+	res, err = r.GetUserById(CtxWithRequestId, id)
 	assert.Equal(t, entity.User{}, res)
 	assert.Error(t, err)
 }
@@ -90,7 +90,7 @@ func TestRegisterUser(t *testing.T) {
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
-	r := repository.NewDBRepository(sqlx.NewDb(db, "postgres"), nil)
+	r := repository.NewDBRepository(sqlx.NewDb(db, "postgres"), nil, zap.L())
 	user := entity.User{
 		Nickname:  "nickname",
 		Password:  "hashstring",
@@ -101,12 +101,12 @@ func TestRegisterUser(t *testing.T) {
 	// Good test
 	mock.ExpectExec(repository.QueryRegisterUser).WithArgs(user.Email, user.Nickname, user.Password).
 		WillReturnResult(driver.ResultNoRows)
-	err = r.RegisterUser(context.Background(), user)
+	err = r.RegisterUser(CtxWithRequestId, user)
 	assert.Equal(t, nil, err)
 	// Error test
 	mock.ExpectExec(repository.QueryRegisterUser).WithArgs(user.Email, user.Nickname, user.Password).
 		WillReturnError(errs.ErrDBInternal)
-	err = r.RegisterUser(context.Background(), user)
+	err = r.RegisterUser(CtxWithRequestId, user)
 	assert.Equal(t, errs.ErrDBInternal, err)
 }
 
@@ -115,7 +115,7 @@ func TestUpdateUser(t *testing.T) {
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
-	r := repository.NewDBRepository(sqlx.NewDb(db, "postgres"), nil)
+	r := repository.NewDBRepository(sqlx.NewDb(db, "postgres"), nil, zap.L())
 	user := entity.User{
 		Nickname:  "nickname",
 		Password:  "hashstring",
@@ -132,7 +132,7 @@ func TestUpdateUser(t *testing.T) {
 	mock.ExpectExec(repository.QueryUpdateUserAvatar).WithArgs(user.UserID, user.AvatarURL).
 		WillReturnResult(driver.ResultNoRows)
 
-	err = r.UpdateUser(context.Background(), user)
+	err = r.UpdateUser(CtxWithRequestId, user)
 	assert.Equal(t, nil, err)
 	// Error test 1
 	mock.ExpectExec(repository.QueryUpdateUserNickname).WithArgs(user.UserID, user.Nickname).
@@ -142,7 +142,7 @@ func TestUpdateUser(t *testing.T) {
 	mock.ExpectExec(repository.QueryUpdateUserAvatar).WithArgs(user.UserID, user.AvatarURL).
 		WillReturnError(errs.ErrDBInternal)
 
-	err = r.UpdateUser(context.Background(), user)
+	err = r.UpdateUser(CtxWithRequestId, user)
 	assert.Equal(t, errs.ErrDBInternal, err)
 
 	// Error test 2
@@ -151,13 +151,13 @@ func TestUpdateUser(t *testing.T) {
 	mock.ExpectExec(repository.QueryUpdateUserPassword).WithArgs(user.UserID, user.Password).
 		WillReturnError(errs.ErrDBInternal)
 
-	err = r.UpdateUser(context.Background(), user)
+	err = r.UpdateUser(CtxWithRequestId, user)
 	assert.Equal(t, errs.ErrDBInternal, err)
 
 	// Error test 3
 	mock.ExpectExec(repository.QueryUpdateUserNickname).WithArgs(user.UserID, user.Nickname).
 		WillReturnError(errs.ErrDBInternal)
 
-	err = r.UpdateUser(context.Background(), user)
+	err = r.UpdateUser(CtxWithRequestId, user)
 	assert.Equal(t, errs.ErrDBInternal, err)
 }

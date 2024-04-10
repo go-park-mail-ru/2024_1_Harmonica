@@ -8,19 +8,22 @@ import (
 )
 
 func (h *APIHandler) GetImage(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	requestId := ctx.Value("request_id").(string)
+
 	name, err := ReadStringSlug(r, "image_name")
 	if err != nil {
-		WriteErrorResponse(w, h.logger, errs.ErrorInfo{GeneralErr: err, LocalErr: errs.ErrInvalidSlug})
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{GeneralErr: err, LocalErr: errs.ErrInvalidSlug})
 		return
 	}
 	res, err := h.service.GetImage(r.Context(), name)
 	if err != nil {
-		WriteErrorResponse(w, h.logger, errs.ErrorInfo{GeneralErr: err, LocalErr: errs.ErrInvalidImg})
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{GeneralErr: err, LocalErr: errs.ErrInvalidImg})
 		return
 	}
 	file, err := io.ReadAll(res)
 	if err != nil {
-		WriteErrorResponse(w, h.logger, errs.ErrorInfo{GeneralErr: err, LocalErr: errs.ErrInvalidImg})
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{GeneralErr: err, LocalErr: errs.ErrInvalidImg})
 		return
 	}
 	w.Write(file)

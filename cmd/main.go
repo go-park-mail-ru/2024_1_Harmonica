@@ -1,6 +1,9 @@
 package main
 
 import (
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"gopkg.in/natefinch/lumberjack.v2"
 	"harmonica/config"
 	"harmonica/internal/handler"
 	"harmonica/internal/handler/middleware"
@@ -9,14 +12,14 @@ import (
 	"log"
 	"net/http"
 
-	"go.uber.org/zap"
-
 	"github.com/joho/godotenv"
 	v3 "github.com/swaggest/swgui/v3"
 )
 
 func runServer(addr string) {
-	logger := zap.Must(zap.NewProduction())
+	//logger := zap.Must(zap.NewProduction())
+	logger := configureZapLogger()
+	defer logger.Sync()
 
 	conf := config.New()
 	connector, err := repository.NewConnector(conf)
@@ -25,7 +28,7 @@ func runServer(addr string) {
 		return
 	}
 	defer connector.Disconnect()
-	r := repository.NewRepository(connector)
+	r := repository.NewRepository(connector, logger)
 	s := service.NewService(r)
 	h := handler.NewAPIHandler(s, logger)
 
@@ -41,11 +44,27 @@ func runServer(addr string) {
 	mux.Handle("GET /swagger/", v3.NewHandler("My API", "/docs/swagger.json", "/swagger"))
 	mux.HandleFunc("GET /img/{image_name}", h.GetImage)
 
+	loggedMux := middleware.Logging(logger, mux)
+
 	server := http.Server{
 		Addr:    addr,
-		Handler: middleware.CSRF(middleware.CORS(mux)),
+		Handler: middleware.CSRF(middleware.CORS(loggedMux)),
 	}
 	server.ListenAndServeTLS("/etc/letsencrypt/live/harmoniums.ru/fullchain.pem", "/etc/letsencrypt/live/harmoniums.ru/privkey.pem")
+}
+
+func configureZapLogger() *zap.Logger {
+	ws := zapcore.AddSync(&lumberjack.Logger{
+		Filename:   "logs/harmonium.log",
+		MaxSize:    1024, // MB
+		MaxBackups: 10,
+		MaxAge:     60, // days
+		Compress:   true,
+	})
+	encoderConfig := zap.NewProductionEncoderConfig()
+	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	core := zapcore.NewCore(zapcore.NewJSONEncoder(encoderConfig), ws, zap.NewAtomicLevelAt(zap.InfoLevel))
+	return zap.New(core, zap.AddCaller(), zap.AddStacktrace(zap.ErrorLevel))
 }
 
 func configureUserRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.ServeMux) {
@@ -57,7 +76,7 @@ func configureUserRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.Se
 		"POST /api/v1/users": h.Register,
 	}
 	checkAuthRoutes := map[string]http.HandlerFunc{
-		"GET /api/v1/is_auth":          h.IsAuth,
+		"GET /api/v1/is_auth":          h.IsAuth, // check it
 		"GET /api/v1/logout":           h.Logout,
 		"GET /api/v1/users/{nickname}": h.GetUser,
 	}
@@ -108,8 +127,8 @@ func configureBoardRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.S
 		"DELETE /api/v1/boards/{board_id}/pins/{pin_id}": h.DeletePinFromBoard,
 	}
 	checkAuthRoutes := map[string]http.HandlerFunc{
-		"GET /api/v1/boards/{board_id}":         h.GetBoard,   // с пагинацией
-		"GET /api/v1/boards/created/{nickname}": h.UserBoards, // с пагинацией
+		"GET /api/v1/boards/{board_id}":         h.GetBoard,
+		"GET /api/v1/boards/created/{nickname}": h.UserBoards,
 	}
 	for pattern, f := range authRoutes {
 		mux.HandleFunc(pattern, middleware.AuthRequired(logger, f))
@@ -133,20 +152,3 @@ func init() {
 func main() {
 	runServer(":8080")
 }
-
-//mux.HandleFunc("POST /api/v1/login", middleware.NotAuth(logger, handler.Login))
-//mux.HandleFunc("GET /api/v1/logout", handler.Logout)
-//mux.HandleFunc("POST /api/v1/users", middleware.NotAuth(logger, handler.Register))
-//mux.HandleFunc("POST /api/v1/users/{user_id}", middleware.Auth(logger, handler.UpdateUser))
-//mux.HandleFunc("GET /api/v1/is_auth", middleware.Auth(logger, handler.IsAuth))
-//
-//mux.HandleFunc("GET /api/v1/pins/created/{user_id}", handler.UserPins)
-//mux.HandleFunc("GET /api/v1/pins", handler.Feed)
-//mux.HandleFunc("POST /api/v1/pins", handler.CreatePin) // Обернуть в OnlyAuth
-//mux.HandleFunc("GET /api/v1/pins/{pin_id}", handler.GetPin)
-//mux.HandleFunc("POST /api/v1/pins/{pin_id}", handler.UpdatePin)   // Обернуть в OnlyAuth
-//mux.HandleFunc("DELETE /api/v1/pins/{pin_id}", handler.DeletePin) // Обернуть в OnlyAuth
-//
-//mux.HandleFunc("POST /api/v1/pins/{pin_id}/like", handler.CreateLike)   // Обернуть в OnlyAuth
-//mux.HandleFunc("DELETE /api/v1/pins/{pin_id}/like", handler.DeleteLike) // Обернуть в OnlyAuth
-//mux.HandleFunc("GET /api/v1/likes/{pin_id}/users", handler.UsersLiked)

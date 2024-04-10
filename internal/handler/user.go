@@ -36,21 +36,22 @@ func MakeUserResponse(user entity.User) entity.UserResponse {
 //	@Router			/users/{nickname}/ [get]
 func (h *APIHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	requestId := ctx.Value("request_id").(string)
 
 	userNicknameFromSlug := r.PathValue("nickname")
 	if !ValidateNickname(userNicknameFromSlug) {
-		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{
 			LocalErr: errs.ErrInvalidSlug,
 		})
 		return
 	}
 	user, errInfo := h.service.GetUserByNickname(ctx, userNicknameFromSlug)
 	if errInfo != emptyErrorInfo {
-		WriteErrorResponse(w, h.logger, errInfo)
+		WriteErrorResponse(w, h.logger, requestId, errInfo)
 		return
 	}
 	if user == emptyUser {
-		WriteErrorResponse(w, h.logger, errs.ErrorInfo{
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{
 			LocalErr: errs.ErrUserNotExist,
 		})
 		return
@@ -88,19 +89,20 @@ func (h *APIHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 //	@Router			/users/{user_id} [post]
 func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	requestId := ctx.Value("request_id").(string)
 
 	userIdFromSlug, err := ReadInt64Slug(r, "user_id")
 	if err != nil {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrInvalidSlug))
+		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(err, errs.ErrInvalidSlug))
 		return
 	}
 
 	userIdFromSession, ok := ctx.Value("user_id").(entity.UserID)
 	if !ok {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrTypeConversion))
+		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(err, errs.ErrTypeConversion))
 	}
 	if uint64(userIdFromSession) != userIdFromSlug {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrDiffUserId))
+		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrDiffUserId))
 		return
 	}
 
@@ -110,7 +112,7 @@ func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		name, errUploading := h.service.UploadImage(ctx, image, imageHeader)
 		if errUploading != nil {
-			WriteErrorResponse(w, h.logger, errs.ErrorInfo{
+			WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{
 				GeneralErr: err,
 				LocalErr:   errs.ErrInvalidImg,
 			})
@@ -122,23 +124,23 @@ func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	userParams := r.FormValue("user")
 	err = json.Unmarshal([]byte(userParams), &user)
 	if err != nil {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(err, errs.ErrReadingRequestBody))
+		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(err, errs.ErrReadingRequestBody))
 		return
 	}
 	user.UserID = userIdFromSession
 	if user.Nickname != "" && !ValidateNickname(user.Nickname) {
-		WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrInvalidInputFormat))
+		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrInvalidInputFormat))
 		return
 	}
 
 	if user.Password != "" {
 		if !ValidatePassword(user.Password) {
-			WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrInvalidInputFormat))
+			WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrInvalidInputFormat))
 			return
 		}
 		hashPassword, errH := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 		if errH != nil {
-			WriteErrorsListResponse(w, h.logger, MakeErrorInfo(errH, errs.ErrHashingPassword))
+			WriteErrorsListResponse(w, h.logger, requestId, MakeErrorInfo(errH, errs.ErrHashingPassword))
 			return
 		}
 		user.Password = string(hashPassword)
@@ -146,7 +148,7 @@ func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	updatedUser, errInfo := h.service.UpdateUser(ctx, user)
 	if errInfo != emptyErrorInfo {
-		WriteErrorResponse(w, h.logger, errInfo)
+		WriteErrorResponse(w, h.logger, requestId, errInfo)
 		return
 	}
 	WriteUserResponse(w, h.logger, updatedUser)

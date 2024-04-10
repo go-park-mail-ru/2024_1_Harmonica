@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"harmonica/internal/entity"
+	"time"
 
 	"github.com/jackskj/carta"
 )
@@ -16,18 +17,24 @@ const (
 )
 
 func (r *DBRepository) SetLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) error {
+	start := time.Now()
 	_, err := r.db.ExecContext(ctx, QuerySetLike, pinId, userId)
+	LogDBQuery(r, ctx, QuerySetLike, time.Since(start))
 	return err
 }
 
 func (r *DBRepository) ClearLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) error {
+	start := time.Now()
 	_, err := r.db.ExecContext(ctx, QueryClearLike, pinId, userId)
+	LogDBQuery(r, ctx, QueryClearLike, time.Since(start))
 	return err
 }
 
 func (r *DBRepository) GetUsersLiked(ctx context.Context, pinId entity.PinID, limit int) (entity.UserList, error) {
 	result := entity.UserList{}
+	start := time.Now()
 	rows, err := r.db.QueryContext(ctx, QueryGetUsersLiked, pinId, limit)
+	LogDBQuery(r, ctx, QueryGetUsersLiked, time.Since(start))
 	if err != nil {
 		return entity.UserList{}, err
 	}
