@@ -3,7 +3,6 @@ package middleware
 import (
 	"context"
 	"errors"
-	"fmt"
 	"harmonica/internal/entity/errs"
 	"harmonica/internal/handler"
 	"net/http"
@@ -37,11 +36,7 @@ func CheckSession(r *http.Request) (*http.Request, error) {
 
 func AuthRequired(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		requestId := r.Context().Value(RequestIdKey).(string)
-
-		fmt.Println(requestId)
-
 		request, err := CheckSession(r)
 		if err != nil {
 			if errs.ErrorCodes[err].HttpCode != 0 {
@@ -60,9 +55,7 @@ func AuthRequired(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
 
 func NoAuthRequired(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		requestId := r.Context().Value(RequestIdKey).(string)
-
 		_, err := CheckSession(r)
 		if err != nil {
 			next.ServeHTTP(w, r)
