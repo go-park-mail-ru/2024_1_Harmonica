@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
@@ -42,12 +43,12 @@ func (h *APIHandler) CreateBoard(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrTypeConversion))
 		return
 	}
-	res, errInfo := h.service.CreateBoard(ctx, board, userId)
+	fullBoard, errInfo := h.service.CreateBoard(ctx, board, userId)
 	if errInfo != emptyErrorInfo {
 		WriteErrorResponse(w, h.logger, requestId, errInfo)
 		return
 	}
-	WriteDefaultResponse(w, h.logger, res)
+	WriteDefaultResponse(w, h.logger, fullBoard)
 }
 
 // Get board.
@@ -74,26 +75,9 @@ func (h *APIHandler) GetBoard(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(err, errs.ErrInvalidSlug))
 		return
 	}
-	userStringId := ctx.Value("user_id")
-	var (
-		userId entity.UserID
-		ok     bool
-	)
-	//if userStringId == nil {
-	//	WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrUnauthorized))
-	//	return
-	//}
-	//userId, ok := userStringId.(entity.UserID)
-	//if !ok {
-	//	WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
-	//	return
-	//}
-	if userStringId != nil {
-		userId, ok = userStringId.(entity.UserID)
-		if !ok {
-			WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrTypeConversion))
-			return
-		}
+	userId, errInfo := CheckAuth(ctx)
+	if errInfo != emptyErrorInfo {
+		WriteErrorResponse(w, h.logger, errInfo)
 	}
 
 	limit, offset, err := GetLimitAndOffset(r)
@@ -297,26 +281,9 @@ func (h *APIHandler) UserBoards(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrInvalidSlug))
 		return
 	}
-	userStringId := ctx.Value("user_id")
-	//if userStringId == nil {
-	//	WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrUnauthorized))
-	//	return
-	//}
-	//userId, ok := userStringId.(entity.UserID)
-	//if !ok {
-	//	WriteErrorResponse(w, h.logger, MakeErrorInfo(nil, errs.ErrTypeConversion))
-	//	return
-	//}
-	var (
-		userId entity.UserID
-		ok     bool
-	)
-	if userStringId != nil {
-		userId, ok = userStringId.(entity.UserID)
-		if !ok {
-			WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrTypeConversion))
-			return
-		}
+	userId, errInfo := CheckAuth(ctx)
+	if errInfo != emptyErrorInfo {
+		WriteErrorResponse(w, h.logger, errInfo)
 	}
 
 	limit, offset, err := GetLimitAndOffset(r)
@@ -349,4 +316,19 @@ func GetInfoFromSlugAndContext(r *http.Request) (entity.BoardID, entity.PinID, e
 		return 0, 0, 0, MakeErrorInfo(nil, errs.ErrTypeConversion)
 	}
 	return boardId, pinId, userId, errs.ErrorInfo{}
+}
+
+func CheckAuth(ctx context.Context) (entity.UserID, errs.ErrorInfo) {
+	userIdString := ctx.Value("user_id")
+	var (
+		userId entity.UserID
+		ok     bool
+	)
+	if userIdString != nil {
+		userId, ok = userIdString.(entity.UserID)
+		if !ok {
+			return 0, errs.ErrorInfo{LocalErr: errs.ErrTypeConversion}
+		}
+	}
+	return userId, emptyErrorInfo
 }
