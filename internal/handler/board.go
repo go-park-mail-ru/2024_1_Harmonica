@@ -77,7 +77,7 @@ func (h *APIHandler) GetBoard(w http.ResponseWriter, r *http.Request) {
 	}
 	userId, errInfo := CheckAuth(ctx)
 	if errInfo != emptyErrorInfo {
-		WriteErrorResponse(w, h.logger, errInfo)
+		WriteErrorResponse(w, h.logger, requestId, errInfo)
 	}
 
 	limit, offset, err := GetLimitAndOffset(r)
@@ -283,7 +283,7 @@ func (h *APIHandler) UserBoards(w http.ResponseWriter, r *http.Request) {
 	}
 	userId, errInfo := CheckAuth(ctx)
 	if errInfo != emptyErrorInfo {
-		WriteErrorResponse(w, h.logger, errInfo)
+		WriteErrorResponse(w, h.logger, requestId, errInfo)
 	}
 
 	limit, offset, err := GetLimitAndOffset(r)
