@@ -48,14 +48,14 @@ func runServer(addr string) {
 
 	server := http.Server{
 		Addr:    addr,
-		Handler: middleware.CORS(loggedMux),
+		Handler: middleware.CSRF(middleware.CORS(loggedMux)),
 	}
 	server.ListenAndServeTLS("/etc/letsencrypt/live/harmoniums.ru/fullchain.pem", "/etc/letsencrypt/live/harmoniums.ru/privkey.pem")
 }
 
 func configureZapLogger() *zap.Logger {
 	ws := zapcore.AddSync(&lumberjack.Logger{
-		Filename:   "logs/pinterest.log",
+		Filename:   "logs/harmonium.log",
 		MaxSize:    1024, // MB
 		MaxBackups: 10,
 		MaxAge:     60, // days
@@ -70,13 +70,13 @@ func configureZapLogger() *zap.Logger {
 func configureUserRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.ServeMux) {
 	authRoutes := map[string]http.HandlerFunc{
 		"POST /api/v1/users/{user_id}": h.UpdateUser,
-		"GET /api/v1/is_auth":          h.IsAuth,
 	}
 	notAuthRoutes := map[string]http.HandlerFunc{
 		"POST /api/v1/login": h.Login,
 		"POST /api/v1/users": h.Register,
 	}
 	checkAuthRoutes := map[string]http.HandlerFunc{
+		"GET /api/v1/is_auth":          h.IsAuth, // check it
 		"GET /api/v1/logout":           h.Logout,
 		"GET /api/v1/users/{nickname}": h.GetUser,
 	}

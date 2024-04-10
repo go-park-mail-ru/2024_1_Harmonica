@@ -1,6 +1,9 @@
 package entity
 
-import "time"
+import (
+	"html"
+	"time"
+)
 
 type VisibilityType string
 
@@ -21,8 +24,19 @@ type Board struct {
 	IsOwner        bool           `json:"is_owner"`
 }
 
+func (b *Board) Sanitize() {
+	b.Title = html.EscapeString(b.Title)
+	b.Description = html.EscapeString(b.Description)
+}
+
 type UserBoards struct {
 	Boards []Board `json:"boards"`
+}
+
+func (b *UserBoards) Sanitize() {
+	for _, board := range b.Boards {
+		board.Sanitize()
+	}
 }
 
 type BoardAuthor struct {
@@ -31,14 +45,32 @@ type BoardAuthor struct {
 	AvatarURL string `db:"avatar_url" json:"avatar_url"`
 }
 
+func (b *BoardAuthor) Sanitize() {
+	b.Nickname = html.EscapeString(b.Nickname)
+}
+
 type BoardPinResponse struct {
 	PinId      PinID  `db:"pin_id" json:"pin_id"`
 	ContentUrl string `db:"content_url" json:"content_url"`
 	PinAuthor  `json:"author"`
 }
 
+func (b *BoardPinResponse) Sanitize() {
+	b.PinAuthor.Sanitize()
+}
+
 type FullBoard struct {
 	Board        `json:"board"`
 	BoardAuthors []BoardAuthor      `json:"authors"`
 	Pins         []BoardPinResponse `json:"pins"`
+}
+
+func (b *FullBoard) Sanitize() {
+	b.Board.Sanitize()
+	for _, author := range b.BoardAuthors {
+		author.Sanitize()
+	}
+	for _, pin := range b.Pins {
+		pin.Sanitize()
+	}
 }

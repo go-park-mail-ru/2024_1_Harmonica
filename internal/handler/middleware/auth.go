@@ -7,16 +7,14 @@ import (
 	"harmonica/internal/handler"
 	"net/http"
 
+	"github.com/gorilla/csrf"
 	"go.uber.org/zap"
 )
 
-const (
-	SessionTokenKey = "session_token"
-	UserIdKey       = "user_id"
-)
+const UserIdKey = "user_id"
 
 func CheckSession(r *http.Request) (*http.Request, error) {
-	c, err := r.Cookie(SessionTokenKey) // "session_token"
+	c, err := r.Cookie("session_token")
 	if err != nil {
 		return nil, err
 	}
@@ -36,6 +34,8 @@ func CheckSession(r *http.Request) (*http.Request, error) {
 
 func AuthRequired(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-CSRF-Token", csrf.Token(r))
+		w.Header().Set("Access-Control-Expose-Headers", "X-CSRF-Token")
 		requestId := r.Context().Value(RequestIdKey).(string)
 		request, err := CheckSession(r)
 		if err != nil {
@@ -45,6 +45,7 @@ func AuthRequired(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
 			}
 			if errors.Is(err, http.ErrNoCookie) {
 				handler.WriteErrorResponse(w, l, requestId, errs.ErrorInfo{LocalErr: errs.ErrUnauthorized})
+				return
 			}
 			handler.WriteErrorResponse(w, l, requestId, errs.ErrorInfo{GeneralErr: err, LocalErr: errs.ErrReadCookie})
 			return
@@ -55,6 +56,8 @@ func AuthRequired(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
 
 func NoAuthRequired(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-CSRF-Token", csrf.Token(r))
+		w.Header().Set("Access-Control-Expose-Headers", "X-CSRF-Token")
 		requestId := r.Context().Value(RequestIdKey).(string)
 		_, err := CheckSession(r)
 		if err != nil {
@@ -69,6 +72,8 @@ func NoAuthRequired(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
 
 func CheckAuth(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-CSRF-Token", csrf.Token(r))
+		w.Header().Set("Access-Control-Expose-Headers", "X-CSRF-Token")
 		request, err := CheckSession(r)
 		if err != nil {
 			request = r

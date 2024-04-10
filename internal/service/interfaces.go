@@ -18,7 +18,7 @@ type IService interface {
 
 	GetFeedPins(ctx context.Context, limit, offset int) (entity.FeedPins, errs.ErrorInfo)
 	GetUserPins(ctx context.Context, authorNickname string, limit, offset int) (entity.UserPins, errs.ErrorInfo)
-	GetPinById(ctx context.Context, id entity.PinID) (entity.PinPageResponse, errs.ErrorInfo)
+	GetPinById(ctx context.Context, PinId entity.PinID, UserId entity.UserID) (entity.PinPageResponse, errs.ErrorInfo)
 	CreatePin(ctx context.Context, pin entity.Pin) (entity.PinPageResponse, errs.ErrorInfo)
 	UpdatePin(ctx context.Context, pin entity.Pin) (entity.PinPageResponse, errs.ErrorInfo)
 	DeletePin(ctx context.Context, pin entity.Pin) errs.ErrorInfo

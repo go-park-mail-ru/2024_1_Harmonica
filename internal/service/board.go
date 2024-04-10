@@ -19,6 +19,7 @@ const UniqueViolationErrCode = pq.ErrorCode("23505")
 
 func (s *RepositoryService) CreateBoard(ctx context.Context, board entity.Board,
 	userId entity.UserID) (entity.FullBoard, errs.ErrorInfo) {
+	board.Sanitize()
 	createdBoard, err := s.repo.CreateBoard(ctx, board, userId)
 	if err != nil {
 		return entity.FullBoard{}, errs.ErrorInfo{
@@ -75,13 +76,13 @@ func (s *RepositoryService) GetBoardById(ctx context.Context, boardId entity.Boa
 			LocalErr:   errs.ErrDBInternal,
 		}
 	}
-	if board.VisibilityType == entity.VisibilityPrivate && !authorContains(authors, userId) {
+	if board.VisibilityType == entity.VisibilityPrivate && !AuthorContains(authors, userId) {
 		return entity.FullBoard{}, errs.ErrorInfo{
 			LocalErr: errs.ErrPermissionDenied,
 		}
 	}
 
-	//if board.VisibilityType == entity.VisibilityPrivate && (userId == 0 || !authorContains(authors, userId)) {
+	//if board.VisibilityType == entity.VisibilityPrivate && (userId == 0 || !AuthorContains(authors, userId)) {
 	//	return emptyFullBoard, errs.ErrorInfo{
 	//		LocalErr: errs.ErrPermissionDenied,
 	//	}
@@ -104,6 +105,7 @@ func (s *RepositoryService) GetBoardById(ctx context.Context, boardId entity.Boa
 
 func (s *RepositoryService) UpdateBoard(ctx context.Context, board entity.Board,
 	userId entity.UserID) (entity.FullBoard, errs.ErrorInfo) {
+	board.Sanitize()
 	isAuthor, err := s.repo.CheckBoardAuthorExistence(ctx, userId, board.BoardID)
 	if err != nil {
 		return entity.FullBoard{}, errs.ErrorInfo{
@@ -278,7 +280,7 @@ func (s *RepositoryService) GetUserBoards(ctx context.Context, authorNickname st
 	return boards, emptyErrorInfo
 }
 
-func authorContains(authors []entity.BoardAuthor, userId entity.UserID) bool {
+func AuthorContains(authors []entity.BoardAuthor, userId entity.UserID) bool {
 	for _, author := range authors {
 		if author.UserId == userId {
 			return true

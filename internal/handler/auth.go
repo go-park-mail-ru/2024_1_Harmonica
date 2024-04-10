@@ -245,7 +245,8 @@ func (h *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
 
 	userIdFromSession, ok := ctx.Value("user_id").(entity.UserID)
 	if !ok {
-		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrTypeConversion))
+		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrUnauthorized))
+		return
 	}
 
 	// Checking the existence of user with userId associated with session
@@ -288,5 +289,8 @@ func SetSessionTokenCookie(w http.ResponseWriter, sessionToken string, expiresAt
 		Value:    sessionToken,
 		Expires:  expiresAt,
 		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
+		Path:     "/",
 	})
 }
