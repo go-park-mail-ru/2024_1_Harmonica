@@ -2,13 +2,14 @@ package test_service
 
 import (
 	"context"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"harmonica/internal/service"
 	mock_repository "harmonica/mocks/repository"
 	"testing"
+
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCreateBoard(t *testing.T) {
@@ -621,12 +622,12 @@ func TestGetUserBoards(t *testing.T) {
 				GetUserBoards: entity.UserBoards{
 					Boards: []entity.Board{
 						{
-							BoardID:        entity.BoardID(1),
-							VisibilityType: "private",
+							BoardID:    entity.BoardID(1),
+							Visibility: "private",
 						},
 						{
-							BoardID:        entity.BoardID(2),
-							VisibilityType: "public",
+							BoardID:    entity.BoardID(2),
+							Visibility: "public",
 						},
 					},
 				},
@@ -643,12 +644,12 @@ func TestGetUserBoards(t *testing.T) {
 				Boards: entity.UserBoards{
 					Boards: []entity.Board{
 						{
-							BoardID:        entity.BoardID(1),
-							VisibilityType: "private",
+							BoardID:    entity.BoardID(1),
+							Visibility: "private",
 						},
 						{
-							BoardID:        entity.BoardID(2),
-							VisibilityType: "public",
+							BoardID:    entity.BoardID(2),
+							Visibility: "public",
 						},
 					},
 				},

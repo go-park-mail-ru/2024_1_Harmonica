@@ -9,7 +9,7 @@ DROP TABLE IF EXISTS public.user;
 CREATE TABLE public.user (
 	user_id BIGINT NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	email TEXT NOT NULL UNIQUE,
-	nickname TEXT NOT NULL UNIQUE CHECK(length(nickname)<=20 AND length(nickname) >= 3),
+	nickname TEXT NOT NULL UNIQUE CHECK(length(nickname) BETWEEN 3 AND 20),
 	password_hash TEXT NOT NULL,
 	register_at TIMESTAMPTZ NULL DEFAULT CURRENT_TIMESTAMP,
 	avatar_id BIGINT NULL,
@@ -30,7 +30,8 @@ CREATE TABLE public.pin (
 	FOREIGN KEY(content_id) REFERENCES public.image(image_id) ON DELETE CASCADE
 );
 
-CREATE TYPE VISIBILITY AS ENUM('private', 'public');
+DROP TYPE IF EXISTS VISIBILITY_TYPE;
+CREATE TYPE VISIBILITY_TYPE AS ENUM('private', 'public');
 
 DROP TABLE IF EXISTS public.board;
 CREATE TABLE public.board (
@@ -39,7 +40,7 @@ CREATE TABLE public.board (
 	created_at TIMESTAMPTZ NULL DEFAULT CURRENT_TIMESTAMP,
 	"description" TEXT NOT NULL DEFAULT '',
 	cover_id BIGINT NULL,
-	visibility_type VISIBILITY NOT NULL DEFAULT 'public',
+	visibility VISIBILITY_TYPE NOT NULL DEFAULT 'public',
 	FOREIGN KEY(cover_id) REFERENCES public.image(image_id) ON DELETE SET NULL
 );
 

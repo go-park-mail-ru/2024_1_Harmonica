@@ -55,7 +55,7 @@ func (r *DBRepository) CreateBoard(ctx context.Context, board entity.Board,
 	var createdBoard entity.Board
 	start := time.Now()
 	err = tx.QueryRowxContext(ctx, QueryCreateBoard, board.Title, board.Description,
-		board.VisibilityType).StructScan(&createdBoard)
+		board.Visibility).StructScan(&createdBoard)
 	LogDBQuery(r, ctx, QueryCreateBoard, time.Since(start))
 	if err != nil {
 		return entity.Board{}, err
@@ -111,7 +111,7 @@ func (r *DBRepository) UpdateBoard(ctx context.Context, board entity.Board) (ent
 	var updatedBoard entity.Board
 	start := time.Now()
 	err := r.db.QueryRowxContext(ctx, QueryUpdateBoard, board.BoardID, board.Title, board.Description,
-		board.CoverURL, board.VisibilityType).StructScan(&updatedBoard)
+		board.CoverURL, board.Visibility).StructScan(&updatedBoard)
 	LogDBQuery(r, ctx, QueryUpdateBoard, time.Since(start))
 	return updatedBoard, err
 }

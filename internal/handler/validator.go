@@ -50,7 +50,7 @@ func ValidateBoard(board entity.Board) bool {
 		return false
 	}
 	for _, visibilityType := range entity.VisibilityTypes {
-		if board.VisibilityType == visibilityType {
+		if board.Visibility == visibilityType {
 			return true
 		}
 	}

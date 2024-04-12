@@ -19,25 +19,25 @@ import (
 
 var boards = []entity.Board{
 	{
-		BoardID:        1,
-		Title:          "Board #1",
-		Description:    "Public board number 1",
-		CoverURL:       "",
-		VisibilityType: "public",
+		BoardID:     1,
+		Title:       "Board #1",
+		Description: "Public board number 1",
+		CoverURL:    "",
+		Visibility:  "public",
 	},
 	{
-		BoardID:        2,
-		Title:          "Board #2",
-		Description:    "Private board number 2",
-		CoverURL:       "alala",
-		VisibilityType: "private",
+		BoardID:     2,
+		Title:       "Board #2",
+		Description: "Private board number 2",
+		CoverURL:    "alala",
+		Visibility:  "private",
 	},
 	{
-		BoardID:        3,
-		Title:          "",
-		Description:    "Wrong board (no title)",
-		CoverURL:       "",
-		VisibilityType: "public",
+		BoardID:     3,
+		Title:       "",
+		Description: "Wrong board (no title)",
+		CoverURL:    "",
+		Visibility:  "public",
 	},
 }
 
@@ -112,7 +112,7 @@ func TestCreateBoard(t *testing.T) {
 					"description": "%s",
 					"cover_url": "%s",
 					"visibility_type": "%s"
-				}`, boards[0].Title, boards[0].Description, boards[0].CoverURL, boards[0].VisibilityType)),
+				}`, boards[0].Title, boards[0].Description, boards[0].CoverURL, boards[0].Visibility)),
 			ExpectedResponse: expectedResponse{
 				Body: MakeDefaultResponse(t, fullBoards[0]),
 				Code: 200,
@@ -128,7 +128,7 @@ func TestCreateBoard(t *testing.T) {
 					"description": "%s",
 					"cover_url": "%s",
 					"visibility_type": "%s"
-				}`, boards[2].Title, boards[2].Description, boards[2].CoverURL, boards[2].VisibilityType)),
+				}`, boards[2].Title, boards[2].Description, boards[2].CoverURL, boards[2].Visibility)),
 			ExpectedResponse: expectedResponse{
 				Body: MakeErrorResponse(errs.ErrInvalidInputFormat),
 				Code: 400,
@@ -147,7 +147,7 @@ func TestCreateBoard(t *testing.T) {
 					"description": "%s",
 					"cover_url": "%s",
 					"visibility_type": "%s"
-				}`, boards[0].Title, boards[0].Description, boards[0].CoverURL, boards[0].VisibilityType)),
+				}`, boards[0].Title, boards[0].Description, boards[0].CoverURL, boards[0].Visibility)),
 			ExpectedResponse: expectedResponse{
 				Body: MakeErrorResponse(errs.ErrDBInternal),
 				Code: 500,

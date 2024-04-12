@@ -1,42 +1,53 @@
+DROP TABLE IF EXISTS public.image;
+CREATE TABLE public.image (
+	image_id BIGINT NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	"name" TEXT NOT NULL UNIQUE,
+	created_at TIMESTAMPTZ NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 DROP TABLE IF EXISTS public.user;
 CREATE TABLE public.user (
-	user_id bigint NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	user_id BIGINT NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	email TEXT NOT NULL UNIQUE,
-	nickname TEXT NOT NULL UNIQUE CHECK(length(nickname)<=20 AND length(nickname) >= 3),
-	"password" TEXT NOT NULL,
-	register_at timestamptz NULL DEFAULT CURRENT_TIMESTAMP,
-	avatar_url TEXT NOT NULL DEFAULT ''
+	nickname TEXT NOT NULL UNIQUE CHECK(length(nickname) BETWEEN 3 AND 20),
+	password_hash TEXT NOT NULL,
+	register_at TIMESTAMPTZ NULL DEFAULT CURRENT_TIMESTAMP,
+	avatar_id BIGINT NULL,
+	FOREIGN KEY(avatar_id) REFERENCES public.image(image_id) ON DELETE SET NULL
 );
 
 DROP TABLE IF EXISTS public.pin;
 CREATE TABLE public.pin (
-	pin_id bigint NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	author_id bigint NOT NULL,
-	created_at timestamptz NULL DEFAULT CURRENT_TIMESTAMP,
+	pin_id BIGINT NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	author_id BIGINT NOT NULL,
+	created_at TIMESTAMPTZ NULL DEFAULT CURRENT_TIMESTAMP,
 	title TEXT NOT NULL DEFAULT '',
 	"description" TEXT NOT NULL DEFAULT '',
 	click_url TEXT NOT NULL DEFAULT '',
-	content_url TEXT NOT NULL,
+	content_id BIGINT NOT NULL,
 	allow_comments BOOLEAN NOT NULL DEFAULT TRUE,
-	FOREIGN KEY(author_id) REFERENCES public.user(user_id) 
+	FOREIGN KEY(author_id) REFERENCES public.user(user_id) ON DELETE CASCADE,
+	FOREIGN KEY(content_id) REFERENCES public.image(image_id) ON DELETE CASCADE
 );
 
-CREATE TYPE VISIBILITY AS ENUM('private', 'public');
+DROP TYPE IF EXISTS VISIBILITY_TYPE;
+CREATE TYPE VISIBILITY_TYPE AS ENUM('private', 'public');
 
 DROP TABLE IF EXISTS public.board;
 CREATE TABLE public.board (
-	board_id bigint NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	board_id BIGINT NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	title TEXT NOT NULL,
-	created_at timestamptz NULL DEFAULT CURRENT_TIMESTAMP,
-	description TEXT NOT NULL DEFAULT '',
-	cover_url TEXT NULL DEFAULT '',
-	visibility_type VISIBILITY NOT NULL DEFAULT 'public'
+	created_at TIMESTAMPTZ NULL DEFAULT CURRENT_TIMESTAMP,
+	"description" TEXT NOT NULL DEFAULT '',
+	cover_id BIGINT NULL,
+	visibility VISIBILITY_TYPE NOT NULL DEFAULT 'public',
+	FOREIGN KEY(cover_id) REFERENCES public.image(image_id) ON DELETE SET NULL
 );
 
 DROP TABLE IF EXISTS public.board_pin;
 CREATE TABLE public.board_pin (
-	board_id bigint NOT NULL,
-	pin_id bigint NOT NULL,
+	board_id BIGINT NOT NULL,
+	pin_id BIGINT NOT NULL,
 	PRIMARY KEY (board_id, pin_id),
 	FOREIGN KEY(board_id) REFERENCES public.board(board_id) ON DELETE CASCADE,
 	FOREIGN KEY(pin_id) REFERENCES public.pin(pin_id) ON DELETE CASCADE
@@ -44,8 +55,8 @@ CREATE TABLE public.board_pin (
 
 DROP TABLE IF EXISTS public.board_author;
 CREATE TABLE public.board_author (
-	board_id bigint NOT NULL,
-	author_id bigint NOT NULL,
+	board_id BIGINT NOT NULL,
+	author_id BIGINT NOT NULL,
 	PRIMARY KEY (board_id, author_id),
 	FOREIGN KEY(board_id) REFERENCES public.board(board_id) ON DELETE CASCADE,
 	FOREIGN KEY(author_id) REFERENCES public.user(user_id) ON DELETE CASCADE
@@ -53,28 +64,10 @@ CREATE TABLE public.board_author (
 
 DROP TABLE IF EXISTS public.like;
 CREATE TABLE public.like (
-	pin_id bigint NOT NULL,
-	user_id bigint NOT NULL,
-	created_at timestamptz NULL DEFAULT CURRENT_TIMESTAMP,
+	pin_id BIGINT NOT NULL,
+	user_id BIGINT NOT NULL,
+	created_at TIMESTAMPTZ NULL DEFAULT CURRENT_TIMESTAMP,
 	PRIMARY KEY (pin_id, user_id),
 	FOREIGN KEY(pin_id) REFERENCES public.pin(pin_id) ON DELETE CASCADE,
 	FOREIGN KEY(user_id) REFERENCES public.user(user_id) ON DELETE CASCADE
-);
-
-DROP TABLE IF EXISTS public.subscribe_on_board;
-CREATE TABLE public.subscribe_on_board (
-	user_id bigint NOT NULL,
-	followed_board_id bigint NOT NULL,
-	PRIMARY KEY (user_id, followed_board_id),
-	FOREIGN KEY(user_id) REFERENCES public.user(user_id) ON DELETE CASCADE,
-	FOREIGN KEY(followed_board_id) REFERENCES public.board(board_id) ON DELETE CASCADE
-);
-
-DROP TABLE IF EXISTS public.subscribe_on_person;
-CREATE TABLE public.subscribe_on_person (
-	user_id bigint NOT NULL,
-	followed_user_id bigint NOT NULL,
-	PRIMARY KEY (user_id, followed_user_id),
-	FOREIGN KEY(user_id) REFERENCES public.user(user_id) ON DELETE CASCADE,
-	FOREIGN KEY(followed_user_id) REFERENCES public.user(user_id) ON DELETE CASCADE
 );

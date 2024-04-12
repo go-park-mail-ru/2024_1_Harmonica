@@ -64,7 +64,7 @@ func (s *RepositoryService) GetBoardById(ctx context.Context, boardId entity.Boa
 		}
 	}
 	board.IsOwner = isAuthor
-	if board.VisibilityType == entity.VisibilityPrivate && !isAuthor {
+	if board.Visibility == entity.VisibilityPrivate && !isAuthor {
 		return entity.FullBoard{}, errs.ErrorInfo{
 			LocalErr: errs.ErrPermissionDenied,
 		}
@@ -76,7 +76,7 @@ func (s *RepositoryService) GetBoardById(ctx context.Context, boardId entity.Boa
 			LocalErr:   errs.ErrDBInternal,
 		}
 	}
-	if board.VisibilityType == entity.VisibilityPrivate && !AuthorContains(authors, userId) {
+	if board.Visibility == entity.VisibilityPrivate && !AuthorContains(authors, userId) {
 		return entity.FullBoard{}, errs.ErrorInfo{
 			LocalErr: errs.ErrPermissionDenied,
 		}
@@ -271,7 +271,7 @@ func (s *RepositoryService) GetUserBoards(ctx context.Context, authorNickname st
 	if author.UserID != userId {
 		var filteredBoards entity.UserBoards
 		for _, board := range boards.Boards {
-			if board.VisibilityType == entity.VisibilityPublic {
+			if board.Visibility == entity.VisibilityPublic {
 				filteredBoards.Boards = append(filteredBoards.Boards, board)
 			}
 		}

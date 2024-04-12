@@ -15,13 +15,13 @@ const (
 var VisibilityTypes = []VisibilityType{VisibilityPublic, VisibilityPrivate}
 
 type Board struct {
-	BoardID        BoardID        `db:"board_id" json:"board_id"`
-	Title          string         `db:"title" json:"title"`
-	CreatedAt      time.Time      `db:"created_at" json:"created_at"`
-	Description    string         `db:"description" json:"description"`
-	CoverURL       string         `db:"cover_url" json:"cover_url" swaggerignore:"true"`
-	VisibilityType VisibilityType `db:"visibility_type" json:"visibility_type"`
-	IsOwner        bool           `json:"is_owner"`
+	BoardID     BoardID        `db:"board_id" json:"board_id"`
+	Title       string         `db:"title" json:"title"`
+	CreatedAt   time.Time      `db:"created_at" json:"created_at"`
+	Description string         `db:"description" json:"description"`
+	CoverURL    string         `db:"cover_url" json:"cover_url" swaggerignore:"true"`
+	Visibility  VisibilityType `db:"visibility" json:"visibility"`
+	IsOwner     bool           `json:"is_owner"`
 }
 
 func (b *Board) Sanitize() {

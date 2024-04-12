@@ -27,7 +27,7 @@ func (h *APIHandler) CreateBoard(w http.ResponseWriter, r *http.Request) {
 	requestId := r.Context().Value("request_id").(string)
 
 	board := entity.Board{}
-	board.VisibilityType = "public"
+	board.Visibility = "public"
 	err := UnmarshalRequest(r, &board)
 
 	if err != nil {
@@ -120,7 +120,7 @@ func (h *APIHandler) UpdateBoard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var newBoard entity.Board
-	newBoard.VisibilityType = "public"
+	newBoard.Visibility = "public"
 
 	boardParams := r.FormValue("board")
 	err = json.Unmarshal([]byte(boardParams), &newBoard)

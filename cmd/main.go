@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "github.com/jackc/pgx/v5"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
