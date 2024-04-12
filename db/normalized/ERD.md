@@ -1,49 +1,58 @@
 ```mermaid
 erDiagram
     user {
-        bigint user_id
-        TEXT email
-        TEXT nickname
+        BIGINT user_id PK
+        TEXT email AK
+        TEXT nickname AK
         TEXT password
-        timestamptz register_at
-        TEXT avatar_url
+        TIMESTAMPTZ register_at
+        BIGINT avatar_id FK
     }
     pin {
-        bigint pin_id 
-        bigint author_id FK
+        BIGINT pin_id PK
+        BIGINT author_id FK
         TEXT title
         TEXT description
-        TEXT content_url
+        BIGINT content_id FK
         TEXT click_url
-        bool allow_coments
-        timestamptz created_at
+        BOOL allow_coments
+        TIMESTAMPTZ created_at
     }
     board {
-        bigint board_id
+        BIGINT board_id PK
         TEXT title
         TEXT description
-        TEXT cover_url
-        timestamptz created_at
-        visibility_type visibility "ENUM(private, public)"
+        BIGINT cover_id FK
+        TIMESTAMPTZ created_at
+        TEXT visibility "ENUM('private', 'public')"
     }
     like {
-        bigint pin_id FK
-        bigint user_id FK
-        timestamptz created_at
+        BIGINT pin_id "PK1.1, FK"
+        BIGINT user_id "PK1.2, FK"
+        TIMESTAMPTZ created_at
     }
     board_author {
-        bigint author_id FK
-        bigint board_id FK
+        BIGINT author_id "PK1.1, FK"
+        BIGINT board_id "PK1.2, FK"
     }
     board_pin {
-        bigint pin_id FK
-        bigint board_id FK
+        BIGINT pin_id "PK1.1, FK"
+        BIGINT board_id "PK1.2, FK"
     }
+    image {
+        BIGINT image_id "PK"
+        TEXT name "AK"
+        TIMESTAMPTZ created_at 
+    }
+
     pin o{--|| user : "one user to many pins"
     board_pin o{--|| pin : "one pin to many board_pin"
     board_pin o{--|| board : "one board to many board_pin"
     board_author o{--|| user : "one user to many board_author"
-    board_author o{--|{ board : "one board to many board_author"
+    board_author o{--|| board : "one board to many board_author"
     like o{--|| user : "one user to many likes"
     like o{--|| pin : "one pin to many likes"
+    user ||--o| image : "one user to one avatar-image"
+    pin ||--|| image : "one pin to one pin-image"
+    board ||--o| image : "one board to one cover-image"
 ```
