@@ -24,7 +24,7 @@ erDiagram
         TEXT description
         BIGINT cover_id FK
         TIMESTAMPTZ created_at
-        TEXT visibility "ENUM('private', 'public')"
+        TEXT visibility
     }
     like {
         BIGINT pin_id "PK1.1, FK"
