@@ -30,9 +30,6 @@ CREATE TABLE public.pin (
 	FOREIGN KEY(content_id) REFERENCES public.image(image_id) ON DELETE CASCADE
 );
 
-DROP TYPE IF EXISTS VISIBILITY_TYPE;
-CREATE TYPE VISIBILITY_TYPE AS ENUM('private', 'public');
-
 DROP TABLE IF EXISTS public.board;
 CREATE TABLE public.board (
 	board_id BIGINT NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -40,7 +37,7 @@ CREATE TABLE public.board (
 	created_at TIMESTAMPTZ NULL DEFAULT CURRENT_TIMESTAMP,
 	"description" TEXT NOT NULL DEFAULT '',
 	cover_id BIGINT NULL,
-	visibility VISIBILITY_TYPE NOT NULL DEFAULT 'public',
+	visibility TEXT NOT NULL DEFAULT 'public' CHECK(visibility='public' OR visibility='private'),
 	FOREIGN KEY(cover_id) REFERENCES public.image(image_id) ON DELETE SET NULL
 );
 
