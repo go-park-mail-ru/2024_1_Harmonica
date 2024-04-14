@@ -211,14 +211,14 @@ func TestLogout(t *testing.T) {
 		{
 			Name: "Correct test 1",
 			ExpectedResponse: expectedResponse{
-				Code: 200,
+				Code: 204,
 			},
 			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 		{
 			Name: "Correct test 1",
 			ExpectedResponse: expectedResponse{
-				Code: 200,
+				Code: 204,
 			},
 			Cookie: &http.Cookie{
 				Name:  "session_token",
