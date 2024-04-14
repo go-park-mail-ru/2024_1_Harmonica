@@ -118,7 +118,7 @@ func (h *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	c, err := r.Cookie("session_token")
 	if err != nil {
 		if errors.Is(err, http.ErrNoCookie) {
-			w.WriteHeader(http.StatusOK)
+			w.WriteHeader(http.StatusNoContent)
 			return
 		}
 		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{
@@ -131,13 +131,13 @@ func (h *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	_, exists := Sessions.Load(sessionToken)
 	if !exists {
 		SetSessionTokenCookie(w, "", time.Now())
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 
 	Sessions.Delete(sessionToken)
 	SetSessionTokenCookie(w, "", time.Now())
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // Registration
