@@ -45,6 +45,7 @@ DROP TABLE IF EXISTS public.board_pin;
 CREATE TABLE public.board_pin (
 	board_id BIGINT NOT NULL,
 	pin_id BIGINT NOT NULL,
+	created_at TIMESTAMPTZ NULL DEFAULT CURRENT_TIMESTAMP,
 	PRIMARY KEY (board_id, pin_id),
 	FOREIGN KEY(board_id) REFERENCES public.board(board_id) ON DELETE CASCADE,
 	FOREIGN KEY(pin_id) REFERENCES public.pin(pin_id) ON DELETE CASCADE

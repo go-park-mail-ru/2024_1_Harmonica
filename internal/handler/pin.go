@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"go.uber.org/zap"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"io"
@@ -36,19 +35,6 @@ func UnmarshalRequest(r *http.Request, dest any) error {
 	}
 	err = json.Unmarshal(bodyBytes, &dest)
 	return err
-}
-
-func WriteDefaultResponse(w http.ResponseWriter, logger *zap.Logger, object any) {
-	w.Header().Set("Content-Type", "application/json")
-	response, _ := json.Marshal(object)
-	_, err := w.Write(response)
-	if err != nil {
-		logger.Error(
-			errs.ErrServerInternal.Error(),
-			zap.Int("local_error_code", errs.ErrorCodes[errs.ErrServerInternal].LocalCode),
-			zap.String("general_error", err.Error()),
-		)
-	}
 }
 
 // Feed pins list
@@ -188,7 +174,7 @@ func (h *APIHandler) CreatePin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pin.AuthorId = ctx.Value("user_id").(entity.UserID)
-	imageName, err := h.UploadImage(r, "image")
+	imageId, imageName, err := h.UploadImage(r, "image")
 	if err != nil {
 		localErr := err
 		if errs.ErrorCodes[localErr].HttpCode == 0 {
@@ -197,8 +183,9 @@ func (h *APIHandler) CreatePin(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{GeneralErr: err, LocalErr: localErr})
 		return
 	}
-	pin.ContentUrl = FormImgURL(imageName)
 
+	pin.ContentUrl = FormImgURL(imageName)
+	pin.ContentId = imageId
 	res, errInfo := h.service.CreatePin(ctx, pin)
 	if errInfo != emptyErrorInfo {
 		WriteErrorResponse(w, h.logger, requestId, errInfo)

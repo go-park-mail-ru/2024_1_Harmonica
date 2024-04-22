@@ -1,10 +1,6 @@
 package main
 
 import (
-	_ "github.com/jackc/pgx/v5"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-	"gopkg.in/natefinch/lumberjack.v2"
 	"harmonica/config"
 	"harmonica/internal/handler"
 	"harmonica/internal/handler/middleware"
@@ -12,6 +8,11 @@ import (
 	"harmonica/internal/service"
 	"log"
 	"net/http"
+
+	_ "github.com/jackc/pgx/v5"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/joho/godotenv"
 	v3 "github.com/swaggest/swgui/v3"
@@ -50,6 +51,9 @@ func runServer(addr string) {
 	server := http.Server{
 		Addr:    addr,
 		Handler: middleware.CSRF(middleware.CORS(loggedMux)),
+	}
+	if config.GetEnvAsBool("DEBUG", false) {
+		server.ListenAndServe()
 	}
 	server.ListenAndServeTLS("/etc/letsencrypt/live/harmoniums.ru/fullchain.pem", "/etc/letsencrypt/live/harmoniums.ru/privkey.pem")
 }

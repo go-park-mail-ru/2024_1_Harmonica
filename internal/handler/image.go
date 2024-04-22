@@ -2,6 +2,7 @@ package handler
 
 import (
 	"harmonica/config"
+	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"io"
 	"net/http"
@@ -29,16 +30,13 @@ func (h *APIHandler) GetImage(w http.ResponseWriter, r *http.Request) {
 	w.Write(file)
 }
 
-func (h *APIHandler) UploadImage(r *http.Request, imageName string) (string, error) {
+func (h *APIHandler) UploadImage(r *http.Request, imageName string) (entity.ImageID, string, error) {
 	file, header, err := r.FormFile(imageName)
 	if err != nil {
-		return "", errs.ErrNoImageProvided
+		return entity.ImageID(0), "", errs.ErrNoImageProvided
 	}
-	name, err := h.service.UploadImage(r.Context(), file, header)
-	if err != nil {
-		return "", err
-	}
-	return name, nil
+	id, name, err := h.service.UploadImage(r.Context(), file, header)
+	return id, name, err
 }
 
 func FormImgURL(name string) string {

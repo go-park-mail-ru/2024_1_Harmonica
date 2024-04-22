@@ -39,6 +39,8 @@ type IRepository interface {
 	GetUsersLiked(ctx context.Context, pinId entity.PinID, limit int) (entity.UserList, error)
 	CheckIsLiked(ctx context.Context, pinId entity.PinID, userId entity.UserID) (bool, error)
 
-	UploadImage(ctx context.Context, file multipart.File, fileHeader *multipart.FileHeader) (string, error)
+	UploadImage(ctx context.Context, file multipart.File, fileHeader *multipart.FileHeader) (entity.ImageID, string, error)
+	GetImageById(ctx context.Context, id entity.ImageID) (*minio.Object, error)
+	GetImageNameById(ctx context.Context, id entity.ImageID) (string, error)
 	GetImage(ctx context.Context, name string) (*minio.Object, error)
 }

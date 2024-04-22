@@ -12,6 +12,7 @@ type User struct {
 	Password   string    `db:"password_hash" json:"password"`
 	AvatarURL  string    `db:"avatar_url" json:"avatar_url" swaggerignore:"true"`
 	RegisterAt time.Time `db:"register_at" json:"register_at" swaggerignore:"true"`
+	AvatarId   ImageID   `db:"avatar_id"`
 }
 
 func (u *User) Sanitize() {

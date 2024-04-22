@@ -35,6 +35,8 @@ type IService interface {
 	ClearLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) errs.ErrorInfo
 	GetUsersLiked(ctx context.Context, pinId entity.PinID, limit int) (entity.UserList, errs.ErrorInfo)
 
-	UploadImage(ctx context.Context, file multipart.File, fileHeader *multipart.FileHeader) (string, error)
+	UploadImage(ctx context.Context, file multipart.File, fileHeader *multipart.FileHeader) (entity.ImageID, string, error)
+	GetImageById(ctx context.Context, id entity.ImageID) (*minio.Object, error)
+	GetImageNameById(ctx context.Context, id entity.ImageID) (string, error)
 	GetImage(ctx context.Context, name string) (*minio.Object, error)
 }

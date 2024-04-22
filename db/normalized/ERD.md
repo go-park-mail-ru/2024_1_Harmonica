@@ -38,6 +38,7 @@ erDiagram
     board_pin {
         BIGINT pin_id "PK1.1, FK"
         BIGINT board_id "PK1.2, FK"
+        TIMESTAMPTZ created_at
     }
     image {
         BIGINT image_id "PK"

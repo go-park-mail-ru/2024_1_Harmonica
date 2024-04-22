@@ -140,7 +140,7 @@ func (h *APIHandler) UpdateBoard(w http.ResponseWriter, r *http.Request) {
 	newBoard.CoverURL = ""
 	image, imageHeader, err := r.FormFile("image")
 	if err == nil {
-		name, errUploading := h.service.UploadImage(ctx, image, imageHeader)
+		_, name, errUploading := h.service.UploadImage(ctx, image, imageHeader)
 		if errUploading != nil {
 			WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrInvalidImg))
 			return

@@ -19,7 +19,7 @@ const (
 	(SELECT COUNT(*) FROM public.like WHERE public.like.pin_id=public.pin.pin_id) AS likes_count
 	FROM public.pin INNER JOIN public.user ON public.pin.author_id=public.user.user_id WHERE pin_id=$1`
 
-	QueryCreatePin = `INSERT INTO public.pin ("author_id", "content_url", "click_url", "title", "description", "allow_comments") 
+	QueryCreatePin = `INSERT INTO public.pin ("author_id", "content_id", "click_url", "title", "description", "allow_comments") 
 	VALUES($1, $2, $3, $4, $5, $6) RETURNING pin_id`
 
 	QueryUpdatePin = `UPDATE public.pin SET allow_comments=$2, title=$3, "description"=$4, click_url=$5 WHERE pin_id=$1`
@@ -72,7 +72,7 @@ func (r *DBRepository) GetPinById(ctx context.Context, pinId entity.PinID) (enti
 func (r *DBRepository) CreatePin(ctx context.Context, pin entity.Pin) (entity.PinID, error) {
 	res := entity.PinID(0)
 	start := time.Now()
-	err := r.db.QueryRowContext(ctx, QueryCreatePin, pin.AuthorId, pin.ContentUrl, pin.ClickUrl, pin.Title,
+	err := r.db.QueryRowContext(ctx, QueryCreatePin, pin.AuthorId, pin.ContentId, pin.ClickUrl, pin.Title,
 		pin.Description, pin.AllowComments).Scan(&res)
 	LogDBQuery(r, ctx, QueryCreatePin, time.Since(start))
 	return res, err

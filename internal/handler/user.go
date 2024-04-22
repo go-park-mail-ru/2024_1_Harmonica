@@ -110,7 +110,7 @@ func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	image, imageHeader, err := r.FormFile("image")
 	if err == nil {
-		name, errUploading := h.service.UploadImage(ctx, image, imageHeader)
+		_, name, errUploading := h.service.UploadImage(ctx, image, imageHeader)
 		if errUploading != nil {
 			WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{
 				GeneralErr: err,
