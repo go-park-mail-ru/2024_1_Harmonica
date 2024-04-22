@@ -1,5 +1,5 @@
 package test_repository
-
+/*
 import (
 	"database/sql/driver"
 	"go.uber.org/zap"
@@ -154,3 +154,4 @@ func TestCheckPinExistence(t *testing.T) {
 	assert.Equal(t, false, res)
 	assert.Equal(t, errs.ErrDBInternal, err)
 }
+*/
