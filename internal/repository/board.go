@@ -2,9 +2,10 @@ package repository
 
 import (
 	"context"
-	"github.com/jackskj/carta"
 	"harmonica/internal/entity"
 	"time"
+
+	"github.com/jackskj/carta"
 )
 
 const (
@@ -24,7 +25,7 @@ const (
 	QueryGetBoardPins = `SELECT public.pin.pin_id, public.pin.content_url, public.user.user_id, public.user.nickname, 
     public.user.avatar_url FROM public.pin INNER JOIN public.board_pin ON public.pin.pin_id = public.board_pin.pin_id 
 	INNER JOIN public.user ON public.pin.author_id = public.user.user_id WHERE public.board_pin.board_id=$1
-	ORDER BY public.pin.created_at DESC LIMIT $2 OFFSET $3`
+	ORDER BY public.board_pin.created_at DESC LIMIT $2 OFFSET $3`
 
 	QueryGetUserBoards = `SELECT public.board.board_id, public.board.title, public.board.created_at, 
     public.board.description, public.board.cover_url, public.board.visibility_type FROM public.board  
