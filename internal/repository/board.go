@@ -31,6 +31,29 @@ const (
     INNER JOIN public.board_author ON public.board.board_id = public.board_author.board_id 
     WHERE public.board_author.author_id=$1 ORDER BY public.board.created_at DESC LIMIT $2 OFFSET $3`
 
+	newQueryGetUserBoards = `SELECT 
+    public.board.board_id,
+    public.board.title,
+    public.board.created_at,
+    public.board.description,
+    public.board.cover_url,
+    public.board.visibility_type,
+    (
+        SELECT ARRAY_AGG(public.pin.content_url ORDER BY public.board_pin.added_at DESC LIMIT 3)
+        FROM public.board_pin
+        INNER JOIN public.pin ON public.board_pin.pin_id = public.pin.pin_id
+        WHERE public.board_pin.board_id = public.board.board_id
+    ) AS recent_pins
+	FROM 
+    	public.board
+	INNER JOIN 
+    	public.board_author ON public.board.board_id = public.board_author.board_id
+	WHERE 
+    	public.board_author.author_id = $1
+	ORDER BY 
+    	public.board.created_at DESC
+	LIMIT $2 OFFSET $3;`
+
 	QueryUpdateBoard = `UPDATE public.board SET title=$2, description=$3, cover_url=$4, visibility_type=$5 
     WHERE board_id=$1 RETURNING public.board.board_id, public.board.created_at, public.board.title, 
     public.board.description, public.board.cover_url, public.board.visibility_type`

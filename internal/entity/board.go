@@ -29,9 +29,18 @@ func (b *Board) Sanitize() {
 	b.Description = html.EscapeString(b.Description)
 }
 
-type UserBoards struct {
-	Boards []Board `json:"boards"`
+type UserBoard struct {
+	Board                         //`json:"board"` возможно без этого сработает как надо - пойдет вглубь
+	RecentPinContentUrls []string `json:"recent_pins"`
 }
+
+type UserBoards struct {
+	Boards []UserBoard `json:"boards"`
+}
+
+//type UserBoards struct {
+//	Boards []Board `json:"boards"`
+//}
 
 func (b *UserBoards) Sanitize() {
 	for _, board := range b.Boards {
