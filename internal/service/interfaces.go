@@ -37,4 +37,7 @@ type IService interface {
 
 	UploadImage(ctx context.Context, file multipart.File, fileHeader *multipart.FileHeader) (string, error)
 	GetImage(ctx context.Context, name string) (*minio.Object, error)
+
+	CreateMessage(ctx context.Context, message entity.Message) errs.ErrorInfo
+	GetMessages(ctx context.Context, firstUserId, secondUserId entity.UserID) (entity.Messages, errs.ErrorInfo)
 }

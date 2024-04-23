@@ -39,6 +39,7 @@ func runServer(addr string) {
 	configureUserRoutes(logger, h, mux)
 	configurePinRoutes(logger, h, mux)
 	configureBoardRoutes(logger, h, mux)
+	configureMessageRoutes(logger, h, mux)
 
 	mux.Handle("GET /docs/swagger.json", http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))))
 	mux.Handle("GET /swagger/", v3.NewHandler("My API", "/docs/swagger.json", "/swagger"))
@@ -50,7 +51,8 @@ func runServer(addr string) {
 		Addr:    addr,
 		Handler: middleware.CSRF(middleware.CORS(loggedMux)),
 	}
-	server.ListenAndServeTLS("/etc/letsencrypt/live/harmoniums.ru/fullchain.pem", "/etc/letsencrypt/live/harmoniums.ru/privkey.pem")
+	server.ListenAndServe()
+	//server.ListenAndServeTLS("/etc/letsencrypt/live/harmoniums.ru/fullchain.pem", "/etc/letsencrypt/live/harmoniums.ru/privkey.pem")
 }
 
 func configureZapLogger() *zap.Logger {
@@ -135,6 +137,16 @@ func configureBoardRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.S
 	}
 	for pattern, f := range checkAuthRoutes {
 		mux.HandleFunc(pattern, middleware.CheckAuth(logger, f))
+	}
+}
+
+func configureMessageRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.ServeMux) {
+	authRoutes := map[string]http.HandlerFunc{
+		"POST /api/v1/messages/{receiver_id}": h.SendMessage,
+		"GET /api/v1/messages/{user_id}":      h.ReadMessages,
+	}
+	for pattern, f := range authRoutes {
+		mux.HandleFunc(pattern, middleware.AuthRequired(logger, f))
 	}
 }
 
