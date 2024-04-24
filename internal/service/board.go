@@ -15,7 +15,7 @@ const (
 	defaultOffset = 0
 )
 
-const ForeignKeyViolationErrCode = pq.ErrorCode("23505")
+const UniqueViolationErrCode = pq.ErrorCode("23505")
 
 func (s *RepositoryService) CreateBoard(ctx context.Context, board entity.Board,
 	userId entity.UserID) (entity.FullBoard, errs.ErrorInfo) {
@@ -179,7 +179,7 @@ func (s *RepositoryService) AddPinToBoard(ctx context.Context, boardId entity.Bo
 		localErr := errs.ErrDBInternal
 		var pqErr *pq.Error
 		ok := errors.As(err, &pqErr)
-		if ok && (pqErr.Code == ForeignKeyViolationErrCode) {
+		if ok && (pqErr.Code == UniqueViolationErrCode) {
 			localErr = errs.ErrDBUniqueViolation
 		}
 		return errs.ErrorInfo{
