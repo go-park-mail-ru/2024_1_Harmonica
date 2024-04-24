@@ -4,25 +4,7 @@ package auth;
 
 option go_package = "microservices/auth/proto";
 
-message Error {
-  string localError = 1;
-  string generalError = 2;
-}
-
-message SessionID {
-    string id = 1;
-}
-
-message Session {
-    uint64 userId = 1;
-    bool isAuthorized = 2;
-}
-
 message Empty {};
-
-message BoolResult {
-  bool result = 1;
-}
 
 message LoginUserRequest {
     int64 userId = 1;
