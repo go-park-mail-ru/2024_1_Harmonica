@@ -277,6 +277,10 @@ func (s *RepositoryService) GetUserBoards(ctx context.Context, authorNickname st
 		}
 		return filteredBoards, emptyErrorInfo
 	}
+
+	// проблема: из-за сортировки приватных досок можем терять некоторые
+	// то есть, вместо запрошенного количества =limit, получаем меньшее
+
 	return boards, emptyErrorInfo
 }
 

@@ -30,17 +30,24 @@ func (b *Board) Sanitize() {
 }
 
 type UserBoard struct {
-	Board                         //`json:"board"` возможно без этого сработает как надо - пойдет вглубь
-	RecentPinContentUrls []string `json:"recent_pins"`
+	BoardID        BoardID        `db:"board_id" json:"board_id"`
+	Title          string         `db:"title" json:"title"`
+	CreatedAt      time.Time      `db:"created_at" json:"created_at"`
+	Description    string         `db:"description" json:"description"`
+	CoverURL       string         `db:"cover_url" json:"cover_url" swaggerignore:"true"`
+	VisibilityType VisibilityType `db:"visibility_type" json:"visibility_type"`
+	//IsOwner              bool           `json:"is_owner"` // здесь это поле не используем
+	RecentPinContentUrls []string `db:"recent_pins" json:"recent_pins"`
+}
+
+func (b *UserBoard) Sanitize() {
+	b.Title = html.EscapeString(b.Title)
+	b.Description = html.EscapeString(b.Description)
 }
 
 type UserBoards struct {
 	Boards []UserBoard `json:"boards"`
 }
-
-//type UserBoards struct {
-//	Boards []Board `json:"boards"`
-//}
 
 func (b *UserBoards) Sanitize() {
 	for _, board := range b.Boards {
