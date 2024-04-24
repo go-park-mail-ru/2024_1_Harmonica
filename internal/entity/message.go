@@ -41,5 +41,5 @@ type MessageResponse struct {
 }
 
 type Messages struct {
-	Messages []Message `json:"messages"`
+	Messages []MessageResponse `json:"messages"`
 }

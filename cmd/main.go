@@ -48,8 +48,9 @@ func runServer(addr string) {
 	loggedMux := middleware.Logging(logger, mux)
 
 	server := http.Server{
-		Addr:    addr,
-		Handler: middleware.CSRF(middleware.CORS(loggedMux)),
+		Addr: addr,
+		//Handler: middleware.CSRF(middleware.CORS(loggedMux)),
+		Handler: middleware.CORS(loggedMux),
 	}
 	server.ListenAndServe()
 	//server.ListenAndServeTLS("/etc/letsencrypt/live/harmoniums.ru/fullchain.pem", "/etc/letsencrypt/live/harmoniums.ru/privkey.pem")
