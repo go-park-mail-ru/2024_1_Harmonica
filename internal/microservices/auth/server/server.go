@@ -4,7 +4,6 @@ import (
 	"context"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
-	"harmonica/internal/handler"
 	auth "harmonica/internal/microservices/auth/proto"
 	"strconv"
 	"sync"
@@ -27,7 +26,6 @@ var (
 )
 
 type AuthorizationServer struct {
-	h *handler.APIHandler
 	s *service.Service
 	r *repository.Repository
 	auth.AuthorizationServer
