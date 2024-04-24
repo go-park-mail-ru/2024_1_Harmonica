@@ -26,6 +26,8 @@ var (
 	ErrElementNotExist    = errors.New("element does not exist")
 	ErrTypeConversion     = errors.New("type conversion error")
 	ErrDBUniqueViolation  = errors.New("unique violation error (element already exists in db)")
+	ErrGRPCWentWrong      = errors.New("something went wrong in grpc connection")
+	ErrCantParseTime      = errors.New("cant parse timestamp")
 )
 
 var ErrorCodes = map[error]struct {
@@ -53,4 +55,32 @@ var ErrorCodes = map[error]struct {
 	ErrElementNotExist:    {HttpCode: 400, LocalCode: 20},
 	ErrTypeConversion:     {HttpCode: 400, LocalCode: 21},
 	ErrDBUniqueViolation:  {HttpCode: 500, LocalCode: 22},
+	ErrGRPCWentWrong:      {HttpCode: 500, LocalCode: 23},
+	ErrCantParseTime:      {HttpCode: 500, LocalCode: 24},
+}
+
+var GetLocalErrorByCode = map[int64]error{
+	1:  ErrAlreadyAuthorized,
+	2:  ErrUnauthorized,
+	3:  ErrReadCookie,
+	4:  ErrReadingRequestBody,
+	5:  ErrInvalidInputFormat,
+	6:  ErrHashingPassword,
+	7:  ErrUserNotExist,
+	8:  ErrWrongPassword,
+	9:  ErrDBUniqueEmail,
+	10: ErrDBUniqueNickname,
+	11: ErrDBInternal,
+	12: ErrInvalidSlug,
+	14: ErrPermissionDenied,
+	15: ErrContentUrlRequired,
+	16: ErrEmptyContentURL,
+	17: ErrInvalidContentType,
+	18: ErrInvalidImg,
+	19: ErrNoImageProvided,
+	20: ErrElementNotExist,
+	21: ErrTypeConversion,
+	22: ErrDBUniqueViolation,
+	23: ErrGRPCWentWrong,
+	24: ErrCantParseTime,
 }

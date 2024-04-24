@@ -4,7 +4,10 @@ import (
 	"encoding/json"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
+	auth "harmonica/internal/microservices/auth/proto"
+	"io"
 	"net/http"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -17,6 +20,110 @@ func MakeUserResponse(user entity.User) entity.UserResponse {
 		AvatarURL: user.AvatarURL,
 	}
 	return userResponse
+}
+
+// Registration
+//
+//	@Summary		Register user
+//	@Description	Register user by POST request and add them to DB
+//	@Tags			Authorization
+//	@Produce		json
+//	@Accept			json
+//	@Param			request	body		entity.User	true	"json"
+//	@Success		200		{object}	entity.UserResponse
+//	@Failure		400		{object}	errs.ErrorResponse	"Possible code responses: 3, 4, 5."
+//	@Failure		401		{object}	errs.ErrorResponse	"Possible code responses: 7, 8."
+//	@Failure		403		{object}	errs.ErrorResponse	"Possible code responses: 1."
+//	@Failure		500		{object}	errs.ErrorResponse	"Possible code responses: 11."
+//	@Router			/users [post]
+func (h *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	requestId := ctx.Value("request_id").(string)
+
+	bodyBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		WriteErrorsListResponse(w, h.logger, requestId, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrReadingRequestBody,
+		})
+		return
+	}
+
+	var user entity.User
+	err = json.Unmarshal(bodyBytes, &user)
+	if err != nil {
+		WriteErrorsListResponse(w, h.logger, requestId, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrReadingRequestBody,
+		})
+		return
+	}
+
+	if !ValidateEmail(user.Email) ||
+		!ValidateNickname(user.Nickname) ||
+		!ValidatePassword(user.Password) {
+		WriteErrorsListResponse(w, h.logger, requestId, errs.ErrorInfo{
+			LocalErr: errs.ErrInvalidInputFormat,
+		})
+		return
+	}
+
+	hashPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		WriteErrorsListResponse(w, h.logger, requestId, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrHashingPassword,
+		})
+		return
+	}
+	user.Password = string(hashPassword)
+
+	errsList := h.service.RegisterUser(ctx, user)
+	if len(errsList) != 0 {
+		WriteErrorsListResponse(w, h.logger, requestId, errsList...)
+		return
+	}
+
+	// Search for user by email (to get user id)
+	registeredUser, errInfo := h.service.GetUserByEmail(ctx, user.Email)
+	if errInfo != emptyErrorInfo {
+		WriteErrorsListResponse(w, h.logger, requestId, errInfo)
+		return
+	}
+	if registeredUser == emptyUser {
+		WriteErrorsListResponse(w, h.logger, requestId, errs.ErrorInfo{
+			LocalErr: errs.ErrUserNotExist,
+		})
+		return
+	}
+
+	res, err := h.AuthService.Login(ctx, &auth.LoginUserRequest{
+		UserId:     int64(registeredUser.UserID),
+		Email:      registeredUser.Email,
+		Nickname:   registeredUser.Nickname,
+		AvatarURL:  registeredUser.AvatarURL,
+		Password:   registeredUser.Password,
+		RegisterAt: registeredUser.RegisterAt.Format(time.RFC3339Nano),
+	})
+	if err != nil {
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{LocalErr: errs.ErrGRPCWentWrong, GeneralErr: err})
+		return
+	}
+	if !res.Valid {
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{
+			LocalErr: errs.GetLocalErrorByCode[res.LocalError],
+		})
+		return
+	}
+	expiresAt, err := time.Parse(time.RFC3339Nano, res.ExpiresAt)
+	if err != nil {
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{
+			LocalErr: errs.ErrCantParseTime,
+		})
+		return
+	}
+	SetSessionTokenCookie(w, res.NewSessionToken, expiresAt)
+	WriteUserResponse(w, h.logger, registeredUser)
 }
 
 // Update user.
@@ -39,12 +146,13 @@ func (h *APIHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	requestId := ctx.Value("request_id").(string)
 
 	userNicknameFromSlug := r.PathValue("nickname")
-	if !ValidateNickname(userNicknameFromSlug) {
-		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{
-			LocalErr: errs.ErrInvalidSlug,
-		})
-		return
-	}
+	// А зачем?
+	//	if !ValidateNickname(userNicknameFromSlug) {
+	//		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{
+	//			LocalErr: errs.ErrInvalidSlug,
+	//		})
+	//		return
+	//	}
 	user, errInfo := h.service.GetUserByNickname(ctx, userNicknameFromSlug)
 	if errInfo != emptyErrorInfo {
 		WriteErrorResponse(w, h.logger, requestId, errInfo)

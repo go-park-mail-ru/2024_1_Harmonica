@@ -19,3 +19,7 @@ mocks: ./internal/service/interfaces.go ./internal/repository/interfaces.go
 	@echo "Generating mocks..."
 	@rm -rf $(MOCKS_DESTINATION)
 	@for file in $^; do mockgen -source=$$file -destination=$(MOCKS_DESTINATION)/$$file; done
+
+proto_auth:
+	export PATH="$(PATH):$(go env GOPATH)/bin" && \
+	protoc --go_out=. --go-grpc_out=. --go-grpc_opt=paths=source_relative --go_opt=paths=source_relative ./internal/microservices/auth/proto/auth.proto

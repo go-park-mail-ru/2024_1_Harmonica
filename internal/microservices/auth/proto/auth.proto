@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package auth;
+
+option go_package = "microservices/auth/proto";
+
+message Error {
+  string localError = 1;
+  string generalError = 2;
+}
+
+message SessionID {
+    string id = 1;
+}
+
+message Session {
+    uint64 userId = 1;
+    bool isAuthorized = 2;
+}
+
+message Empty {};
+
+message BoolResult {
+  bool result = 1;
+}
+
+message LoginUserRequest {
+    int64 userId = 1;
+    string email = 2;
+    string nickname = 3;
+    string password = 4;
+    string avatarURL = 5;
+    string register_at = 6;
+}
+
+message LoginUserResponse {
+    int64 userId = 1;
+    string email = 2;
+    string nickname = 3;
+    string password = 4;
+    string avatarURL = 5;
+    string register_at = 6;
+    string newSessionToken = 7;
+    bool valid = 8;
+    int64 localError = 9;
+    string expiresAt = 10;
+}
+
+message IsAuthUserResponse {
+    int64 userId = 1;
+    string email = 2;
+    string nickname = 3;
+    string avatarURL = 4;
+}
+
+message IsAuthResponse {
+    bool isAuthorized = 1;
+    IsAuthUserResponse user = 2;
+    int64 localError = 3;
+    bool valid = 4;
+}
+
+message CheckSessionRequest {
+    string session = 1;
+}
+
+message CheckSessionResponse {
+    bool valid = 1;
+    int64 userId = 2;
+    int64 localError = 3;
+}
+
+message LogoutRequest {
+    string sessionToken = 1;
+}
+
+message LogoutResponse {}
+
+service Authorization {
+  rpc Login(LoginUserRequest) returns(LoginUserResponse) {}
+  rpc Logout(LogoutRequest) returns(LogoutResponse) {}
+  rpc IsAuth(Empty) returns(IsAuthResponse) {}
+  rpc CheckSession(CheckSessionRequest) returns(CheckSessionResponse) {}
+}

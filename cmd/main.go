@@ -1,16 +1,19 @@
 package main
 
 import (
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-	"gopkg.in/natefinch/lumberjack.v2"
 	"harmonica/config"
 	"harmonica/internal/handler"
 	"harmonica/internal/handler/middleware"
+	auth "harmonica/internal/microservices/auth/proto"
 	"harmonica/internal/repository"
 	"harmonica/internal/service"
 	"log"
 	"net/http"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"google.golang.org/grpc"
+	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/joho/godotenv"
 	v3 "github.com/swaggest/swgui/v3"
@@ -28,13 +31,19 @@ func runServer(addr string) {
 		return
 	}
 	defer connector.Disconnect()
+
+	conn, err := grpc.Dial(config.GetEnv("AUTH_MICRO_PORT", ":8001"), grpc.WithInsecure())
+	if err != nil {
+		log.Print(err)
+		return
+	}
+	defer conn.Close()
+
 	r := repository.NewRepository(connector, logger)
 	s := service.NewService(r)
-	h := handler.NewAPIHandler(s, logger)
-
+	c := auth.NewAuthorizationClient(conn)
+	h := handler.NewAPIHandler(s, logger, c)
 	mux := http.NewServeMux()
-
-	go handler.CleanupSessions()
 
 	configureUserRoutes(logger, h, mux)
 	configurePinRoutes(logger, h, mux)
@@ -49,6 +58,11 @@ func runServer(addr string) {
 	server := http.Server{
 		Addr:    addr,
 		Handler: middleware.CSRF(middleware.CORS(loggedMux)),
+	}
+
+	if config.GetEnvAsBool("DEBUG", false) {
+		server.ListenAndServe()
+		return
 	}
 	server.ListenAndServeTLS("/etc/letsencrypt/live/harmoniums.ru/fullchain.pem", "/etc/letsencrypt/live/harmoniums.ru/privkey.pem")
 }
@@ -81,13 +95,13 @@ func configureUserRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.Se
 		"GET /api/v1/users/{nickname}": h.GetUser,
 	}
 	for pattern, f := range authRoutes {
-		mux.HandleFunc(pattern, middleware.AuthRequired(logger, f))
+		mux.HandleFunc(pattern, middleware.AuthRequired(logger, h.AuthService, f))
 	}
 	for pattern, f := range notAuthRoutes {
-		mux.HandleFunc(pattern, middleware.NoAuthRequired(logger, f))
+		mux.HandleFunc(pattern, middleware.NoAuthRequired(logger, h.AuthService, f))
 	}
 	for pattern, f := range checkAuthRoutes {
-		mux.HandleFunc(pattern, middleware.CheckAuth(logger, f))
+		mux.HandleFunc(pattern, middleware.CheckAuth(logger, h.AuthService, f))
 	}
 }
 
@@ -108,10 +122,10 @@ func configurePinRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.Ser
 		"GET /api/v1/likes/{pin_id}/users":    h.UsersLiked,
 	}
 	for pattern, f := range authRoutes {
-		mux.HandleFunc(pattern, middleware.AuthRequired(logger, f))
+		mux.HandleFunc(pattern, middleware.AuthRequired(logger, h.AuthService, f))
 	}
 	for pattern, f := range checkAuthRoutes {
-		mux.HandleFunc(pattern, middleware.CheckAuth(logger, f))
+		mux.HandleFunc(pattern, middleware.CheckAuth(logger, h.AuthService, f))
 	}
 	for pattern, f := range publicRoutes {
 		mux.HandleFunc(pattern, f)
@@ -131,10 +145,10 @@ func configureBoardRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.S
 		"GET /api/v1/boards/created/{nickname}": h.UserBoards,
 	}
 	for pattern, f := range authRoutes {
-		mux.HandleFunc(pattern, middleware.AuthRequired(logger, f))
+		mux.HandleFunc(pattern, middleware.AuthRequired(logger, h.AuthService, f))
 	}
 	for pattern, f := range checkAuthRoutes {
-		mux.HandleFunc(pattern, middleware.CheckAuth(logger, f))
+		mux.HandleFunc(pattern, middleware.CheckAuth(logger, h.AuthService, f))
 	}
 }
 
