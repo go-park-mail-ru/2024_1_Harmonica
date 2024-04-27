@@ -49,6 +49,7 @@ func runServer(addr string) {
 	// new !
 	hub := chat.NewHub()
 	go hub.Run()
+	// TODO исправить
 	//mux.HandleFunc("GET /ws", middleware.AuthRequired(logger,
 	//	func(w http.ResponseWriter, r *http.Request) { chat.ServeWs(hub, w, r) }))
 	mux.HandleFunc("GET /ws", func(w http.ResponseWriter, r *http.Request) { chat.ServeWs(hub, w, r) })
@@ -57,10 +58,12 @@ func runServer(addr string) {
 
 	server := http.Server{
 		Addr: addr,
+		// TODO поменять обратно
 		//Handler: middleware.CSRF(middleware.CORS(loggedMux)),
 		Handler: middleware.CORS(loggedMux),
 	}
 	server.ListenAndServe()
+	// TODO поменять обратно
 	//server.ListenAndServeTLS("/etc/letsencrypt/live/harmoniums.ru/fullchain.pem", "/etc/letsencrypt/live/harmoniums.ru/privkey.pem")
 }
 

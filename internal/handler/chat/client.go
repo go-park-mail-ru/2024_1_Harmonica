@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	"harmonica/internal/entity"
+	"harmonica/internal/entity/errs"
 	"log"
 	"net/http"
 	"time"
@@ -14,11 +15,6 @@ const (
 	pongWait       = 60 * time.Second    // Time allowed to read the next pong message from the peer.
 	pingPeriod     = (pongWait * 9) / 10 // Send pings to peer with this period. Must be less than pongWait.
 	maxMessageSize = 8000                // Maximum message size allowed from peer.
-)
-
-var (
-	newline = []byte{'\n'}
-	space   = []byte{' '}
 )
 
 var upgrader = websocket.Upgrader{
@@ -37,20 +33,11 @@ type ChatMessage struct {
 	ReceiverId entity.UserID `json:"receiver_id"`
 }
 
-func NewChatMessage(text string, senderID, receiverID entity.UserID) *ChatMessage {
-	return &ChatMessage{
-		Text:       text,
-		SenderId:   senderID,
-		ReceiverId: receiverID,
-	}
-}
-
 // Client is a middleman between the websocket connection and the hub.
 type Client struct {
-	hub  *Hub
-	conn *websocket.Conn
-	//send chan []byte
-	message chan *ChatMessage
+	hub     *Hub
+	conn    *websocket.Conn
+	message chan *ChatMessage //send chan []byte
 
 	userId    entity.UserID
 	wsConnKey string
@@ -58,10 +45,9 @@ type Client struct {
 
 func NewClient(hub *Hub, conn *websocket.Conn, userId entity.UserID, wsConnKey string) *Client {
 	return &Client{
-		hub:  hub,
-		conn: conn,
-		//send:      make(chan []byte, 256), // создаем буферизованный канал для исходящих сообщений
-		message:   make(chan *ChatMessage, 10),
+		hub:       hub,
+		conn:      conn,
+		message:   make(chan *ChatMessage, 10), //send: make(chan []byte, 256), // создаем буферизованный канал для исходящих сообщений
 		userId:    userId,
 		wsConnKey: wsConnKey,
 	}
@@ -81,9 +67,7 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userId, ok := ctx.Value("user_id").(entity.UserID)
 	if !ok {
-
-		//fmt.Println("22222")
-		//
+		// TODO исправить
 		//log.Println(errs.ErrTypeConversion)
 		userId = 3
 	}
@@ -129,72 +113,16 @@ func (c *Client) WriteMessage() {
 	}()
 	for {
 		select {
-		//case chatMessage, ok := <-c.message:
-		//
-		//	c.conn.SetWriteDeadline(time.Now().Add(writeWait))
-		//
-		//	if !ok && chatMessage.ReceiverId != c.userId {
-		//
-		//		fmt.Println("99999")
-		//
-		//		c.conn.WriteMessage(websocket.CloseMessage, []byte{})
-		//		return
-		//	}
-		//
-		//	for {
-		//		select {
-		//		case msg, ok := <-c.message:
-		//			if !ok {
-		//				return
-		//			}
-		//			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
-		//			err := c.conn.WriteJSON(msg)
-		//			if err != nil {
-		//				log.Printf("error: %s", err)
-		//				return
-		//			}
-		//		default:
-		//			break
-		//		}
-		//	}
-		//
-		//	//if chatMessage.ReceiverId == c.userId {
-		//	//	// Если да, игнорируем это сообщение
-		//	//	continue
-		//	//}
-		//
-		//	//c.conn.SetWriteDeadline(time.Now().Add(writeWait))
-		//
-		//	err := c.conn.WriteJSON(chatMessage)
-		//	if err != nil {
-		//
-		//		fmt.Println("77777")
-		//
-		//		log.Printf("error: %s", err)
-		//		return
-		//	}
-		//
-		//	// Add queued chat messages to the current websocket message.
-		//	n := len(c.message)
-		//	for i := 0; i < n; i++ {
-		//		//w.Write(newline)
-		//		//w.Write(<-c.message)
-		//		chatMessage = <-c.message
-		//		if chatMessage.ReceiverId == c.userId {
-		//			c.conn.WriteJSON(<-c.message)
-		//		}
-		//	}
-		//
-		//	if errClose := c.conn.Close(); errClose != nil {
-		//		return
-		//	}
-
 		case chatMessage, ok := <-c.message:
 			if !ok {
 
 				fmt.Println("99999")
 
-				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				errResponse := errs.ErrorResponse{
+					Code:    errs.ErrorCodes[errs.ErrWSConnectionClosed].LocalCode,
+					Message: errs.ErrWSConnectionClosed.Error(),
+				}
+				c.conn.WriteJSON(errResponse)
 				return
 			}
 
@@ -217,29 +145,17 @@ func (c *Client) WriteMessage() {
 					c.conn.WriteJSON(<-c.message)
 				}
 			}
-
-			// Add queued chat messages to the current websocket message.
-			//for {
-			//	select {
-			//	case msg, ok := <-c.message:
-			//		if !ok {
-			//			return
-			//		}
-			//		c.conn.SetWriteDeadline(time.Now().Add(writeWait))
-			//		err := c.conn.WriteJSON(msg)
-			//		if err != nil {
-			//			log.Printf("error: %s", err)
-			//			return
-			//		}
-			//	default:
-			//		break
-			//	}
-			//}
-
 		case <-ticker.C:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				log.Printf("error: %v", err)
+
+				// тут надо?
+				//errResponse := errs.ErrorResponse{
+				//	Code:    errs.ErrorCodes[errs.ErrWSConnectionClosed].LocalCode,
+				//	Message: errs.ErrWSConnectionClosed.Error(),
+				//}
+				//c.conn.WriteJSON(errResponse)
 				return
 			}
 		}

@@ -27,6 +27,7 @@ var (
 	ErrTypeConversion      = errors.New("type conversion error")
 	ErrDBUniqueViolation   = errors.New("unique violation error (element already exists in db)")
 	ErrForeignKeyViolation = errors.New("foreign key violation error (referenced element does not exist in db)")
+	ErrWSConnectionClosed  = errors.New("ws connection was closed")
 )
 
 var ErrorCodes = map[error]struct {
@@ -55,4 +56,5 @@ var ErrorCodes = map[error]struct {
 	ErrTypeConversion:      {HttpCode: 400, LocalCode: 21},
 	ErrDBUniqueViolation:   {HttpCode: 500, LocalCode: 22},
 	ErrForeignKeyViolation: {HttpCode: 500, LocalCode: 23},
+	ErrWSConnectionClosed:  {HttpCode: 500, LocalCode: 24},
 }
