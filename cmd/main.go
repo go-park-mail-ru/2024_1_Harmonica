@@ -51,7 +51,7 @@ func runServer(addr string) {
 		Addr:    addr,
 		Handler: middleware.CSRF(middleware.CORS(loggedMux)),
 	}
-	server.ListenAndServe()
+	server.ListenAndServeTLS("/etc/letsencrypt/live/harmoniums.ru/fullchain.pem", "/etc/letsencrypt/live/harmoniums.ru/privkey.pem")
 }
 
 func configureZapLogger() *zap.Logger {
