@@ -6,6 +6,7 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 	"harmonica/config"
 	"harmonica/internal/handler"
+	"harmonica/internal/handler/chat"
 	"harmonica/internal/handler/middleware"
 	"harmonica/internal/repository"
 	"harmonica/internal/service"
@@ -44,6 +45,13 @@ func runServer(addr string) {
 	mux.Handle("GET /docs/swagger.json", http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))))
 	mux.Handle("GET /swagger/", v3.NewHandler("My API", "/docs/swagger.json", "/swagger"))
 	mux.HandleFunc("GET /img/{image_name}", h.GetImage)
+
+	// new !
+	hub := chat.NewHub()
+	go hub.Run()
+	//mux.HandleFunc("GET /ws", middleware.AuthRequired(logger,
+	//	func(w http.ResponseWriter, r *http.Request) { chat.ServeWs(hub, w, r) }))
+	mux.HandleFunc("GET /ws", func(w http.ResponseWriter, r *http.Request) { chat.ServeWs(hub, w, r) })
 
 	loggedMux := middleware.Logging(logger, mux)
 
