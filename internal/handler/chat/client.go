@@ -7,6 +7,7 @@ import (
 	"harmonica/internal/entity/errs"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -64,13 +65,25 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := r.Context()
-	userId, ok := ctx.Value("user_id").(entity.UserID)
-	if !ok {
+	//ctx := r.Context()
+	//userId, ok := ctx.Value("user_id").(entity.UserID)
+	//fmt.Println(userId)
+	//if !ok {
+	//	// TODO исправить
+	//	fmt.Println("19199191")
+	//	log.Println(errs.ErrTypeConversion)
+	//	//userId = 3
+	//}
+
+	// в ws-протоколе нет кук!!!!! мб можно прокинуть?
+	userIdString := r.URL.Query().Get("user_id")
+	userIdInt, err := strconv.Atoi(userIdString)
+	if err != nil {
 		// TODO исправить
-		//log.Println(errs.ErrTypeConversion)
-		userId = 3
+		log.Println(errs.ErrTypeConversion)
 	}
+	userId := entity.UserID(userIdInt)
+
 	wsConnKey := r.URL.Query().Get("ws_conn_key")
 
 	client := NewClient(hub, conn, userId, wsConnKey)
@@ -118,6 +131,7 @@ func (c *Client) WriteMessage() {
 
 				fmt.Println("99999")
 
+				// посмотреть тут ошибку!
 				errResponse := errs.ErrorResponse{
 					Code:    errs.ErrorCodes[errs.ErrWSConnectionClosed].LocalCode,
 					Message: errs.ErrWSConnectionClosed.Error(),
