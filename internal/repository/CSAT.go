@@ -8,7 +8,7 @@ import (
 
 const (
 	//QuerySetRating = `INSERT INTO public.rating ("")`
-	QueryGetRating = `SELECT 'title', 'rating_count', 'user' FROM public.rating`
+	QueryGetRating = `SELECT title, rating_count, user FROM public.rating`
 )
 
 func (r *DBRepository) GetRating(ctx context.Context) (entity.RatingList, error) {
