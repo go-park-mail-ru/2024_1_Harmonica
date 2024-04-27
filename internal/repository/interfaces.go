@@ -43,4 +43,5 @@ type IRepository interface {
 	GetImage(ctx context.Context, name string) (*minio.Object, error)
 
 	GetRating(ctx context.Context) (entity.RatingList, error)
+	RatingCreate(ctx context.Context, rating entity.Rating) error
 }

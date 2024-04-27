@@ -44,6 +44,7 @@ func runServer(addr string) {
 	mux.Handle("GET /swagger/", v3.NewHandler("My API", "/docs/swagger.json", "/swagger"))
 	mux.HandleFunc("GET /img/{image_name}", h.GetImage)
 	mux.HandleFunc("GET /api/v1/CSAT", h.GetRatings)
+	mux.HandleFunc("POST /api/v1/CSAT", h.CreateRatings)
 
 	loggedMux := middleware.Logging(logger, mux)
 

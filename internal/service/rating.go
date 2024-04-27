@@ -16,3 +16,14 @@ func (s *RepositoryService) GetRating(ctx context.Context) (entity.RatingList, e
 	}
 	return ratings, emptyErrorInfo
 }
+
+func (s *RepositoryService) CreateRating(ctx context.Context, rating entity.Rating) errs.ErrorInfo {
+	err := s.repo.RatingCreate(ctx, rating)
+	if err != nil {
+		return errs.ErrorInfo{
+			GeneralErr: err, // добавила эту ошибку, ранее возвращалось nil
+			LocalErr:   errs.ErrDBInternal,
+		}
+	}
+	return emptyErrorInfo
+}

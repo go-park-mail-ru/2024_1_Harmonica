@@ -39,4 +39,5 @@ type IService interface {
 	GetImage(ctx context.Context, name string) (*minio.Object, error)
 
 	GetRating(ctx context.Context) (entity.RatingList, errs.ErrorInfo)
+	CreateRating(ctx context.Context, rating entity.Rating) errs.ErrorInfo
 }

@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	//QuerySetRating = `INSERT INTO public.rating ("")`
-	QueryGetRating = `SELECT title, rating_count, user_nickname FROM public.rating`
+	QueryCreateRating = `INSERT INTO public.rating ("title", "rating_count", "user_nickname") VALUES ($1, $2, $3)`
+	QueryGetRating    = `SELECT title, rating_count, user_nickname FROM public.rating`
 )
 
 func (r *DBRepository) GetRating(ctx context.Context) (entity.RatingList, error) {
@@ -22,4 +22,9 @@ func (r *DBRepository) GetRating(ctx context.Context) (entity.RatingList, error)
 		return entity.RatingList{}, err
 	}
 	return result, nil
+}
+
+func (r *DBRepository) RatingCreate(ctx context.Context, rating entity.Rating) error {
+	err := r.db.QueryRowContext(ctx, QueryCreateRating, rating.Title, rating.RatingCount, rating.User).Scan()
+	return err
 }
