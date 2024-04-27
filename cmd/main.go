@@ -43,6 +43,7 @@ func runServer(addr string) {
 	mux.Handle("GET /docs/swagger.json", http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))))
 	mux.Handle("GET /swagger/", v3.NewHandler("My API", "/docs/swagger.json", "/swagger"))
 	mux.HandleFunc("GET /img/{image_name}", h.GetImage)
+	mux.HandleFunc("GET /api/v1/CSAT", h.GetRatings)
 
 	loggedMux := middleware.Logging(logger, mux)
 
@@ -50,7 +51,7 @@ func runServer(addr string) {
 		Addr:    addr,
 		Handler: middleware.CSRF(middleware.CORS(loggedMux)),
 	}
-	server.ListenAndServeTLS("/etc/letsencrypt/live/harmoniums.ru/fullchain.pem", "/etc/letsencrypt/live/harmoniums.ru/privkey.pem")
+	server.ListenAndServe()
 }
 
 func configureZapLogger() *zap.Logger {
