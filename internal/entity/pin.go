@@ -31,6 +31,8 @@ type PinAuthor struct { // TODO: PinAuthor == BoardAuthor, replace to just Autho
 	UserId    UserID `db:"user_id" json:"user_id"`
 	Nickname  string `db:"nickname" json:"nickname"`
 	AvatarURL string `db:"avatar_url" json:"avatar_url"`
+	AvatarDX  int64  `json:"avatar_width"`
+	AvatarDY  int64  `json:"avatar_height"`
 }
 
 func (p *PinAuthor) Sanitize() {
@@ -47,6 +49,8 @@ type PinPageResponse struct {
 	AllowComments bool      `db:"allow_comments" json:"allow_comments"`
 	ClickUrl      string    `db:"click_url" json:"click_url"`
 	ContentUrl    string    `db:"content_url" json:"content_url"`
+	ContentDX     int64     `json:"content_width"`
+	ContentDY     int64     `json:"content_height"`
 	LikesCount    uint64    `db:"likes_count" json:"likes_count"`
 	IsOwner       bool      `json:"is_owner"`
 	IsLiked       bool      `json:"is_liked"`
@@ -66,6 +70,8 @@ func (p *PinPageResponse) Sanitize() {
 type FeedPinResponse struct {
 	PinId      PinID  `db:"pin_id" json:"pin_id"`
 	ContentUrl string `db:"content_url" json:"content_url"`
+	ContentDX  int64  `json:"content_width"`
+	ContentDY  int64  `json:"content_height"`
 	PinAuthor  `json:"author"`
 }
 
@@ -88,6 +94,8 @@ func (p *FeedPins) Sanitize() {
 type UserPinResponse struct {
 	PinId      PinID  `db:"pin_id" json:"pin_id"`
 	ContentUrl string `db:"content_url" json:"content_url"`
+	ContentDX  int64  `json:"content_width"`
+	ContentDY  int64  `json:"content_height"`
 }
 
 type UserPins struct {

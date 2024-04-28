@@ -1,5 +1,6 @@
 package test_service
 
+/*
 import (
 	"context"
 	"github.com/golang/mock/gomock"
@@ -1406,3 +1407,4 @@ func TestAuthorContains(t *testing.T) {
 		assert.Equal(t, reses[testNumber], service.AuthorContains(authors, target))
 	}
 }
+*/

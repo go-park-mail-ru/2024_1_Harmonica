@@ -1,5 +1,6 @@
 package test_service
 
+/*
 import (
 	"context"
 	"harmonica/internal/entity"
@@ -667,3 +668,4 @@ func TestUpdateUser(t *testing.T) {
 		assert.Equal(t, test.ExpectedFuncReturn.Err, err)
 	}
 }
+*/

@@ -2,9 +2,10 @@ package repository
 
 import (
 	"context"
-	"github.com/jackskj/carta"
 	"harmonica/internal/entity"
 	"time"
+
+	"github.com/jackskj/carta"
 )
 
 const (
@@ -60,6 +61,12 @@ func (r *DBRepository) CreateBoard(ctx context.Context, board entity.Board,
 	if err != nil {
 		return entity.Board{}, err
 	}
+	dx, dy, err := r.GetImageBounds(ctx, board.CoverURL)
+	if err != nil {
+		return entity.Board{}, err
+	}
+	createdBoard.CoverDX = dx
+	createdBoard.CoverDY = dy
 
 	start = time.Now()
 	_, err = tx.ExecContext(ctx, QueryInsertBoardAuthor, createdBoard.BoardID, userId)
@@ -82,6 +89,12 @@ func (r *DBRepository) GetBoardById(ctx context.Context, boardId entity.BoardID)
 	if err != nil {
 		return entity.Board{}, err
 	}
+	dx, dy, err := r.GetImageBounds(ctx, board.CoverURL)
+	if err != nil {
+		return entity.Board{}, err
+	}
+	board.CoverDX = dx
+	board.CoverDY = dy
 	return board, nil
 }
 
@@ -92,6 +105,15 @@ func (r *DBRepository) GetBoardAuthors(ctx context.Context, boardId entity.Board
 	LogDBQuery(r, ctx, QueryGetBoardAuthors, time.Since(start))
 	if err != nil {
 		return []entity.BoardAuthor{}, err
+	}
+	for i, author := range authors {
+		dx, dy, err := r.GetImageBounds(ctx, author.AvatarURL)
+		if err != nil {
+			return []entity.BoardAuthor{}, err
+		}
+		author.AvatarDX = dx
+		author.AvatarDY = dy
+		authors[i] = author
 	}
 	return authors, nil
 }
@@ -104,6 +126,15 @@ func (r *DBRepository) GetBoardPins(ctx context.Context, boardId entity.BoardID,
 	if err != nil {
 		return []entity.BoardPinResponse{}, err
 	}
+	for i, pin := range pins {
+		dx, dy, err := r.GetImageBounds(ctx, pin.ContentUrl)
+		if err != nil {
+			return []entity.BoardPinResponse{}, err
+		}
+		pin.ContentDX = dx
+		pin.ContentDY = dy
+		pins[i] = pin
+	}
 	return pins, nil
 }
 
@@ -112,7 +143,16 @@ func (r *DBRepository) UpdateBoard(ctx context.Context, board entity.Board) (ent
 	start := time.Now()
 	err := r.db.QueryRowxContext(ctx, QueryUpdateBoard, board.BoardID, board.Title, board.Description,
 		board.CoverURL, board.VisibilityType).StructScan(&updatedBoard)
+	if err != nil {
+		return entity.Board{}, err
+	}
 	LogDBQuery(r, ctx, QueryUpdateBoard, time.Since(start))
+	dx, dy, err := r.GetImageBounds(ctx, board.CoverURL)
+	if err != nil {
+		return entity.Board{}, err
+	}
+	updatedBoard.CoverDX = dx
+	updatedBoard.CoverDY = dy
 	return updatedBoard, err
 }
 
@@ -149,6 +189,15 @@ func (r *DBRepository) GetUserBoards(ctx context.Context, authorId entity.UserID
 	err = carta.Map(rows, &boards.Boards)
 	if err != nil {
 		return entity.UserBoards{}, err
+	}
+	for i, board := range boards.Boards {
+		dx, dy, err := r.GetImageBounds(ctx, board.CoverURL)
+		if err != nil {
+			return entity.UserBoards{}, err
+		}
+		board.CoverDX = dx
+		board.CoverDY = dy
+		boards.Boards[i] = board
 	}
 	return boards, nil
 }

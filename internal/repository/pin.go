@@ -40,6 +40,15 @@ func (r *DBRepository) GetFeedPins(ctx context.Context, limit, offset int) (enti
 	if err != nil {
 		return entity.FeedPins{}, err
 	}
+	for i, pin := range result.Pins {
+		dx, dy, err := r.GetImageBounds(ctx, pin.ContentUrl)
+		if err != nil {
+			return entity.FeedPins{}, err
+		}
+		pin.ContentDX = dx
+		pin.ContentDY = dy
+		result.Pins[i] = pin
+	}
 	return result, nil
 }
 
@@ -55,6 +64,15 @@ func (r *DBRepository) GetUserPins(ctx context.Context, authorId entity.UserID, 
 	if err != nil {
 		return entity.UserPins{}, err
 	}
+	for i, pin := range result.Pins {
+		dx, dy, err := r.GetImageBounds(ctx, pin.ContentUrl)
+		if err != nil {
+			return entity.UserPins{}, err
+		}
+		pin.ContentDX = dx
+		pin.ContentDY = dy
+		result.Pins[i] = pin
+	}
 	return result, nil
 }
 
@@ -66,6 +84,13 @@ func (r *DBRepository) GetPinById(ctx context.Context, pinId entity.PinID) (enti
 	if err != nil {
 		return entity.PinPageResponse{}, err
 	}
+	dx, dy, err := r.GetImageBounds(ctx, result.ContentUrl)
+	if err != nil {
+		return entity.PinPageResponse{}, err
+	}
+	result.ContentDX = dx
+	result.ContentDY = dy
+
 	return result, nil
 }
 

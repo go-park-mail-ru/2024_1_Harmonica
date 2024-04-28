@@ -1,9 +1,6 @@
 package main
 
 import (
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-	"gopkg.in/natefinch/lumberjack.v2"
 	"harmonica/config"
 	"harmonica/internal/handler"
 	"harmonica/internal/handler/middleware"
@@ -11,6 +8,10 @@ import (
 	"harmonica/internal/service"
 	"log"
 	"net/http"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/joho/godotenv"
 	v3 "github.com/swaggest/swgui/v3"
