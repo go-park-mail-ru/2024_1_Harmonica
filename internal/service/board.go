@@ -261,21 +261,12 @@ func (s *RepositoryService) GetUserBoards(ctx context.Context, authorNickname st
 			LocalErr: errs.ErrUserNotExist,
 		}
 	}
-	boards, err := s.repo.GetUserBoards(ctx, author.UserID, limit, offset)
+	boards, err := s.repo.GetUserBoards(ctx, author.UserID, userId, limit, offset)
 	if err != nil {
 		return entity.UserBoards{}, errs.ErrorInfo{
 			GeneralErr: err,
 			LocalErr:   errs.ErrDBInternal,
 		}
-	}
-	if author.UserID != userId {
-		var filteredBoards entity.UserBoards
-		for _, board := range boards.Boards {
-			if board.VisibilityType == entity.VisibilityPublic {
-				filteredBoards.Boards = append(filteredBoards.Boards, board)
-			}
-		}
-		return filteredBoards, emptyErrorInfo
 	}
 	return boards, emptyErrorInfo
 }

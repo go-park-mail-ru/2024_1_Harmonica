@@ -59,7 +59,6 @@ func runServer(addr string) {
 		Addr:    addr,
 		Handler: middleware.CSRF(middleware.CORS(loggedMux)),
 	}
-
 	if config.GetEnvAsBool("DEBUG", false) {
 		server.ListenAndServe()
 		return
