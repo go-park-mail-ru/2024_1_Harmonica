@@ -19,7 +19,6 @@ var (
 	ErrPermissionDenied    = errors.New("current user doesn't have requested permissions")
 	ErrContentUrlRequired  = errors.New("field 'content_url' is required")
 	ErrEmptyContentURL     = errors.New("content url can't be empty")
-	ErrServerInternal      = errors.New("internal server error")
 	ErrInvalidContentType  = errors.New("invalid content type header")
 	ErrInvalidImg          = errors.New("image is not valid")
 	ErrNoImageProvided     = errors.New("there is not any image file")
@@ -28,6 +27,8 @@ var (
 	ErrDBUniqueViolation   = errors.New("unique violation error (element already exists in db)")
 	ErrForeignKeyViolation = errors.New("foreign key violation error (referenced element does not exist in db)")
 	ErrWSConnectionClosed  = errors.New("ws connection was closed")
+	ErrWSConnectionUpgrade = errors.New("can't upgrade http connection to ws")
+	ErrServerInternal      = errors.New("internal server error")
 )
 
 var ErrorCodes = map[error]struct {
@@ -46,6 +47,7 @@ var ErrorCodes = map[error]struct {
 	ErrDBUniqueNickname:    {HttpCode: 500, LocalCode: 10},
 	ErrDBInternal:          {HttpCode: 500, LocalCode: 11},
 	ErrInvalidSlug:         {HttpCode: 400, LocalCode: 12},
+	ErrDiffUserId:          {HttpCode: 400, LocalCode: 13},
 	ErrPermissionDenied:    {HttpCode: 403, LocalCode: 14},
 	ErrContentUrlRequired:  {HttpCode: 400, LocalCode: 15},
 	ErrEmptyContentURL:     {HttpCode: 400, LocalCode: 16},
@@ -57,4 +59,6 @@ var ErrorCodes = map[error]struct {
 	ErrDBUniqueViolation:   {HttpCode: 500, LocalCode: 22},
 	ErrForeignKeyViolation: {HttpCode: 500, LocalCode: 23},
 	ErrWSConnectionClosed:  {HttpCode: 500, LocalCode: 24},
+	ErrWSConnectionUpgrade: {HttpCode: 500, LocalCode: 25},
+	ErrServerInternal:      {HttpCode: 500, LocalCode: 26},
 }

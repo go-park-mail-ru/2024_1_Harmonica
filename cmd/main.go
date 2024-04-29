@@ -6,7 +6,6 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 	"harmonica/config"
 	"harmonica/internal/handler"
-	"harmonica/internal/handler/chat"
 	"harmonica/internal/handler/middleware"
 	"harmonica/internal/repository"
 	"harmonica/internal/service"
@@ -31,7 +30,8 @@ func runServer(addr string) {
 	defer connector.Disconnect()
 	r := repository.NewRepository(connector, logger)
 	s := service.NewService(r)
-	h := handler.NewAPIHandler(s, logger)
+	hub := handler.NewHub()
+	h := handler.NewAPIHandler(s, hub, logger)
 
 	mux := http.NewServeMux()
 
@@ -47,12 +47,11 @@ func runServer(addr string) {
 	mux.HandleFunc("GET /img/{image_name}", h.GetImage)
 
 	// new !
-	hub := chat.NewHub()
 	go hub.Run()
 	// TODO исправить
-	//mux.HandleFunc("GET /ws", middleware.AuthRequired(logger,
-	//	func(w http.ResponseWriter, r *http.Request) { chat.ServeWs(hub, w, r) }))
-	mux.HandleFunc("GET /ws", func(w http.ResponseWriter, r *http.Request) { chat.ServeWs(hub, w, r) })
+	mux.HandleFunc("GET /ws", middleware.AuthRequired(logger, h.ServeWs))
+	//mux.HandleFunc("GET /ws", h.ServeWs)
+	//mux.HandleFunc("GET /ws", func(w http.ResponseWriter, r *http.Request) { chat.ServeWs(hub, w, r) })
 
 	loggedMux := middleware.Logging(logger, mux)
 
