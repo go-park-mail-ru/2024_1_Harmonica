@@ -2,9 +2,11 @@ package repository
 
 import (
 	"context"
-	"go.uber.org/zap"
+	"fmt"
 	"harmonica/internal/entity"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 const (
@@ -32,7 +34,15 @@ func (r *DBRepository) GetUserByEmail(ctx context.Context, email string) (entity
 		if err != nil {
 			return entity.User{}, err
 		}
+		dx, dy, err := r.GetImageBounds(ctx, user.AvatarURL)
+		if err != nil {
+			fmt.Print("IM HER", err)
+			return entity.User{}, err
+		}
+		user.AvatarDX = dx
+		user.AvatarDY = dy
 	}
+	fmt.Print("IM HER")
 	return user, nil
 }
 
@@ -49,6 +59,12 @@ func (r *DBRepository) GetUserByNickname(ctx context.Context, nickname string) (
 		if err != nil {
 			return entity.User{}, err
 		}
+		dx, dy, err := r.GetImageBounds(ctx, user.AvatarURL)
+		if err != nil {
+			return entity.User{}, err
+		}
+		user.AvatarDX = dx
+		user.AvatarDY = dy
 	}
 	return user, nil
 }
@@ -66,6 +82,12 @@ func (r *DBRepository) GetUserById(ctx context.Context, id entity.UserID) (entit
 		if err != nil {
 			return entity.User{}, err
 		}
+		dx, dy, err := r.GetImageBounds(ctx, user.AvatarURL)
+		if err != nil {
+			return entity.User{}, err
+		}
+		user.AvatarDX = dx
+		user.AvatarDY = dy
 	}
 	return user, nil
 }

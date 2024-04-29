@@ -40,5 +40,6 @@ type IRepository interface {
 	CheckIsLiked(ctx context.Context, pinId entity.PinID, userId entity.UserID) (bool, error)
 
 	UploadImage(ctx context.Context, file multipart.File, fileHeader *multipart.FileHeader) (string, error)
+	GetImageBounds(ctx context.Context, url string) (int64, int64, error)
 	GetImage(ctx context.Context, name string) (*minio.Object, error)
 }

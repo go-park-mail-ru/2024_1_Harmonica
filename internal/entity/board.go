@@ -20,6 +20,8 @@ type Board struct {
 	CreatedAt      time.Time      `db:"created_at" json:"created_at"`
 	Description    string         `db:"description" json:"description"`
 	CoverURL       string         `db:"cover_url" json:"cover_url" swaggerignore:"true"`
+	CoverDX        int64          `json:"cover_width"`
+	CoverDY        int64          `json:"cover_height"`
 	VisibilityType VisibilityType `db:"visibility_type" json:"visibility_type"`
 	IsOwner        bool           `json:"is_owner"`
 }
@@ -59,6 +61,8 @@ type BoardAuthor struct {
 	UserId    UserID `db:"user_id" json:"user_id"`
 	Nickname  string `db:"nickname" json:"nickname"`
 	AvatarURL string `db:"avatar_url" json:"avatar_url"`
+	AvatarDX  int64  `json:"avatar_width"`
+	AvatarDY  int64  `json:"avatar_height"`
 }
 
 func (b *BoardAuthor) Sanitize() {
@@ -68,6 +72,8 @@ func (b *BoardAuthor) Sanitize() {
 type BoardPinResponse struct {
 	PinId      PinID  `db:"pin_id" json:"pin_id"`
 	ContentUrl string `db:"content_url" json:"content_url"`
+	ContentDX  int64  `json:"content_width"`
+	ContentDY  int64  `json:"content_height"`
 	PinAuthor  `json:"author"`
 }
 

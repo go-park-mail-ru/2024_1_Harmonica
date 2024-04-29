@@ -40,20 +40,38 @@ func (r *DBRepository) GetFeedPins(ctx context.Context, limit, offset int) (enti
 	if err != nil {
 		return entity.FeedPins{}, err
 	}
+	for i, pin := range result.Pins {
+		dx, dy, err := r.GetImageBounds(ctx, pin.ContentUrl)
+		if err != nil {
+			return entity.FeedPins{}, err
+		}
+		pin.ContentDX = dx
+		pin.ContentDY = dy
+		result.Pins[i] = pin
+	}
 	return result, nil
 }
 
 func (r *DBRepository) GetUserPins(ctx context.Context, authorId entity.UserID, limit, offset int) (entity.UserPins, error) {
-	result := entity.UserPins{}
 	start := time.Now()
 	rows, err := r.db.QueryContext(ctx, QueryGetUserPins, authorId, limit, offset)
 	LogDBQuery(r, ctx, QueryGetUserPins, time.Since(start))
 	if err != nil {
 		return entity.UserPins{}, err
 	}
+	result := entity.UserPins{}
 	err = carta.Map(rows, &result.Pins)
 	if err != nil {
 		return entity.UserPins{}, err
+	}
+	for i, pin := range result.Pins {
+		dx, dy, err := r.GetImageBounds(ctx, pin.ContentUrl)
+		if err != nil {
+			return entity.UserPins{}, err
+		}
+		pin.ContentDX = dx
+		pin.ContentDY = dy
+		result.Pins[i] = pin
 	}
 	return result, nil
 }
@@ -66,6 +84,13 @@ func (r *DBRepository) GetPinById(ctx context.Context, pinId entity.PinID) (enti
 	if err != nil {
 		return entity.PinPageResponse{}, err
 	}
+	dx, dy, err := r.GetImageBounds(ctx, result.ContentUrl)
+	if err != nil {
+		return entity.PinPageResponse{}, err
+	}
+	result.ContentDX = dx
+	result.ContentDY = dy
+
 	return result, nil
 }
 
