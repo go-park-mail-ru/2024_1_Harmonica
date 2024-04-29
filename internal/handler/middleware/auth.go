@@ -3,8 +3,10 @@ package middleware
 import (
 	"context"
 	"errors"
+	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"harmonica/internal/handler"
+	auth "harmonica/internal/microservices/auth/proto"
 	"net/http"
 
 	"github.com/gorilla/csrf"
@@ -13,31 +15,28 @@ import (
 
 const UserIdKey = "user_id"
 
-func CheckSession(r *http.Request) (*http.Request, error) {
+func CheckSession(r *http.Request, a auth.AuthorizationClient) (*http.Request, error) {
 	c, err := r.Cookie("session_token")
 	if err != nil {
 		return nil, err
 	}
 	sessionToken := c.Value
-	s, exists := handler.Sessions.Load(sessionToken)
-	if !exists || s.(handler.Session).IsExpired() {
-		if exists {
-			handler.Sessions.Delete(sessionToken)
-		}
-		return nil, errs.ErrUnauthorized
+	res, err := a.CheckSession(r.Context(), &auth.CheckSessionRequest{Session: sessionToken})
+	if err != nil {
+		return nil, err
 	}
-	userId := s.(handler.Session).UserId
+
 	ctx := r.Context()
-	ctx = context.WithValue(ctx, UserIdKey, userId)
+	ctx = context.WithValue(ctx, UserIdKey, entity.UserID(res.UserId))
 	return r.WithContext(ctx), nil
 }
 
-func AuthRequired(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
+func AuthRequired(l *zap.Logger, a auth.AuthorizationClient, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-CSRF-Token", csrf.Token(r))
 		w.Header().Set("Access-Control-Expose-Headers", "X-CSRF-Token")
 		requestId := r.Context().Value(RequestIdKey).(string)
-		request, err := CheckSession(r)
+		request, err := CheckSession(r, a)
 		if err != nil {
 			if errs.ErrorCodes[err].HttpCode != 0 {
 				handler.WriteErrorResponse(w, l, requestId, errs.ErrorInfo{LocalErr: err})
@@ -54,12 +53,12 @@ func AuthRequired(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func NoAuthRequired(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
+func NoAuthRequired(l *zap.Logger, a auth.AuthorizationClient, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-CSRF-Token", csrf.Token(r))
 		w.Header().Set("Access-Control-Expose-Headers", "X-CSRF-Token")
 		requestId := r.Context().Value(RequestIdKey).(string)
-		_, err := CheckSession(r)
+		_, err := CheckSession(r, a)
 		if err != nil {
 			next.ServeHTTP(w, r)
 			return
@@ -70,11 +69,11 @@ func NoAuthRequired(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func CheckAuth(l *zap.Logger, next http.HandlerFunc) http.HandlerFunc {
+func CheckAuth(l *zap.Logger, a auth.AuthorizationClient, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-CSRF-Token", csrf.Token(r))
 		w.Header().Set("Access-Control-Expose-Headers", "X-CSRF-Token")
-		request, err := CheckSession(r)
+		request, err := CheckSession(r, a)
 		if err != nil {
 			request = r
 		}

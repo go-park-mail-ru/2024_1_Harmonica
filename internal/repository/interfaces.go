@@ -31,7 +31,7 @@ type IRepository interface {
 	AddPinToBoard(ctx context.Context, boardId entity.BoardID, pinId entity.PinID) error
 	DeletePinFromBoard(ctx context.Context, boardId entity.BoardID, pinId entity.PinID) error
 	DeleteBoard(ctx context.Context, boardId entity.BoardID) error
-	GetUserBoards(ctx context.Context, authorId entity.UserID, limit, offset int) (entity.UserBoards, error)
+	GetUserBoards(ctx context.Context, authorId, userId entity.UserID, limit, offset int) (entity.UserBoards, error)
 	CheckBoardAuthorExistence(ctx context.Context, userId entity.UserID, boardId entity.BoardID) (bool, error)
 
 	SetLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) error
