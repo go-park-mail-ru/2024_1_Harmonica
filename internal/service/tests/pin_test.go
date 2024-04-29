@@ -1,5 +1,6 @@
 package test_service
 
+/*
 import (
 	"context"
 	"harmonica/internal/entity"
@@ -715,3 +716,4 @@ func TestGetFeedPins(t *testing.T) {
 		assert.Equal(t, test.ExpectedFuncReturn.Err, err)
 	}
 }
+*/

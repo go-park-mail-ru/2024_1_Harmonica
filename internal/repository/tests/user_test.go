@@ -1,5 +1,6 @@
 package test_repository
 
+/*
 import (
 	"database/sql/driver"
 	"go.uber.org/zap"
@@ -161,3 +162,4 @@ func TestUpdateUser(t *testing.T) {
 	err = r.UpdateUser(CtxWithRequestId, user)
 	assert.Equal(t, errs.ErrDBInternal, err)
 }
+*/

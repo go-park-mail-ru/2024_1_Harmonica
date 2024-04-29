@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/jackskj/carta"
 	"harmonica/internal/entity"
+	"strings"
 	"time"
 )
 
@@ -26,11 +27,6 @@ const (
 	INNER JOIN public.user ON public.pin.author_id = public.user.user_id WHERE public.board_pin.board_id=$1
 	ORDER BY public.pin.created_at DESC LIMIT $2 OFFSET $3`
 
-	QueryGetUserBoards = `SELECT public.board.board_id, public.board.title, public.board.created_at, 
-    public.board.description, public.board.cover_url, public.board.visibility_type FROM public.board  
-    INNER JOIN public.board_author ON public.board.board_id = public.board_author.board_id 
-    WHERE public.board_author.author_id=$1 ORDER BY public.board.created_at DESC LIMIT $2 OFFSET $3`
-
 	QueryUpdateBoard = `UPDATE public.board SET title=$2, description=$3, cover_url=$4, visibility_type=$5 
     WHERE board_id=$1 RETURNING public.board.board_id, public.board.created_at, public.board.title, 
     public.board.description, public.board.cover_url, public.board.visibility_type`
@@ -40,6 +36,18 @@ const (
 	QueryDeletePinFromBoard = `DELETE FROM public.board_pin WHERE board_id=$1 AND pin_id=$2`
 
 	QueryDeleteBoard = `DELETE FROM public.board WHERE board_id=$1`
+
+	QueryGetUserBoards = `SELECT b.board_id, b.title, b.created_at, b.description, b.cover_url, b.visibility_type,
+    ARRAY (SELECT p.content_url FROM public.pin p INNER JOIN public.board_pin bp ON p.pin_id = bp.pin_id
+	WHERE bp.board_id = b.board_id ORDER BY bp.added_at DESC LIMIT 3) AS recent_pins
+	FROM public.board b INNER JOIN public.board_author ba ON b.board_id = ba.board_id 
+	WHERE ba.author_id = $1 AND ($1 = $2 OR b.visibility_type = 'public')
+	ORDER BY b.created_at DESC LIMIT $3 OFFSET $4;`
+
+	//OldQueryGetUserBoards = `SELECT public.board.board_id, public.board.title, public.board.created_at,
+	//public.board.description, public.board.cover_url, public.board.visibility_type FROM public.board
+	//INNER JOIN public.board_author ON public.board.board_id = public.board_author.board_id
+	//WHERE public.board_author.author_id=$1 ORDER BY public.board.created_at DESC LIMIT $2 OFFSET $3`
 
 	QueryCheckBoardAuthorExistence = `SELECT EXISTS(SELECT 1 FROM public.board_author WHERE author_id=$1 AND board_id=$2)`
 )
@@ -137,11 +145,11 @@ func (r *DBRepository) DeleteBoard(ctx context.Context, boardId entity.BoardID) 
 	return err
 }
 
-func (r *DBRepository) GetUserBoards(ctx context.Context, authorId entity.UserID,
+func (r *DBRepository) GetUserBoards(ctx context.Context, authorId, userId entity.UserID,
 	limit, offset int) (entity.UserBoards, error) {
 	boards := entity.UserBoards{}
 	start := time.Now()
-	rows, err := r.db.QueryContext(ctx, QueryGetUserBoards, authorId, limit, offset)
+	rows, err := r.db.QueryContext(ctx, QueryGetUserBoards, authorId, userId, limit, offset)
 	LogDBQuery(r, ctx, QueryGetUserBoards, time.Since(start))
 	if err != nil {
 		return entity.UserBoards{}, err
@@ -149,6 +157,16 @@ func (r *DBRepository) GetUserBoards(ctx context.Context, authorId entity.UserID
 	err = carta.Map(rows, &boards.Boards)
 	if err != nil {
 		return entity.UserBoards{}, err
+	}
+	for i := range boards.Boards {
+		if boards.Boards[i].RecentPinContentUrls[0] == "{}" {
+			boards.Boards[i].RecentPinContentUrls = nil
+			continue
+		}
+		recentPins := boards.Boards[i].RecentPinContentUrls
+		recentPins[0] = recentPins[0][1 : len(recentPins[0])-1] // убираем фигурные скобки {}
+		recentPins = strings.Split(recentPins[0], ",")
+		boards.Boards[i].RecentPinContentUrls = recentPins
 	}
 	return boards, nil
 }
