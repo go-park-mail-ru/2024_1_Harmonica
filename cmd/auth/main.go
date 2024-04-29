@@ -6,8 +6,8 @@ import (
 	"net"
 
 	"harmonica/config"
-	"harmonica/internal/repository"
-	"harmonica/internal/service"
+	"harmonica/internal/microservices/auth/server/repository"
+	"harmonica/internal/microservices/auth/server/service"
 	"log"
 
 	"github.com/joho/godotenv"
@@ -61,6 +61,6 @@ func main() {
 	}
 
 	server := grpc.NewServer()
-	au.RegisterAuthorizationServer(server, auth.NewAuthorizationServer(s, r))
+	au.RegisterAuthorizationServer(server, auth.NewAuthorizationServer(s))
 	server.Serve(lis)
 }

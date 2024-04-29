@@ -5,12 +5,10 @@ import (
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	auth "harmonica/internal/microservices/auth/proto"
+	"harmonica/internal/microservices/auth/server/service"
 	"strconv"
 	"sync"
 	"time"
-
-	"harmonica/internal/repository"
-	"harmonica/internal/service"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -26,13 +24,12 @@ var (
 )
 
 type AuthorizationServer struct {
-	s *service.Service
-	r *repository.Repository
+	service service.IService
 	auth.AuthorizationServer
 }
 
-func NewAuthorizationServer(s *service.Service, r *repository.Repository) AuthorizationServer {
-	return AuthorizationServer{s: s, r: r}
+func NewAuthorizationServer(s *service.Service) AuthorizationServer {
+	return AuthorizationServer{service: s}
 }
 
 func (s AuthorizationServer) CheckSession(ctx context.Context, req *auth.CheckSessionRequest) (*auth.CheckSessionResponse, error) {
@@ -55,7 +52,7 @@ func (s AuthorizationServer) Login(ctx context.Context, req *auth.LoginUserReque
 	if !ValidateEmail(req.Email) || !ValidatePassword(req.Password) {
 		return &auth.LoginUserResponse{LocalError: 5, Valid: false}, nil
 	}
-	loggedInUser, errInfo := s.s.GetUserByEmail(ctx, req.Email)
+	loggedInUser, errInfo := s.service.GetUserByEmail(ctx, req.Email) // 1service
 
 	if errInfo != emptyErrorInfo {
 		return &auth.LoginUserResponse{LocalError: int64(errs.ErrorCodes[errInfo.LocalErr].LocalCode), Valid: false}, nil
@@ -106,7 +103,7 @@ func (s AuthorizationServer) IsAuth(ctx context.Context, req *auth.Empty) (*auth
 	}
 	id, _ := strconv.Atoi(userIdFromSession)
 	userId := entity.UserID(id)
-	user, errInfo := s.s.GetUserById(ctx, userId)
+	user, errInfo := s.service.GetUserById(ctx, userId) // 2service
 	if errInfo != emptyErrorInfo {
 		return MakeLocalErrorIsAuth(int64(errs.ErrorCodes[errInfo.LocalErr].LocalCode)), nil
 	}
