@@ -2,6 +2,7 @@ package handler
 
 import (
 	"go.uber.org/zap"
+	auth "harmonica/internal/microservices/auth/proto"
 	"harmonica/internal/service"
 )
 
@@ -20,13 +21,15 @@ import (
 // тут ощутимые изменения. не накосячила?
 
 type APIHandler struct {
-	service service.IService
-	logger  *zap.Logger
+	service     service.IService
+	logger      *zap.Logger
+	AuthService auth.AuthorizationClient
 }
 
-func NewAPIHandler(s service.IService, l *zap.Logger) *APIHandler {
+func NewAPIHandler(s service.IService, l *zap.Logger, a auth.AuthorizationClient) *APIHandler {
 	return &APIHandler{
-		service: s,
-		logger:  l,
+		service:     s,
+		logger:      l,
+		AuthService: a,
 	}
 }

@@ -3,25 +3,21 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
+	auth "harmonica/internal/microservices/auth/proto"
 	"io"
 	"net/http"
-	"sync"
 	"time"
 
 	"go.uber.org/zap"
-
-	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
+	"google.golang.org/grpc/metadata"
 )
 
 var (
-	Sessions            sync.Map
-	sessionTTL          = 24 * time.Hour
-	sessionsCleanupTime = 6 * time.Hour
-	emptyUser           = entity.User{}
-	emptyErrorInfo      = errs.ErrorInfo{}
+	emptyUser      = entity.User{}
+	emptyErrorInfo = errs.ErrorInfo{}
 )
 
 // Login
@@ -60,45 +56,38 @@ func (h *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 			LocalErr:   errs.ErrReadingRequestBody})
 		return
 	}
-
-	if !ValidateEmail(user.Email) ||
-		!ValidatePassword(user.Password) {
-		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{
-			LocalErr: errs.ErrInvalidInputFormat,
+	res, err := h.AuthService.Login(metadata.NewOutgoingContext(r.Context(),
+		metadata.Pairs("request_id", requestId)),
+		&auth.LoginUserRequest{
+			UserId:   int64(user.UserID),
+			Email:    user.Email,
+			Nickname: user.Nickname,
+			Password: user.Password,
 		})
+	if err != nil {
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{GeneralErr: err})
+		return
+	}
+	if !res.Valid || res.LocalError != 0 {
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{LocalErr: errs.GetLocalErrorByCode[res.LocalError]})
 		return
 	}
 
-	loggedInUser, errInfo := h.service.GetUserByEmail(ctx, user.Email)
-	if errInfo != emptyErrorInfo {
-		WriteErrorResponse(w, h.logger, requestId, errInfo)
-		return
-	}
-	if loggedInUser == emptyUser {
-		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{
-			LocalErr: errs.ErrUserNotExist,
-		})
-		return
-	}
-
-	err = bcrypt.CompareHashAndPassword([]byte(loggedInUser.Password), []byte(user.Password))
+	time, err := time.Parse(time.RFC3339Nano, res.ExpiresAt)
 	if err != nil {
 		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{
-			GeneralErr: err,
-			LocalErr:   errs.ErrWrongPassword})
+			LocalErr: errs.ErrCantParseTime,
+		})
 		return
 	}
-
-	newSessionToken := uuid.NewString()
-	expiresAt := time.Now().Add(sessionTTL)
-	s := Session{
-		UserId: loggedInUser.UserID,
-		Expiry: expiresAt,
-	}
-	Sessions.Store(newSessionToken, s)
-
-	SetSessionTokenCookie(w, newSessionToken, expiresAt)
-	WriteUserResponse(w, h.logger, loggedInUser)
+	SetSessionTokenCookie(w, res.NewSessionToken, time)
+	WriteUserResponse(w, h.logger, entity.User{
+		UserID:    entity.UserID(res.UserId),
+		Email:     res.Email,
+		Nickname:  res.Nickname,
+		Password:  res.Password,
+		AvatarURL: res.AvatarURL,
+	})
 }
 
 // Logout
@@ -128,103 +117,9 @@ func (h *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sessionToken := c.Value
-	_, exists := Sessions.Load(sessionToken)
-	if !exists {
-		SetSessionTokenCookie(w, "", time.Now())
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-
-	Sessions.Delete(sessionToken)
-	SetSessionTokenCookie(w, "", time.Now())
+	h.AuthService.Logout(r.Context(), &auth.LogoutRequest{SessionToken: sessionToken})
+	SetSessionTokenCookie(w, sessionToken, time.Now())
 	w.WriteHeader(http.StatusNoContent)
-}
-
-// Registration
-//
-//	@Summary		Register user
-//	@Description	Register user by POST request and add them to DB
-//	@Tags			Authorization
-//	@Produce		json
-//	@Accept			json
-//	@Param			request	body		entity.User	true	"json"
-//	@Success		200		{object}	entity.UserResponse
-//	@Failure		400		{object}	errs.ErrorResponse	"Possible code responses: 3, 4, 5."
-//	@Failure		401		{object}	errs.ErrorResponse	"Possible code responses: 7, 8."
-//	@Failure		403		{object}	errs.ErrorResponse	"Possible code responses: 1."
-//	@Failure		500		{object}	errs.ErrorResponse	"Possible code responses: 11."
-//	@Router			/users [post]
-func (h *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	requestId := ctx.Value("request_id").(string)
-
-	bodyBytes, err := io.ReadAll(r.Body)
-	if err != nil {
-		WriteErrorsListResponse(w, h.logger, requestId, errs.ErrorInfo{
-			GeneralErr: err,
-			LocalErr:   errs.ErrReadingRequestBody,
-		})
-		return
-	}
-
-	var user entity.User
-	err = json.Unmarshal(bodyBytes, &user)
-	if err != nil {
-		WriteErrorsListResponse(w, h.logger, requestId, errs.ErrorInfo{
-			GeneralErr: err,
-			LocalErr:   errs.ErrReadingRequestBody,
-		})
-		return
-	}
-
-	if !ValidateEmail(user.Email) ||
-		!ValidateNickname(user.Nickname) ||
-		!ValidatePassword(user.Password) {
-		WriteErrorsListResponse(w, h.logger, requestId, errs.ErrorInfo{
-			LocalErr: errs.ErrInvalidInputFormat,
-		})
-		return
-	}
-
-	hashPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-	if err != nil {
-		WriteErrorsListResponse(w, h.logger, requestId, errs.ErrorInfo{
-			GeneralErr: err,
-			LocalErr:   errs.ErrHashingPassword,
-		})
-		return
-	}
-	user.Password = string(hashPassword)
-
-	errsList := h.service.RegisterUser(ctx, user)
-	if len(errsList) != 0 {
-		WriteErrorsListResponse(w, h.logger, requestId, errsList...)
-		return
-	}
-
-	// Search for user by email (to get user id)
-	registeredUser, errInfo := h.service.GetUserByEmail(ctx, user.Email)
-	if errInfo != emptyErrorInfo {
-		WriteErrorsListResponse(w, h.logger, requestId, errInfo)
-		return
-	}
-	if registeredUser == emptyUser {
-		WriteErrorsListResponse(w, h.logger, requestId, errs.ErrorInfo{
-			LocalErr: errs.ErrUserNotExist,
-		})
-		return
-	}
-
-	newSessionToken := uuid.NewString()
-	expiresAt := time.Now().Add(sessionTTL)
-	s := Session{
-		UserId: registeredUser.UserID,
-		Expiry: expiresAt,
-	}
-	Sessions.Store(newSessionToken, s)
-
-	SetSessionTokenCookie(w, newSessionToken, expiresAt)
-	WriteUserResponse(w, h.logger, registeredUser)
 }
 
 // Check if user is authorized
@@ -241,27 +136,31 @@ func (h *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 //	@Router			/is_auth [get]
 func (h *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	requestId := ctx.Value("request_id").(string)
-
-	userIdFromSession, ok := ctx.Value("user_id").(entity.UserID)
-	if !ok {
+	requestId, ok1 := ctx.Value("request_id").(string)
+	userIdFromSession, ok2 := ctx.Value("user_id").(entity.UserID)
+	if !ok1 || !ok2 {
 		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrUnauthorized))
 		return
 	}
 
-	// Checking the existence of user with userId associated with session
-	user, errInfo := h.service.GetUserById(ctx, userIdFromSession)
-	if errInfo != emptyErrorInfo {
-		WriteErrorResponse(w, h.logger, requestId, errInfo)
-		return
-	}
-	if user == emptyUser {
+	res, err := h.AuthService.IsAuth(metadata.NewOutgoingContext(r.Context(),
+		metadata.Pairs("user_id", fmt.Sprintf(`%d`, userIdFromSession), "request_id", requestId)), &auth.Empty{})
+	if err != nil {
 		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{
-			LocalErr: errs.ErrUnauthorized})
+			LocalErr:   errs.ErrGRPCWentWrong,
+			GeneralErr: err,
+		})
+	}
+	if !res.Valid {
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{LocalErr: errs.GetLocalErrorByCode[res.LocalError]})
 		return
 	}
-
-	WriteUserResponse(w, h.logger, user)
+	WriteUserResponse(w, h.logger, entity.User{
+		UserID:    entity.UserID(res.User.UserId),
+		Email:     res.User.Email,
+		Nickname:  res.User.Nickname,
+		AvatarURL: res.User.AvatarURL,
+	})
 }
 
 func WriteUserResponse(w http.ResponseWriter, logger *zap.Logger, user entity.User) {
