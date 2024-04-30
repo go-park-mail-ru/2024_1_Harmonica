@@ -8,14 +8,14 @@ import (
 type Hub struct {
 	clients    map[entity.UserID][]*Client
 	mu         sync.Mutex
-	broadcast  chan *ChatMessage // Inbound messages from the clients.
-	register   chan *Client      // Register requests from the clients.
-	unregister chan *Client      // Unregister requests from clients.
+	broadcast  chan *entity.ChatMessage // Inbound messages from the clients.
+	register   chan *Client             // Register requests from the clients.
+	unregister chan *Client             // Unregister requests from clients.
 }
 
 func NewHub() *Hub {
 	return &Hub{
-		broadcast:  make(chan *ChatMessage),
+		broadcast:  make(chan *entity.ChatMessage),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		clients:    make(map[entity.UserID][]*Client),
@@ -34,16 +34,10 @@ func (hub *Hub) Run() {
 			deleteClientFromHub(hub, client)
 			hub.mu.Unlock()
 		case chatMessage := <-hub.broadcast:
+			senderId := chatMessage.Payload.SenderId
+			receiverId := chatMessage.Payload.ReceiverId
 			hub.mu.Lock()
-			//for client := range hub.clients {
-			//	select { // вот так было дефолтно в репе gorilla/websocket
-			//		case client.send <- message:
-			//		default:
-			//			close(client.send)
-			//			delete(h.clients, client)
-			//	}
-			//}
-			if clients, ok := hub.clients[chatMessage.ReceiverId]; ok {
+			if clients, ok := hub.clients[receiverId]; ok {
 				for _, client := range clients {
 					select {
 					case client.message <- chatMessage:
@@ -55,8 +49,8 @@ func (hub *Hub) Run() {
 				}
 			}
 			// это для того, чтобы сообщение, отправленное юзером, отображалось во всех его вкладках
-			clients, ok := hub.clients[chatMessage.SenderId]
-			if ok && chatMessage.ReceiverId != chatMessage.SenderId {
+			clients, ok := hub.clients[senderId]
+			if ok && receiverId != senderId {
 				for _, client := range clients {
 					select {
 					case client.message <- chatMessage:

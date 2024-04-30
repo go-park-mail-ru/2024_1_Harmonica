@@ -26,17 +26,11 @@ var upgrader = websocket.Upgrader{
 	//CheckOrigin: func(r *http.Request) bool { return true },
 }
 
-type ChatMessage struct {
-	Text       string        `json:"text"`
-	SenderId   entity.UserID `json:"sender_id"`
-	ReceiverId entity.UserID `json:"receiver_id"`
-}
-
 // Client is a middleman between the websocket connection and the hub.
 type Client struct {
 	hub       *Hub
 	conn      *websocket.Conn
-	message   chan *ChatMessage //send chan []byte
+	message   chan *entity.ChatMessage //send chan []byte
 	userId    entity.UserID
 	wsConnKey string
 	logger    *zap.Logger
@@ -46,7 +40,7 @@ func NewClient(hub *Hub, conn *websocket.Conn, userId entity.UserID, wsConnKey s
 	return &Client{
 		hub:       hub,
 		conn:      conn,
-		message:   make(chan *ChatMessage, 100), //send: make(chan []byte, 256), // создаем буферизованный канал для исходящих сообщений
+		message:   make(chan *entity.ChatMessage, 100), //send: make(chan []byte, 256), // создаем буферизованный канал для исходящих сообщений
 		userId:    userId,
 		wsConnKey: wsConnKey,
 		logger:    l,
@@ -54,7 +48,6 @@ func NewClient(hub *Hub, conn *websocket.Conn, userId entity.UserID, wsConnKey s
 }
 
 func (h *APIHandler) ServeWs(w http.ResponseWriter, r *http.Request) {
-	//cookie := r.Header.Get("Cookie") //если понадобится, это можно будет передать в responseHeader
 	ctx := r.Context()
 	requestId := ctx.Value("request_id").(string)
 
@@ -89,7 +82,7 @@ func (c *Client) ReadMessage() {
 	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 
 	for {
-		var chatMessage ChatMessage
+		var chatMessage entity.ChatMessage
 		err := c.conn.ReadJSON(&chatMessage)
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
@@ -101,7 +94,7 @@ func (c *Client) ReadMessage() {
 			}
 			break
 		}
-		chatMessage.SenderId = c.userId
+		chatMessage.Payload.SenderId = c.userId
 		c.hub.broadcast <- &chatMessage
 	}
 }
@@ -125,7 +118,7 @@ func (c *Client) WriteMessage() {
 				//c.conn.WriteJSON(errResponse)
 				//return
 
-				// The hub closed the channel.
+				// The hub closed the channel
 				_ = c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
@@ -146,8 +139,10 @@ func (c *Client) WriteMessage() {
 			n := len(c.message)
 			for i := 0; i < n; i++ {
 				chatMessage = <-c.message
+				senderId := chatMessage.Payload.SenderId
+				receiverId := chatMessage.Payload.ReceiverId
 				//if chatMessage.ReceiverId == c.userId {
-				if (chatMessage.ReceiverId == c.userId || chatMessage.SenderId == c.userId) && chatMessage.SenderId != chatMessage.ReceiverId {
+				if (receiverId == c.userId || senderId == c.userId) && senderId != receiverId {
 					err = c.conn.WriteJSON(<-c.message)
 					if err != nil {
 						//возникла ошибка при отправке json -> простое сообщение мб отправится

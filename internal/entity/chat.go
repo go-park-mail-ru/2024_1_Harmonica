@@ -44,6 +44,23 @@ type Messages struct {
 	Messages []MessageResponse `json:"messages"`
 }
 
+type Action string
+
+const (
+	ActionMessage Action = "CHAT_MESSAGE"
+)
+
+var Actions = []Action{ActionMessage}
+
+type ChatMessage struct {
+	Action  Action `json:"action"`
+	Payload struct {
+		Text       string `json:"text"`
+		SenderId   UserID `json:"sender_id"`
+		ReceiverId UserID `json:"receiver_id"`
+	} `json:"payload"`
+}
+
 type UserChat struct {
 	UserID        UserID `db:"user_id" json:"user_id" swaggerignore:"true"`
 	Nickname      string `db:"nickname" json:"nickname"`
