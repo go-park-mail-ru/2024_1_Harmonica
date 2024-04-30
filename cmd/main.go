@@ -40,18 +40,16 @@ func runServer(addr string) {
 	configureUserRoutes(logger, h, mux)
 	configurePinRoutes(logger, h, mux)
 	configureBoardRoutes(logger, h, mux)
-	configureMessageRoutes(logger, h, mux)
+	configureChatRoutes(logger, h, mux)
 
 	mux.Handle("GET /docs/swagger.json", http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))))
 	mux.Handle("GET /swagger/", v3.NewHandler("My API", "/docs/swagger.json", "/swagger"))
 	mux.HandleFunc("GET /img/{image_name}", h.GetImage)
 
-	// new !
 	go hub.Run()
 	// TODO исправить
-	mux.HandleFunc("GET /ws", middleware.AuthRequired(logger, h.ServeWs))
-	//mux.HandleFunc("GET /ws", h.ServeWs)
-	//mux.HandleFunc("GET /ws", func(w http.ResponseWriter, r *http.Request) { chat.ServeWs(hub, w, r) })
+	//mux.HandleFunc("GET /ws", middleware.AuthRequired(logger, h.ServeWs))
+	mux.HandleFunc("GET /ws", h.ServeWs)
 
 	loggedMux := middleware.Logging(logger, mux)
 
@@ -151,10 +149,11 @@ func configureBoardRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.S
 	}
 }
 
-func configureMessageRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.ServeMux) {
+func configureChatRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.ServeMux) {
 	authRoutes := map[string]http.HandlerFunc{
 		"POST /api/v1/messages/{receiver_id}": h.SendMessage,
 		"GET /api/v1/messages/{user_id}":      h.ReadMessages,
+		"GET /api/v1/chats":                   h.GetUserChats,
 	}
 	for pattern, f := range authRoutes {
 		mux.HandleFunc(pattern, middleware.AuthRequired(logger, f))

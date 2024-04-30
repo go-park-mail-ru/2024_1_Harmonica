@@ -44,4 +44,5 @@ type IRepository interface {
 
 	CreateMessage(ctx context.Context, message entity.Message) error
 	GetMessages(ctx context.Context, firstUserId, secondUserId entity.UserID) (entity.Messages, error)
+	GetUserChats(ctx context.Context, userId entity.UserID) (entity.UserChats, error)
 }

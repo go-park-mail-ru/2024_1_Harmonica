@@ -1,13 +1,11 @@
 package handler
 
 import (
-	"fmt"
 	"harmonica/internal/entity"
 	"sync"
 )
 
 type Hub struct {
-	//clients map[*Client]bool // Registered clients.
 	clients    map[entity.UserID][]*Client
 	mu         sync.Mutex
 	broadcast  chan *ChatMessage // Inbound messages from the clients.
@@ -33,40 +31,58 @@ func (hub *Hub) Run() {
 			hub.mu.Unlock()
 		case client := <-hub.unregister:
 			hub.mu.Lock()
-			if clients, ok := hub.clients[client.userId]; ok {
-				for i, c := range clients {
-					if c == client {
-						hub.clients[client.userId] = append(clients[:i], clients[i+1:]...)
-						close(client.message)
-						break
-					}
-				}
-			}
+			deleteClientFromHub(hub, client)
 			hub.mu.Unlock()
 		case chatMessage := <-hub.broadcast:
-
-			fmt.Println("3")
-
 			hub.mu.Lock()
 			//for client := range hub.clients {
-			//	//select ... тут был дефолтно
-			//	if chatMessage.ReceiverId == client.userId {
-			//		fmt.Println("YES")
-			//		client.message <- chatMessage
+			//	select { // вот так было дефолтно в репе gorilla/websocket
+			//		case client.send <- message:
+			//		default:
+			//			close(client.send)
+			//			delete(h.clients, client)
 			//	}
 			//}
 			if clients, ok := hub.clients[chatMessage.ReceiverId]; ok {
 				for _, client := range clients {
-					client.message <- chatMessage
+					select {
+					case client.message <- chatMessage:
+						// отправка прошла успешно
+					default:
+						close(client.message)
+						deleteClientFromHub(hub, client)
+					}
 				}
 			}
 			// это для того, чтобы сообщение, отправленное юзером, отображалось во всех его вкладках
-			if clients, ok := hub.clients[chatMessage.SenderId]; ok {
+			clients, ok := hub.clients[chatMessage.SenderId]
+			if ok && chatMessage.ReceiverId != chatMessage.SenderId {
 				for _, client := range clients {
-					client.message <- chatMessage
+					select {
+					case client.message <- chatMessage:
+						// отправка прошла успешно
+					default:
+						close(client.message)
+						deleteClientFromHub(hub, client)
+					}
 				}
 			}
 			hub.mu.Unlock()
+		}
+	}
+}
+
+func deleteClientFromHub(hub *Hub, client *Client) {
+	if clients, ok := hub.clients[client.userId]; ok {
+		for i, c := range clients {
+			if c == client {
+				hub.clients[client.userId] = append(clients[:i], clients[i+1:]...)
+				close(client.message)
+				break
+			}
+		}
+		if len(hub.clients[client.userId]) == 0 {
+			delete(hub.clients, client.userId)
 		}
 	}
 }

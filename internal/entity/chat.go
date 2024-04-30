@@ -43,3 +43,15 @@ type MessageResponse struct {
 type Messages struct {
 	Messages []MessageResponse `json:"messages"`
 }
+
+type UserChat struct {
+	UserID        UserID `db:"user_id" json:"user_id" swaggerignore:"true"`
+	Nickname      string `db:"nickname" json:"nickname"`
+	AvatarURL     string `db:"avatar_url" json:"avatar_url" swaggerignore:"true"`
+	RecentMessage string `db:"recent_message" json:"recent_message"`
+}
+
+type UserChats struct {
+	SubscriptionsUserChats []UserChat `json:"subscriptions_users"`
+	OtherUserChats         []UserChat `json:"other_users"`
+}

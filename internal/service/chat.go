@@ -39,3 +39,14 @@ func (s *RepositoryService) GetMessages(ctx context.Context, firstUserId, second
 	}
 	return messages, emptyErrorInfo
 }
+
+func (s *RepositoryService) GetUserChats(ctx context.Context, userId entity.UserID) (entity.UserChats, errs.ErrorInfo) {
+	chats, err := s.repo.GetUserChats(ctx, userId)
+	if err != nil {
+		return entity.UserChats{}, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrDBInternal,
+		}
+	}
+	return chats, emptyErrorInfo
+}

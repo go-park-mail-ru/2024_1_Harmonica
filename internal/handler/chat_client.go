@@ -1,14 +1,11 @@
 package handler
 
 import (
-	"fmt"
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
-	"log"
 	"net/http"
-	"strconv"
 	"time"
 )
 
@@ -67,20 +64,12 @@ func (h *APIHandler) ServeWs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//userId, ok := ctx.Value("user_id").(entity.UserID)
-	//if !ok {
-	//	WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrWSConnectionUpgrade))
-	//	return
-	//}
-
-	// в ws-протоколе нет кук!!!!! мб можно прокинуть?
-	userIdString := r.URL.Query().Get("user_id")
-	userIdInt, err := strconv.Atoi(userIdString)
-	if err != nil {
-		// TODO исправить
-		log.Println(errs.ErrTypeConversion)
+	// TODO вернуть куки !
+	userId, ok := ctx.Value("user_id").(entity.UserID)
+	if !ok {
+		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrWSConnectionUpgrade))
+		return
 	}
-	userId := entity.UserID(userIdInt)
 
 	wsConnKey := r.URL.Query().Get("ws_conn_key")
 	client := NewClient(h.hub, conn, userId, wsConnKey, h.logger)
@@ -137,17 +126,14 @@ func (c *Client) WriteMessage() {
 				//return
 
 				// The hub closed the channel.
-				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				_ = c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
-
-			fmt.Println("2")
-
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			err := c.conn.WriteJSON(chatMessage)
 			if err != nil {
 				//возникла ошибка при отправке json -> простое сообщение мб отправится
-				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				_ = c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				c.logger.Error(
 					errs.ErrWSConnectionClosed.Error(),
 					zap.Int("local_error_code", errs.ErrorCodes[errs.ErrWSConnectionClosed].LocalCode),
@@ -161,11 +147,11 @@ func (c *Client) WriteMessage() {
 			for i := 0; i < n; i++ {
 				chatMessage = <-c.message
 				//if chatMessage.ReceiverId == c.userId {
-				if chatMessage.ReceiverId == c.userId || chatMessage.SenderId == c.userId {
+				if (chatMessage.ReceiverId == c.userId || chatMessage.SenderId == c.userId) && chatMessage.SenderId != chatMessage.ReceiverId {
 					err = c.conn.WriteJSON(<-c.message)
 					if err != nil {
 						//возникла ошибка при отправке json -> простое сообщение мб отправится
-						c.conn.WriteMessage(websocket.CloseMessage, []byte{})
+						_ = c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 						c.logger.Error(
 							errs.ErrWSConnectionClosed.Error(),
 							zap.Int("local_error_code", errs.ErrorCodes[errs.ErrWSConnectionClosed].LocalCode),
