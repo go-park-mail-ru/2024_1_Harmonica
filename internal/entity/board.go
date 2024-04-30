@@ -20,6 +20,8 @@ type Board struct {
 	CreatedAt      time.Time      `db:"created_at" json:"created_at"`
 	Description    string         `db:"description" json:"description"`
 	CoverURL       string         `db:"cover_url" json:"cover_url" swaggerignore:"true"`
+	CoverDX        int64          `json:"cover_width"`
+	CoverDY        int64          `json:"cover_height"`
 	VisibilityType VisibilityType `db:"visibility_type" json:"visibility_type"`
 	IsOwner        bool           `json:"is_owner"`
 }
@@ -29,8 +31,24 @@ func (b *Board) Sanitize() {
 	b.Description = html.EscapeString(b.Description)
 }
 
+type UserBoard struct {
+	BoardID        BoardID        `db:"board_id" json:"board_id"`
+	Title          string         `db:"title" json:"title"`
+	CreatedAt      time.Time      `db:"created_at" json:"created_at"`
+	Description    string         `db:"description" json:"description"`
+	CoverURL       string         `db:"cover_url" json:"cover_url" swaggerignore:"true"`
+	VisibilityType VisibilityType `db:"visibility_type" json:"visibility_type"`
+	//IsOwner              bool           `json:"is_owner"` // здесь это поле не используем
+	RecentPinContentUrls []string `db:"recent_pins" json:"recent_pins"`
+}
+
+func (b *UserBoard) Sanitize() {
+	b.Title = html.EscapeString(b.Title)
+	b.Description = html.EscapeString(b.Description)
+}
+
 type UserBoards struct {
-	Boards []Board `json:"boards"`
+	Boards []UserBoard `json:"boards"`
 }
 
 func (b *UserBoards) Sanitize() {
@@ -43,6 +61,8 @@ type BoardAuthor struct {
 	UserId    UserID `db:"user_id" json:"user_id"`
 	Nickname  string `db:"nickname" json:"nickname"`
 	AvatarURL string `db:"avatar_url" json:"avatar_url"`
+	AvatarDX  int64  `json:"avatar_width"`
+	AvatarDY  int64  `json:"avatar_height"`
 }
 
 func (b *BoardAuthor) Sanitize() {
@@ -52,6 +72,8 @@ func (b *BoardAuthor) Sanitize() {
 type BoardPinResponse struct {
 	PinId      PinID  `db:"pin_id" json:"pin_id"`
 	ContentUrl string `db:"content_url" json:"content_url"`
+	ContentDX  int64  `json:"content_width"`
+	ContentDY  int64  `json:"content_height"`
 	PinAuthor  `json:"author"`
 }
 

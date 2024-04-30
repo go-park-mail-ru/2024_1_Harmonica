@@ -25,6 +25,8 @@ var (
 	ErrElementNotExist     = errors.New("element does not exist")
 	ErrTypeConversion      = errors.New("type conversion error")
 	ErrDBUniqueViolation   = errors.New("unique violation error (element already exists in db)")
+	ErrGRPCWentWrong       = errors.New("something went wrong in grpc connection")
+	ErrCantParseTime       = errors.New("cant parse timestamp")
 	ErrForeignKeyViolation = errors.New("foreign key violation error (referenced element does not exist in db)")
 	ErrWSConnectionClosed  = errors.New("ws connection was closed")
 	ErrWSConnectionUpgrade = errors.New("can't upgrade http connection to ws")
@@ -57,8 +59,41 @@ var ErrorCodes = map[error]struct {
 	ErrElementNotExist:     {HttpCode: 400, LocalCode: 20},
 	ErrTypeConversion:      {HttpCode: 400, LocalCode: 21},
 	ErrDBUniqueViolation:   {HttpCode: 500, LocalCode: 22},
-	ErrForeignKeyViolation: {HttpCode: 500, LocalCode: 23},
-	ErrWSConnectionClosed:  {HttpCode: 500, LocalCode: 24},
-	ErrWSConnectionUpgrade: {HttpCode: 500, LocalCode: 25},
-	ErrServerInternal:      {HttpCode: 500, LocalCode: 26},
+	ErrGRPCWentWrong:       {HttpCode: 500, LocalCode: 23},
+	ErrCantParseTime:       {HttpCode: 500, LocalCode: 24},
+	ErrForeignKeyViolation: {HttpCode: 500, LocalCode: 25},
+	ErrWSConnectionClosed:  {HttpCode: 500, LocalCode: 26},
+	ErrWSConnectionUpgrade: {HttpCode: 500, LocalCode: 27},
+	ErrServerInternal:      {HttpCode: 500, LocalCode: 28},
+}
+
+var GetLocalErrorByCode = map[int64]error{
+	1:  ErrAlreadyAuthorized,
+	2:  ErrUnauthorized,
+	3:  ErrReadCookie,
+	4:  ErrReadingRequestBody,
+	5:  ErrInvalidInputFormat,
+	6:  ErrHashingPassword,
+	7:  ErrUserNotExist,
+	8:  ErrWrongPassword,
+	9:  ErrDBUniqueEmail,
+	10: ErrDBUniqueNickname,
+	11: ErrDBInternal,
+	12: ErrInvalidSlug,
+	13: ErrDiffUserId,
+	14: ErrPermissionDenied,
+	15: ErrContentUrlRequired,
+	16: ErrEmptyContentURL,
+	17: ErrInvalidContentType,
+	18: ErrInvalidImg,
+	19: ErrNoImageProvided,
+	20: ErrElementNotExist,
+	21: ErrTypeConversion,
+	22: ErrDBUniqueViolation,
+	23: ErrGRPCWentWrong,
+	24: ErrCantParseTime,
+	25: ErrForeignKeyViolation,
+	26: ErrWSConnectionClosed,
+	27: ErrWSConnectionUpgrade,
+	28: ErrServerInternal,
 }

@@ -113,7 +113,6 @@ func (h *APIHandler) GetBoard(w http.ResponseWriter, r *http.Request) {
 func (h *APIHandler) UpdateBoard(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	requestId := r.Context().Value("request_id").(string)
-
 	boardId, err := ReadInt64Slug(r, "board_id")
 	if err != nil {
 		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(err, errs.ErrInvalidSlug))

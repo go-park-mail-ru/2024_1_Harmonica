@@ -11,6 +11,8 @@ type User struct {
 	Nickname   string    `db:"nickname" json:"nickname"`
 	Password   string    `db:"password" json:"password"`
 	AvatarURL  string    `db:"avatar_url" json:"avatar_url" swaggerignore:"true"`
+	AvatarDX   int64     `json:"avatar_width"`
+	AvatarDY   int64     `json:"avatar_height"`
 	RegisterAt time.Time `db:"register_at" json:"register_at" swaggerignore:"true"`
 }
 
@@ -27,6 +29,8 @@ type UserResponse struct {
 	Email     string `json:"email"`
 	Nickname  string `json:"nickname"`
 	AvatarURL string `json:"avatar_url"`
+	AvatarDX  int64  `json:"avatar_width"`
+	AvatarDY  int64  `json:"avatar_height"`
 }
 
 func (u *UserResponse) Sanitize() {

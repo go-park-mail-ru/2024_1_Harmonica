@@ -21,11 +21,19 @@ func (h *APIHandler) GetImage(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{GeneralErr: err, LocalErr: errs.ErrInvalidImg})
 		return
 	}
+	fileStat, err := res.Stat()
+	if err != nil {
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{GeneralErr: err, LocalErr: errs.ErrInvalidImg})
+		return
+	}
+
 	file, err := io.ReadAll(res)
 	if err != nil {
 		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{GeneralErr: err, LocalErr: errs.ErrInvalidImg})
 		return
 	}
+	w.Header().Add("X-Amz-Meta-Width", fileStat.Metadata.Get("X-Amz-Meta-Width"))
+	w.Header().Add("X-Amz-Meta-Height", fileStat.Metadata.Get("X-Amz-Meta-Height"))
 	w.Write(file)
 }
 

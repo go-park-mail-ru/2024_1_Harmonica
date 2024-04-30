@@ -19,11 +19,7 @@ const (
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  4096,
 	WriteBufferSize: 4096,
-	// We'll need to check the origin of our connection
-	// this will allow us to make requests from our React
-	// development server to here.
-	// For now, we'll do no checking and just allow any connection
-	//CheckOrigin: func(r *http.Request) bool { return true },
+	//CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
 // Client is a middleman between the websocket connection and the hub.
@@ -51,15 +47,15 @@ func (h *APIHandler) ServeWs(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	requestId := ctx.Value("request_id").(string)
 
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
+	// не забывать возвращать куки вместо r.URL.Query().Get("user_id") после постмана!!!
+	userId, ok := ctx.Value("user_id").(entity.UserID)
+	if !ok {
 		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrWSConnectionUpgrade))
 		return
 	}
 
-	// TODO вернуть куки !
-	userId, ok := ctx.Value("user_id").(entity.UserID)
-	if !ok {
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
 		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrWSConnectionUpgrade))
 		return
 	}
@@ -110,14 +106,6 @@ func (c *Client) WriteMessage() {
 		select {
 		case chatMessage, ok := <-c.message:
 			if !ok {
-				// была идея отправлять так, но потом поняла, что это фигня. так ведь?
-				//errResponse := errs.ErrorResponse{
-				//	Code:    errs.ErrorCodes[errs.ErrWSConnectionClosed].LocalCode,
-				//	Message: errs.ErrWSConnectionClosed.Error(),
-				//}
-				//c.conn.WriteJSON(errResponse)
-				//return
-
 				// The hub closed the channel
 				_ = c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
