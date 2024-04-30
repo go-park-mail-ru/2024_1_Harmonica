@@ -42,4 +42,8 @@ type IRepository interface {
 	UploadImage(ctx context.Context, file multipart.File, fileHeader *multipart.FileHeader) (string, error)
 	GetImageBounds(ctx context.Context, url string) (int64, int64, error)
 	GetImage(ctx context.Context, name string) (*minio.Object, error)
+
+	CreateMessage(ctx context.Context, message entity.Message) error
+	GetMessages(ctx context.Context, firstUserId, secondUserId entity.UserID) (entity.Messages, error)
+	GetUserChats(ctx context.Context, userId entity.UserID) (entity.UserChats, error)
 }

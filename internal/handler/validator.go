@@ -4,6 +4,7 @@ import (
 	"harmonica/internal/entity"
 	"net/mail"
 	"regexp"
+	"strings"
 	"unicode"
 )
 
@@ -49,10 +50,20 @@ func ValidateBoard(board entity.Board) bool {
 	if (len(board.Title) == 0 || len(board.Title) > 60) || len(board.Description) > 500 {
 		return false
 	}
+	trimmedTitle := strings.TrimSpace(board.Title)
+	if trimmedTitle == "" {
+		return false
+	}
 	for _, visibilityType := range entity.VisibilityTypes {
 		if board.VisibilityType == visibilityType {
 			return true
 		}
 	}
 	return false
+}
+
+func ValidateMessage(message entity.Message) bool {
+	text := message.Text
+	trimmedText := strings.TrimSpace(text)
+	return len(text) > 0 && len(text) < 2001 && trimmedText != ""
 }

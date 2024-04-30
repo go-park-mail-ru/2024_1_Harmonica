@@ -29,7 +29,6 @@ func (h *APIHandler) CreateBoard(w http.ResponseWriter, r *http.Request) {
 	board := entity.Board{}
 	board.VisibilityType = "public"
 	err := UnmarshalRequest(r, &board)
-
 	if err != nil {
 		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(err, errs.ErrReadingRequestBody))
 		return
@@ -38,6 +37,7 @@ func (h *APIHandler) CreateBoard(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrInvalidInputFormat))
 		return
 	}
+
 	userId, ok := ctx.Value("user_id").(entity.UserID)
 	if !ok {
 		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrTypeConversion))

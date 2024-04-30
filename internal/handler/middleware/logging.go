@@ -1,9 +1,13 @@
 package middleware
 
 import (
+	"bufio"
 	"context"
+	"errors"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+	"log"
+	"net"
 	"net/http"
 	"time"
 )
@@ -18,6 +22,16 @@ type WrappedResponseWriter struct {
 func (wrappedWriter *WrappedResponseWriter) WriteHeader(code int) {
 	wrappedWriter.StatusCode = code
 	wrappedWriter.ResponseWriter.WriteHeader(code)
+}
+
+func (wrappedWriter *WrappedResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	h, ok := wrappedWriter.ResponseWriter.(http.Hijacker)
+	if !ok {
+		log.Println("hijack not supported")
+		return nil, nil, errors.New("hijack not supported")
+	}
+	return h.Hijack()
+	// это нужно для чата, так как иначе  ошибка "websocket: response does not implement http.Hijacker"
 }
 
 func Logging(l *zap.Logger, next http.Handler) http.Handler {

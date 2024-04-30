@@ -76,11 +76,11 @@ func (s *RepositoryService) GetBoardById(ctx context.Context, boardId entity.Boa
 			LocalErr:   errs.ErrDBInternal,
 		}
 	}
-	if board.VisibilityType == entity.VisibilityPrivate && !AuthorContains(authors, userId) {
-		return entity.FullBoard{}, errs.ErrorInfo{
-			LocalErr: errs.ErrPermissionDenied,
-		}
-	}
+	//if board.VisibilityType == entity.VisibilityPrivate && !AuthorContains(authors, userId) {
+	//	return entity.FullBoard{}, errs.ErrorInfo{
+	//		LocalErr: errs.ErrPermissionDenied,
+	//	}
+	//} // по-моему это дубрирует "if board.VisibilityType == entity.VisibilityPrivate && !isAuthor {"
 
 	//if board.VisibilityType == entity.VisibilityPrivate && (userId == 0 || !AuthorContains(authors, userId)) {
 	//	return emptyFullBoard, errs.ErrorInfo{
@@ -271,11 +271,11 @@ func (s *RepositoryService) GetUserBoards(ctx context.Context, authorNickname st
 	return boards, emptyErrorInfo
 }
 
-func AuthorContains(authors []entity.BoardAuthor, userId entity.UserID) bool {
-	for _, author := range authors {
-		if author.UserId == userId {
-			return true
-		}
-	}
-	return false
-}
+//func AuthorContains(authors []entity.BoardAuthor, userId entity.UserID) bool {
+//	for _, author := range authors {
+//		if author.UserId == userId {
+//			return true
+//		}
+//	}
+//	return false
+//}
