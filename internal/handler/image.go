@@ -1,40 +1,35 @@
 package handler
 
 import (
+	"context"
 	"harmonica/config"
 	"harmonica/internal/entity/errs"
+	image "harmonica/internal/microservices/image/proto"
 	"io"
 	"net/http"
+	"strings"
+
+	"google.golang.org/grpc/metadata"
 )
 
 func (h *APIHandler) GetImage(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	requestId := ctx.Value("request_id").(string)
-
+	requestId := r.Context().Value("request_id").(string)
 	name, err := ReadStringSlug(r, "image_name")
 	if err != nil {
 		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{GeneralErr: err, LocalErr: errs.ErrInvalidSlug})
 		return
 	}
-	res, err := h.service.GetImage(r.Context(), name)
+	ctx := metadata.NewOutgoingContext(r.Context(), metadata.Pairs("request_id", requestId))
+	res, err := h.ImageService.GetImage(ctx, &image.GetImageRequest{Name: name})
 	if err != nil {
-		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{GeneralErr: err, LocalErr: errs.ErrInvalidImg})
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{GeneralErr: err, LocalErr: errs.ErrGRPCWentWrong})
 		return
 	}
-	fileStat, err := res.Stat()
-	if err != nil {
-		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{GeneralErr: err, LocalErr: errs.ErrInvalidImg})
+	if res.LocalError != 0 {
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{LocalErr: errs.GetLocalErrorByCode[res.LocalError]})
 		return
 	}
-
-	file, err := io.ReadAll(res)
-	if err != nil {
-		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{GeneralErr: err, LocalErr: errs.ErrInvalidImg})
-		return
-	}
-	w.Header().Add("X-Amz-Meta-Width", fileStat.Metadata.Get("X-Amz-Meta-Width"))
-	w.Header().Add("X-Amz-Meta-Height", fileStat.Metadata.Get("X-Amz-Meta-Height"))
-	w.Write(file)
+	w.Write(res.Image)
 }
 
 func (h *APIHandler) UploadImage(r *http.Request, imageName string) (string, error) {
@@ -42,13 +37,28 @@ func (h *APIHandler) UploadImage(r *http.Request, imageName string) (string, err
 	if err != nil {
 		return "", errs.ErrNoImageProvided
 	}
-	name, err := h.service.UploadImage(r.Context(), file, header)
-	if err != nil {
-		return "", err
+	contentType := header.Header.Get("Content-Type")
+	if len(contentType) == 0 || strings.Split(contentType, "/")[0] != "image" {
+		return "", errs.ErrInvalidContentType
 	}
-	return name, nil
+	f, err := io.ReadAll(file)
+	if err != nil {
+		return "", errs.ErrInvalidImg
+	}
+	res, err := h.ImageService.UploadImage(r.Context(), &image.UploadImageRequest{Image: f, Filename: header.Filename})
+	if err != nil {
+		return "", errs.ErrGRPCWentWrong
+	}
+	if res.LocalError != 0 {
+		return "", errs.GetLocalErrorByCode[res.LocalError]
+	}
+	return res.Name, nil
 }
 
-func FormImgURL(name string) string {
-	return config.GetEnv("SERVER_URL", "") + name
+func (h *APIHandler) FormImgURL(name string) string {
+	res, err := h.ImageService.FormUrl(context.Background(), &image.FormUrlRequest{Name: name})
+	if err != nil {
+		return config.GetEnv("SERVER_URL", "") + name
+	}
+	return res.Url
 }

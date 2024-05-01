@@ -137,14 +137,14 @@ func (h *APIHandler) UpdateBoard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	newBoard.CoverURL = ""
-	image, imageHeader, err := r.FormFile("image")
+	_, _, err = r.FormFile("image")
 	if err == nil {
-		name, errUploading := h.service.UploadImage(ctx, image, imageHeader)
+		name, errUploading := h.UploadImage(r, "image")
 		if errUploading != nil {
 			WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrInvalidImg))
 			return
 		}
-		newBoard.CoverURL = FormImgURL(name)
+		newBoard.CoverURL = h.FormImgURL(name)
 	}
 	newBoard.BoardID = entity.BoardID(boardId)
 	board, errInfo := h.service.UpdateBoard(ctx, newBoard, userId)

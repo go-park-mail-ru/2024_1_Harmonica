@@ -1,13 +1,13 @@
 package main
 
 import (
-	au "harmonica/internal/microservices/auth/proto"
-	auth "harmonica/internal/microservices/auth/server"
+	im "harmonica/internal/microservices/image/proto"
+	image "harmonica/internal/microservices/image/server"
 	"net"
 
 	"harmonica/config"
-	"harmonica/internal/microservices/auth/server/repository"
-	"harmonica/internal/microservices/auth/server/service"
+	"harmonica/internal/microservices/image/server/repository"
+	"harmonica/internal/microservices/image/server/service"
 	"log"
 
 	"github.com/joho/godotenv"
@@ -20,7 +20,7 @@ import (
 
 func configureZapLogger() *zap.Logger {
 	ws := zapcore.AddSync(&lumberjack.Logger{
-		Filename:   "logs/auth/harmonium.log",
+		Filename:   "logs/image/harmonium.log",
 		MaxSize:    1024, // MB
 		MaxBackups: 10,
 		MaxAge:     60, // days
@@ -49,18 +49,16 @@ func main() {
 		log.Print(err)
 		return
 	}
-	defer connector.Disconnect()
+
 	r := repository.NewRepository(connector, logger)
 	s := service.NewService(r)
 
-	go auth.CleanupSessions()
-
-	lis, err := net.Listen("tcp", config.GetEnv("AUTH_MICROSERVICE_PORT", ":8002"))
+	lis, err := net.Listen("tcp", config.GetEnv("IMAGE_MICROSERVICE_PORT", ":8003"))
 	if err != nil {
 		log.Print(err)
 	}
 
 	server := grpc.NewServer()
-	au.RegisterAuthorizationServer(server, auth.NewAuthorizationServer(s))
+	im.RegisterImageServer(server, image.NewImageServer(s, logger))
 	server.Serve(lis)
 }
