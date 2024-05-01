@@ -49,12 +49,12 @@ func (s ImageServer) GetImage(ctx context.Context, req *image.GetImageRequest) (
 	obj, err := s.service.GetImage(ctx, req.Name)
 	if err != nil {
 		s.logErr("GetImage", err, requestId)
-		return &image.GetImageResponse{LocalError: 26}, nil
+		return &image.GetImageResponse{LocalError: 30}, nil
 	}
 	res, err := io.ReadAll(obj)
 	if err != nil {
 		s.logErr("GetImage", err, requestId)
-		return &image.GetImageResponse{LocalError: 25}, nil
+		return &image.GetImageResponse{LocalError: 29}, nil
 	}
 	return &image.GetImageResponse{Image: res}, nil
 }
@@ -88,7 +88,7 @@ func (s ImageServer) GetImageBounds(ctx context.Context, req *image.GetImageBoun
 	dx, dy, err := s.service.GetImageBounds(ctx, req.Url)
 	if err != nil {
 		s.logErr("GetImageBounds", err, GetRequestId(ctx))
-		return &image.GetImageBoundsResponse{LocalError: 25}, nil
+		return &image.GetImageBoundsResponse{LocalError: 29}, nil
 	}
 	return &image.GetImageBoundsResponse{Dx: dx, Dy: dy}, nil
 }
