@@ -41,4 +41,6 @@ type IService interface {
 	CreateMessage(ctx context.Context, message entity.Message) errs.ErrorInfo
 	GetMessages(ctx context.Context, firstUserId, secondUserId entity.UserID) (entity.Messages, errs.ErrorInfo)
 	GetUserChats(ctx context.Context, userId entity.UserID) (entity.UserChats, errs.ErrorInfo)
+
+	Search(ctx context.Context, request entity.SearchRequest) (entity.SearchResult, errs.ErrorInfo)
 }

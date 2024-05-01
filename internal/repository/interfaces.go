@@ -46,4 +46,8 @@ type IRepository interface {
 	CreateMessage(ctx context.Context, message entity.Message) error
 	GetMessages(ctx context.Context, firstUserId, secondUserId entity.UserID) (entity.Messages, error)
 	GetUserChats(ctx context.Context, userId entity.UserID) (entity.UserChats, error)
+
+	SearchForUsers(ctx context.Context, query string) ([]entity.SearchUser, error)
+	SearchForPins(ctx context.Context, query string) ([]entity.SearchPin, error)
+	SearchForBoards(ctx context.Context, query string) ([]entity.SearchBoard, error)
 }
