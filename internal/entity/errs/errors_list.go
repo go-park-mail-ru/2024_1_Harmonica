@@ -19,7 +19,6 @@ var (
 	ErrPermissionDenied    = errors.New("current user doesn't have requested permissions")
 	ErrContentUrlRequired  = errors.New("field 'content_url' is required")
 	ErrEmptyContentURL     = errors.New("content url can't be empty")
-	ErrServerInternal      = errors.New("internal server error")
 	ErrInvalidContentType  = errors.New("invalid content type header")
 	ErrInvalidImg          = errors.New("image is not valid")
 	ErrNoImageProvided     = errors.New("there is not any image file")
@@ -28,6 +27,10 @@ var (
 	ErrDBUniqueViolation   = errors.New("unique violation error (element already exists in db)")
 	ErrGRPCWentWrong       = errors.New("something went wrong in grpc connection")
 	ErrCantParseTime       = errors.New("cant parse timestamp")
+	ErrForeignKeyViolation = errors.New("foreign key violation error (referenced element does not exist in db)")
+	ErrWSConnectionClosed  = errors.New("ws connection was closed")
+	ErrWSConnectionUpgrade = errors.New("can't upgrade http connection to ws")
+	ErrServerInternal      = errors.New("internal server error")
 	ErrNotFound            = errors.New("not found")
 	ErrMinioTurnedOff      = errors.New("minio server doesn't response")
 	ErrNotAllowedExtension = errors.New("this file extension is not allowed")
@@ -49,6 +52,7 @@ var ErrorCodes = map[error]struct {
 	ErrDBUniqueNickname:    {HttpCode: 500, LocalCode: 10},
 	ErrDBInternal:          {HttpCode: 500, LocalCode: 11},
 	ErrInvalidSlug:         {HttpCode: 400, LocalCode: 12},
+	ErrDiffUserId:          {HttpCode: 400, LocalCode: 13},
 	ErrPermissionDenied:    {HttpCode: 403, LocalCode: 14},
 	ErrContentUrlRequired:  {HttpCode: 400, LocalCode: 15},
 	ErrEmptyContentURL:     {HttpCode: 400, LocalCode: 16},
@@ -60,9 +64,13 @@ var ErrorCodes = map[error]struct {
 	ErrDBUniqueViolation:   {HttpCode: 500, LocalCode: 22},
 	ErrGRPCWentWrong:       {HttpCode: 500, LocalCode: 23},
 	ErrCantParseTime:       {HttpCode: 500, LocalCode: 24},
-	ErrNotFound:            {HttpCode: 404, LocalCode: 25},
-	ErrMinioTurnedOff:      {HttpCode: 500, LocalCode: 26},
-	ErrNotAllowedExtension: {HttpCode: 400, LocalCode: 27},
+	ErrForeignKeyViolation: {HttpCode: 500, LocalCode: 25},
+	ErrWSConnectionClosed:  {HttpCode: 500, LocalCode: 26},
+	ErrWSConnectionUpgrade: {HttpCode: 500, LocalCode: 27},
+	ErrServerInternal:      {HttpCode: 500, LocalCode: 28},
+	ErrNotFound:            {HttpCode: 404, LocalCode: 29},
+	ErrMinioTurnedOff:      {HttpCode: 500, LocalCode: 30},
+	ErrNotAllowedExtension: {HttpCode: 400, LocalCode: 31},
 }
 
 var GetLocalErrorByCode = map[int64]error{
@@ -78,6 +86,7 @@ var GetLocalErrorByCode = map[int64]error{
 	10: ErrDBUniqueNickname,
 	11: ErrDBInternal,
 	12: ErrInvalidSlug,
+	13: ErrDiffUserId,
 	14: ErrPermissionDenied,
 	15: ErrContentUrlRequired,
 	16: ErrEmptyContentURL,
@@ -89,7 +98,11 @@ var GetLocalErrorByCode = map[int64]error{
 	22: ErrDBUniqueViolation,
 	23: ErrGRPCWentWrong,
 	24: ErrCantParseTime,
-	25: ErrNotFound,
-	26: ErrMinioTurnedOff,
-	27: ErrNotAllowedExtension,
+	25: ErrForeignKeyViolation,
+	26: ErrWSConnectionClosed,
+	27: ErrWSConnectionUpgrade,
+	28: ErrServerInternal,
+	29: ErrNotFound,
+	30: ErrMinioTurnedOff,
+	31: ErrNotAllowedExtension,
 }

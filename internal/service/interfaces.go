@@ -31,4 +31,8 @@ type IService interface {
 	SetLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) errs.ErrorInfo
 	ClearLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) errs.ErrorInfo
 	GetUsersLiked(ctx context.Context, pinId entity.PinID, limit int) (entity.UserList, errs.ErrorInfo)
+
+	CreateMessage(ctx context.Context, message entity.Message) errs.ErrorInfo
+	GetMessages(ctx context.Context, firstUserId, secondUserId entity.UserID) (entity.Messages, errs.ErrorInfo)
+	GetUserChats(ctx context.Context, userId entity.UserID) (entity.UserChats, errs.ErrorInfo)
 }
