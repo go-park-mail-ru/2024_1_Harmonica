@@ -12,16 +12,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func MakeUserResponse(user entity.User) entity.UserResponse {
-	userResponse := entity.UserResponse{
-		UserId:    user.UserID,
-		Email:     user.Email,
-		Nickname:  user.Nickname,
-		AvatarURL: user.AvatarURL,
-	}
-	return userResponse
-}
-
 // Registration
 //
 //	@Summary		Register user
@@ -145,36 +135,29 @@ func (h *APIHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	requestId := ctx.Value("request_id").(string)
 
-	userNicknameFromSlug := r.PathValue("nickname")
-	// А зачем?
-	//	if !ValidateNickname(userNicknameFromSlug) {
-	//		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{
-	//			LocalErr: errs.ErrInvalidSlug,
-	//		})
-	//		return
-	//	}
-	user, errInfo := h.service.GetUserByNickname(ctx, userNicknameFromSlug)
+	nicknameFromSlug := r.PathValue("nickname")
+	var (
+		userIdFromSession entity.UserID
+		ok                bool
+	)
+	userId := ctx.Value("user_id")
+	if userId != nil {
+		userIdFromSession, ok = userId.(entity.UserID)
+		if !ok {
+			userIdFromSession = 0
+		}
+	}
+
+	userProfile, errInfo := h.service.GetUserProfileByNickname(ctx, nicknameFromSlug, userIdFromSession)
 	if errInfo != emptyErrorInfo {
 		WriteErrorResponse(w, h.logger, requestId, errInfo)
 		return
 	}
-	if user == emptyUser {
+	if (userProfile.User == entity.UserResponse{}) {
 		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{
 			LocalErr: errs.ErrUserNotExist,
 		})
 		return
-	}
-
-	isOwner := false
-	userIdFromSession, ok := ctx.Value("user_id").(entity.UserID)
-	if ok {
-		isOwner = user.UserID == userIdFromSession
-	}
-
-	userProfile := entity.UserProfileResponse{
-		User:           MakeUserResponse(user),
-		FollowersCount: 0,
-		IsOwner:        isOwner,
 	}
 	WriteDefaultResponse(w, h.logger, userProfile)
 }
@@ -261,3 +244,15 @@ func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 	WriteUserResponse(w, h.logger, updatedUser)
 }
+
+//func MakeUserResponse(user entity.User) entity.UserResponse {
+//	userResponse := entity.UserResponse{
+//		UserId:    user.UserID,
+//		Email:     user.Email,
+//		Nickname:  user.Nickname,
+//		AvatarURL: user.AvatarURL,
+//		AvatarDX:  user.AvatarDX,
+//		AvatarDY:  user.AvatarDY,
+//	}
+//	return userResponse
+//}
