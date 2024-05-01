@@ -40,3 +40,14 @@ func (s *RepositoryService) GetUsersLiked(ctx context.Context, pinId entity.PinI
 	}
 	return res, emptyErrorInfo
 }
+
+func (s *RepositoryService) GetFavorites(ctx context.Context, limit, offset int) (entity.FeedPins, errs.ErrorInfo) {
+	res, err := s.repo.GetFavorites(ctx, ctx.Value("user_id").(entity.UserID), limit, offset)
+	if err != nil {
+		return entity.FeedPins{}, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrDBInternal,
+		}
+	}
+	return res, errs.ErrorInfo{}
+}

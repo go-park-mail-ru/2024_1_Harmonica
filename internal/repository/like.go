@@ -14,6 +14,11 @@ const (
 	QueryGetUsersLiked = `SELECT nickname, avatar_url FROM public.user WHERE(user_id IN (SELECT user_id FROM public.like WHERE pin_id=$1)) LIMIT $2`
 	QueryFindLike      = `SELECT EXISTS(SELECT pin_id, user_id FROM public.like WHERE pin_id=$1 AND user_id=$2)`
 	QueryIsLiked       = `SELECT EXISTS(SELECT 1 FROM public.like WHERE user_id=$2 AND pin_id=$1)`
+
+	QueryGetFavorites = `SELECT pin.author_id, avatar_url, nickname, pin.pin_id, content_url FROM public.like 
+	INNER JOIN public.pin ON public.pin.pin_id=public.like.pin_id
+    INNER JOIN public.user ON public.like.user_id=public.user.user_id
+	WHERE public.like.user_id = $1 ORDER BY public.like.created_at DESC LIMIT $2 OFFSET $3`
 )
 
 func (r *DBRepository) SetLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) error {
@@ -52,4 +57,20 @@ func (r *DBRepository) CheckIsLiked(ctx context.Context, pinId entity.PinID, use
 		return false, err
 	}
 	return res, nil
+}
+
+func (r *DBRepository) GetFavorites(ctx context.Context, userId entity.UserID, limit, offset int) (entity.FeedPins, error) {
+	start := time.Now()
+	rows, err := r.db.QueryContext(ctx, QueryGetFavorites, userId, limit, offset)
+	LogDBQuery(r, ctx, QueryGetFavorites, time.Since(start))
+	if err != nil {
+		return entity.FeedPins{}, err
+	}
+	var result entity.FeedPins
+	err = carta.Map(rows, &result.Pins)
+	if err != nil {
+		return entity.FeedPins{}, err
+	}
+	// Здесь добавить image bounds (не делаю тк это все равно переписывать)
+	return result, nil
 }
