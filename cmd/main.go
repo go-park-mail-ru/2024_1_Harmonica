@@ -32,7 +32,7 @@ func runServer(addr string) {
 	}
 	defer connector.Disconnect()
 
-	conn, err := grpc.Dial(config.GetEnv("AUTH_MICRO_PORT", ":8001"), grpc.WithInsecure())
+	conn, err := grpc.Dial(config.GetEnv("AUTH_MICROSERVICE_PORT", ":8002"), grpc.WithInsecure())
 	if err != nil {
 		logger.Info(err.Error())
 		return
@@ -171,7 +171,7 @@ func configureChatRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.Se
 
 func configureSearchRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.ServeMux) {
 	checkAuthRoutes := map[string]http.HandlerFunc{
-		"GET /api/v1/search": h.Search,
+		"GET /api/v1/search/{search_query}": h.Search,
 	}
 	for pattern, f := range checkAuthRoutes {
 		mux.HandleFunc(pattern, middleware.CheckAuth(logger, h.AuthService, f))

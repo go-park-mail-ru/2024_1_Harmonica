@@ -12,11 +12,11 @@ const (
 	QuerySearchForUser = `SELECT user_id, nickname, avatar_url FROM public."user" u WHERE LOWER(u.nickname) LIKE LOWER($1)
 	ORDER BY u.register_at DESC LIMIT $2`
 
-	QuerySearchForPin = `SELECT pin_id, title, content_url FROM public.pin p WHERE TO_TSVECTOR(p.title) @@ TO_TSQUERY($1) OR
-	TO_TSVECTOR(p.description) @@ TO_TSQUERY($1) ORDER BY p.created_at DESC LIMIT $2`
+	QuerySearchForPin = `SELECT pin_id, title, content_url FROM public.pin p WHERE TO_TSVECTOR(p.title) @@ PLAINTO_TSQUERY($1) OR
+	TO_TSVECTOR(p.description) @@ PLAINTO_TSQUERY($1) ORDER BY p.created_at DESC LIMIT $2`
 
 	QuerySearchForBoard = `SELECT board_id, title, cover_url FROM public.board b WHERE b.visibility_type='public'
-	AND (TO_TSVECTOR(b.title) @@ TO_TSQUERY($1) OR TO_TSVECTOR(b.description) @@ TO_TSQUERY($1))
+	AND (TO_TSVECTOR(b.title) @@ PLAINTO_TSQUERY($1) OR TO_TSVECTOR(b.description) @@ PLAINTO_TSQUERY($1))
 	ORDER BY b.created_at DESC LIMIT $2`
 )
 

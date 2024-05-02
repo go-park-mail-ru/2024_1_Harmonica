@@ -55,7 +55,7 @@ func main() {
 
 	go auth.CleanupSessions()
 
-	lis, err := net.Listen("tcp", config.GetEnv("AUTH_MICRO_PORT", ":8001"))
+	lis, err := net.Listen("tcp", config.GetEnv("AUTH_MICROSERVICE_PORT", ":8002"))
 	if err != nil {
 		log.Print(err)
 	}
