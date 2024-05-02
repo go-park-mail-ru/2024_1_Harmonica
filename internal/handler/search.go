@@ -30,4 +30,10 @@ func (h *APIHandler) Search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	res, errInfo := h.service.Search(ctx, req)
+	if errInfo != emptyErrorInfo {
+		WriteErrorResponse(w, h.logger, requestId, errInfo)
+		return
+	}
+	WriteDefaultResponse(w, h.logger, res)
 }

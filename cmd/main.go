@@ -51,6 +51,7 @@ func runServer(addr string) {
 	configurePinRoutes(logger, h, mux)
 	configureBoardRoutes(logger, h, mux)
 	configureChatRoutes(logger, h, mux)
+	configureSearchRoutes(logger, h, mux)
 
 	mux.Handle("GET /docs/swagger.json", http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))))
 	mux.Handle("GET /swagger/", v3.NewHandler("My API", "/docs/swagger.json", "/swagger"))
@@ -165,6 +166,15 @@ func configureChatRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.Se
 	}
 	for pattern, f := range authRoutes {
 		mux.HandleFunc(pattern, middleware.AuthRequired(logger, h.AuthService, f))
+	}
+}
+
+func configureSearchRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.ServeMux) {
+	checkAuthRoutes := map[string]http.HandlerFunc{
+		"GET /api/v1/search": h.Search,
+	}
+	for pattern, f := range checkAuthRoutes {
+		mux.HandleFunc(pattern, middleware.CheckAuth(logger, h.AuthService, f))
 	}
 }
 

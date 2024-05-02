@@ -1,15 +1,13 @@
 package entity
 
 type SearchRequest struct {
-	SearchUsers  bool   `json:"users"`
-	SearchPins   bool   `json:"pins"`
-	SearchBoards bool   `json:"boards"`
-	SearchQuery  string `json:"search_query"`
+	SearchQuery string `json:"search_query"`
 }
 
 type SearchResult struct {
-	ResultType string `json:"type"`
-	Object     any    `json:"object"`
+	Users  []SearchUser  `json:"users"`
+	Pins   []SearchPin   `json:"pins"`
+	Boards []SearchBoard `json:"boards"`
 }
 
 type SearchUser struct {
