@@ -12,6 +12,10 @@ const (
 	QueryGetPinsFeed = `SELECT user_id, avatar_url, nickname, pin_id, content_url FROM public.pin
     INNER JOIN public.user ON public.pin.author_id=public.user.user_id ORDER BY created_at DESC LIMIT $1 OFFSET $2`
 
+	QueryGetSubscriptionsFeedPins = `SELECT p.pin_id, p.content_url, u.user_id, u.nickname, u.avatar_url 
+	FROM public.pin p JOIN public.subscribe_on_person s ON p.author_id = s.followed_user_id 
+	JOIN public.user u ON p.author_id = u.user_id WHERE s.user_id = $1 ORDER BY p.created_at DESC LIMIT $2 OFFSET $3;`
+
 	QueryGetUserPins = `SELECT pin_id, content_url FROM public.pin INNER JOIN public.user ON 
 	public.pin.author_id=public.user.user_id WHERE public.pin.author_id=$1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`
 
@@ -33,6 +37,30 @@ func (r *DBRepository) GetFeedPins(ctx context.Context, limit, offset int) (enti
 	start := time.Now()
 	rows, err := r.db.QueryContext(ctx, QueryGetPinsFeed, limit, offset)
 	LogDBQuery(r, ctx, QueryGetPinsFeed, time.Since(start))
+	if err != nil {
+		return entity.FeedPins{}, err
+	}
+	err = carta.Map(rows, &result.Pins)
+	if err != nil {
+		return entity.FeedPins{}, err
+	}
+	for i, pin := range result.Pins {
+		dx, dy, err := r.GetImageBounds(ctx, pin.ContentUrl)
+		if err != nil {
+			return entity.FeedPins{}, err
+		}
+		pin.ContentDX = dx
+		pin.ContentDY = dy
+		result.Pins[i] = pin
+	}
+	return result, nil
+}
+
+func (r *DBRepository) GetSubscriptionsFeedPins(ctx context.Context, userId entity.UserID, limit, offset int) (entity.FeedPins, error) {
+	result := entity.FeedPins{}
+	start := time.Now()
+	rows, err := r.db.QueryContext(ctx, QueryGetSubscriptionsFeedPins, userId, limit, offset)
+	LogDBQuery(r, ctx, QueryGetSubscriptionsFeedPins, time.Since(start))
 	if err != nil {
 		return entity.FeedPins{}, err
 	}

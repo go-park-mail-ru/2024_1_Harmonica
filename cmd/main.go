@@ -51,6 +51,7 @@ func runServer(addr string) {
 	configurePinRoutes(logger, h, mux)
 	configureBoardRoutes(logger, h, mux)
 	configureChatRoutes(logger, h, mux)
+	configureSubscriptionRoutes(logger, h, mux)
 
 	mux.Handle("GET /docs/swagger.json", http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))))
 	mux.Handle("GET /swagger/", v3.NewHandler("My API", "/docs/swagger.json", "/swagger"))
@@ -120,9 +121,10 @@ func configurePinRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.Ser
 	}
 	checkAuthRoutes := map[string]http.HandlerFunc{
 		"GET /api/v1/pins/{pin_id}": h.GetPin,
+		"GET /api/v1/pins":          h.Feed,
 	}
 	publicRoutes := map[string]http.HandlerFunc{
-		"GET /api/v1/pins":                    h.Feed,
+		//"GET /api/v1/pins":                    h.Feed,
 		"GET /api/v1/pins/created/{nickname}": h.UserPins,
 		"GET /api/v1/likes/{pin_id}/users":    h.UsersLiked,
 	}
@@ -165,6 +167,23 @@ func configureChatRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.Se
 	}
 	for pattern, f := range authRoutes {
 		mux.HandleFunc(pattern, middleware.AuthRequired(logger, h.AuthService, f))
+	}
+}
+
+func configureSubscriptionRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.ServeMux) {
+	authRoutes := map[string]http.HandlerFunc{
+		"POST /api/v1/users/subscribe/{user_id}":   h.SubscribeToUser,
+		"DELETE /api/v1/users/subscribe/{user_id}": h.UnsubscribeFromUser,
+	}
+	publicRoutes := map[string]http.HandlerFunc{
+		"GET /api/v1/users/subscribers/{user_id}":   h.GetUserSubscribers,
+		"GET /api/v1/users/subscriptions/{user_id}": h.GetUserSubscriptions,
+	}
+	for pattern, f := range authRoutes {
+		mux.HandleFunc(pattern, middleware.AuthRequired(logger, h.AuthService, f))
+	}
+	for pattern, f := range publicRoutes {
+		mux.HandleFunc(pattern, f)
 	}
 }
 

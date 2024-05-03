@@ -65,7 +65,7 @@ func (h *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 			Password: user.Password,
 		})
 	if err != nil {
-		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{GeneralErr: err})
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{LocalErr: errs.ErrUnauthorized, GeneralErr: err})
 		return
 	}
 	if !res.Valid || res.LocalError != 0 {
