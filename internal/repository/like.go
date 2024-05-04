@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"harmonica/internal/entity"
+	"harmonica/internal/microservices/image/proto"
 	"time"
 
 	"github.com/jackskj/carta"
@@ -71,6 +72,14 @@ func (r *DBRepository) GetFavorites(ctx context.Context, userId entity.UserID, l
 	if err != nil {
 		return entity.FeedPins{}, err
 	}
-	// Здесь добавить image bounds (не делаю тк это все равно переписывать)
+	for i, pin := range result.Pins {
+		res, err := r.ImageService.GetImageBounds(ctx, &proto.GetImageBoundsRequest{Url: pin.ContentUrl})
+		if err != nil {
+			return entity.FeedPins{}, err
+		}
+		pin.ContentDX = res.Dx
+		pin.ContentDY = res.Dy
+		result.Pins[i] = pin
+	}
 	return result, nil
 }
