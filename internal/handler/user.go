@@ -199,9 +199,9 @@ func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	var user entity.User
 
-	image, imageHeader, err := r.FormFile("image")
+	_, _, err = r.FormFile("image")
 	if err == nil {
-		name, errUploading := h.service.UploadImage(ctx, image, imageHeader)
+		name, errUploading := h.UploadImage(r, "image")
 		if errUploading != nil {
 			WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{
 				GeneralErr: err,
@@ -209,7 +209,7 @@ func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 			})
 			return
 		}
-		user.AvatarURL = FormImgURL(name)
+		user.AvatarURL = h.FormImgURL(name)
 	}
 
 	userParams := r.FormValue("user")

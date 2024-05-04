@@ -5,6 +5,8 @@ import (
 	"harmonica/internal/handler"
 	"harmonica/internal/handler/middleware"
 	auth "harmonica/internal/microservices/auth/proto"
+	image "harmonica/internal/microservices/image/proto"
+
 	"harmonica/internal/repository"
 	"harmonica/internal/service"
 	"log"
@@ -24,27 +26,21 @@ func runServer(addr string) {
 	logger := configureZapLogger()
 	defer logger.Sync()
 
+	authCli, imageCli := makeMicroservicesClients()
+
 	conf := config.New()
-	connector, err := repository.NewConnector(conf)
+	connector, err := repository.NewConnector(conf, imageCli)
 	if err != nil {
 		logger.Info(err.Error())
 		return
 	}
 	defer connector.Disconnect()
 
-	conn, err := grpc.Dial(config.GetEnv("AUTH_MICRO_PORT", ":8001"), grpc.WithInsecure())
-	if err != nil {
-		logger.Info(err.Error())
-		return
-	}
-	defer conn.Close()
-
 	r := repository.NewRepository(connector, logger)
 	s := service.NewService(r)
-	c := auth.NewAuthorizationClient(conn)
-	hub := handler.NewHub() // ws-server
-	h := handler.NewAPIHandler(s, logger, hub, c)
 
+	hub := handler.NewHub() // ws-server
+	h := handler.NewAPIHandler(s, logger, hub, authCli, imageCli)
 	mux := http.NewServeMux()
 
 	configureUserRoutes(logger, h, mux)
@@ -63,14 +59,33 @@ func runServer(addr string) {
 	loggedMux := middleware.Logging(logger, mux)
 
 	server := http.Server{
-		Addr:    addr,
-		Handler: middleware.CSRF(middleware.CORS(loggedMux)),
+		Addr: addr,
 	}
+
 	if config.GetEnvAsBool("DEBUG", false) {
+		server.Handler = middleware.CORS(loggedMux)
 		server.ListenAndServe()
 		return
 	}
+	server.Handler = middleware.CSRF(middleware.CORS(loggedMux))
 	server.ListenAndServeTLS("/etc/letsencrypt/live/harmoniums.ru/fullchain.pem", "/etc/letsencrypt/live/harmoniums.ru/privkey.pem")
+}
+
+func makeMicroservicesClients() (auth.AuthorizationClient, image.ImageClient) {
+	authConn, err := grpc.Dial(config.GetEnv("AUTH_MICROSERVICE_PORT", ":8002"), grpc.WithInsecure())
+	if err != nil {
+		log.Print(err)
+		return nil, nil
+	}
+
+	imageConn, err := grpc.Dial(config.GetEnv("IMAGE_MICROSERVICE_PORT", ":8003"), grpc.WithInsecure())
+	if err != nil {
+		log.Print(err)
+		return nil, nil
+	}
+	authCli := auth.NewAuthorizationClient(authConn)
+	imageCli := image.NewImageClient(imageConn)
+	return authCli, imageCli
 }
 
 func configureZapLogger() *zap.Logger {

@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"harmonica/internal/entity"
+	"harmonica/internal/microservices/image/proto"
 	"time"
 
 	"github.com/jackskj/carta"
@@ -45,12 +46,19 @@ func (r *DBRepository) GetFeedPins(ctx context.Context, limit, offset int) (enti
 		return entity.FeedPins{}, err
 	}
 	for i, pin := range result.Pins {
-		dx, dy, err := r.GetImageBounds(ctx, pin.ContentUrl)
+		res, err := r.ImageService.GetImageBounds(ctx, &proto.GetImageBoundsRequest{Url: pin.ContentUrl})
 		if err != nil {
 			return entity.FeedPins{}, err
 		}
-		pin.ContentDX = dx
-		pin.ContentDY = dy
+		pin.ContentDX = res.Dx
+		pin.ContentDY = res.Dy
+
+		res, err = r.ImageService.GetImageBounds(ctx, &proto.GetImageBoundsRequest{Url: pin.PinAuthor.AvatarURL})
+		if err != nil {
+			return entity.FeedPins{}, err
+		}
+		pin.PinAuthor.AvatarDX = res.Dx
+		pin.PinAuthor.AvatarDY = res.Dy
 		result.Pins[i] = pin
 	}
 	return result, nil
@@ -93,10 +101,11 @@ func (r *DBRepository) GetUserPins(ctx context.Context, authorId entity.UserID, 
 		return entity.UserPins{}, err
 	}
 	for i, pin := range result.Pins {
-		dx, dy, err := r.GetImageBounds(ctx, pin.ContentUrl)
+		res, err := r.ImageService.GetImageBounds(ctx, &proto.GetImageBoundsRequest{Url: pin.ContentUrl})
 		if err != nil {
 			return entity.UserPins{}, err
 		}
+		dx, dy := res.Dx, res.Dy
 		pin.ContentDX = dx
 		pin.ContentDY = dy
 		result.Pins[i] = pin
@@ -112,13 +121,20 @@ func (r *DBRepository) GetPinById(ctx context.Context, pinId entity.PinID) (enti
 	if err != nil {
 		return entity.PinPageResponse{}, err
 	}
-	dx, dy, err := r.GetImageBounds(ctx, result.ContentUrl)
+
+	res, err := r.ImageService.GetImageBounds(ctx, &proto.GetImageBoundsRequest{Url: result.ContentUrl})
 	if err != nil {
 		return entity.PinPageResponse{}, err
 	}
-	result.ContentDX = dx
-	result.ContentDY = dy
+	result.ContentDX = res.Dx
+	result.ContentDY = res.Dy
 
+	res, err = r.ImageService.GetImageBounds(ctx, &proto.GetImageBoundsRequest{Url: result.PinAuthor.AvatarURL})
+	if err != nil {
+		return entity.PinPageResponse{}, err
+	}
+	result.PinAuthor.AvatarDX = res.Dx
+	result.PinAuthor.AvatarDY = res.Dy
 	return result, nil
 }
 

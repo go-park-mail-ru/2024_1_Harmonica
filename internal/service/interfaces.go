@@ -4,9 +4,6 @@ import (
 	"context"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
-	"mime/multipart"
-
-	"github.com/minio/minio-go/v7"
 )
 
 type IService interface {
@@ -36,9 +33,6 @@ type IService interface {
 	SetLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) errs.ErrorInfo
 	ClearLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) errs.ErrorInfo
 	GetUsersLiked(ctx context.Context, pinId entity.PinID, limit int) (entity.UserList, errs.ErrorInfo)
-
-	UploadImage(ctx context.Context, file multipart.File, fileHeader *multipart.FileHeader) (string, error)
-	GetImage(ctx context.Context, name string) (*minio.Object, error)
 
 	CreateMessage(ctx context.Context, message entity.Message) errs.ErrorInfo
 	GetMessages(ctx context.Context, firstUserId, secondUserId entity.UserID) (entity.Messages, errs.ErrorInfo)

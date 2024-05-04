@@ -223,7 +223,7 @@ func (h *APIHandler) CreatePin(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{GeneralErr: err, LocalErr: localErr})
 		return
 	}
-	pin.ContentUrl = FormImgURL(imageName)
+	pin.ContentUrl = h.FormImgURL(imageName)
 
 	res, errInfo := h.service.CreatePin(ctx, pin)
 	if errInfo != emptyErrorInfo {

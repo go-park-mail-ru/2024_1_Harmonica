@@ -2,8 +2,8 @@ package repository
 
 import (
 	"context"
-	"fmt"
 	"harmonica/internal/entity"
+	"harmonica/internal/microservices/image/proto"
 	"time"
 
 	"go.uber.org/zap"
@@ -40,15 +40,14 @@ func (r *DBRepository) GetUserByEmail(ctx context.Context, email string) (entity
 		if err != nil {
 			return entity.User{}, err
 		}
-		dx, dy, err := r.GetImageBounds(ctx, user.AvatarURL)
+
+		res, err := r.ImageService.GetImageBounds(ctx, &proto.GetImageBoundsRequest{Url: user.AvatarURL})
 		if err != nil {
-			fmt.Print("IM HER", err)
 			return entity.User{}, err
 		}
-		user.AvatarDX = dx
-		user.AvatarDY = dy
+		user.AvatarDX = res.Dx
+		user.AvatarDY = res.Dy
 	}
-	fmt.Print("IM HER")
 	return user, nil
 }
 
@@ -65,12 +64,12 @@ func (r *DBRepository) GetUserByNickname(ctx context.Context, nickname string) (
 		if err != nil {
 			return entity.User{}, err
 		}
-		dx, dy, err := r.GetImageBounds(ctx, user.AvatarURL)
+		res, err := r.ImageService.GetImageBounds(ctx, &proto.GetImageBoundsRequest{Url: user.AvatarURL})
 		if err != nil {
 			return entity.User{}, err
 		}
-		user.AvatarDX = dx
-		user.AvatarDY = dy
+		user.AvatarDX = res.Dx
+		user.AvatarDY = res.Dy
 	}
 	return user, nil
 }
@@ -88,12 +87,13 @@ func (r *DBRepository) GetUserById(ctx context.Context, id entity.UserID) (entit
 		if err != nil {
 			return entity.User{}, err
 		}
-		dx, dy, err := r.GetImageBounds(ctx, user.AvatarURL)
+
+		res, err := r.ImageService.GetImageBounds(ctx, &proto.GetImageBoundsRequest{Url: user.AvatarURL})
 		if err != nil {
 			return entity.User{}, err
 		}
-		user.AvatarDX = dx
-		user.AvatarDY = dy
+		user.AvatarDX = res.Dx
+		user.AvatarDY = res.Dy
 	}
 	return user, nil
 }
