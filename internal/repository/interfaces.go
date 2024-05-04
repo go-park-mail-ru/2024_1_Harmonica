@@ -36,6 +36,7 @@ type IRepository interface {
 	ClearLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) error
 	GetUsersLiked(ctx context.Context, pinId entity.PinID, limit int) (entity.UserList, error)
 	CheckIsLiked(ctx context.Context, pinId entity.PinID, userId entity.UserID) (bool, error)
+	GetFavorites(ctx context.Context, userId entity.UserID, limit, offset int) (entity.FeedPins, error)
 
 	CreateMessage(ctx context.Context, message entity.Message) error
 	GetMessages(ctx context.Context, firstUserId, secondUserId entity.UserID) (entity.Messages, error)

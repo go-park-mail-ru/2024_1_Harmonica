@@ -112,3 +112,50 @@ func (h *APIHandler) UsersLiked(w http.ResponseWriter, r *http.Request) {
 	}
 	WriteDefaultResponse(w, h.logger, res)
 }
+
+// Get last 4 pins for cover to favorites.
+//
+//	@Summary		Get last 4 pins for cover to favorites
+//	@Tags			Likes
+//	@Param			Cookie	header	string	true	"session-token"	default(session-token=)
+//	@Produce		json
+//	@Success		200	{object}	entity.FeedPins
+//	@Router			/favorites/cover [get]
+func (h *APIHandler) GetFavoritesCover(w http.ResponseWriter, r *http.Request) { // Просто верхние 4 из ленты (возможно переделать)
+	ctx := r.Context()
+	requestId := ctx.Value("request_id").(string)
+	limit, offset := 4, 0
+	feed, resError := h.service.GetFavorites(ctx, limit, offset)
+	if resError != emptyErrorInfo {
+		WriteErrorResponse(w, h.logger, requestId, resError)
+		return
+	}
+	WriteDefaultResponse(w, h.logger, feed)
+}
+
+// Get feed of favorite pins by page.
+//
+//	@Summary		Get feed of favorite pins by page
+//	@Tags			Likes
+//	@Param			Cookie	header	string	true	"session-token"	default(session-token=)
+//	@Produce		json
+//	@Success		200	{object}	entity.FeedPins
+//	@Router			/favorites [get]
+func (h *APIHandler) GetFavorites(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	requestId := ctx.Value("request_id").(string)
+	limit, offset, err := GetLimitAndOffset(r)
+	if err != nil {
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrInvalidSlug,
+		})
+		return
+	}
+	feed, resError := h.service.GetFavorites(ctx, limit, offset)
+	if resError != emptyErrorInfo {
+		WriteErrorResponse(w, h.logger, requestId, resError)
+		return
+	}
+	WriteDefaultResponse(w, h.logger, feed)
+}

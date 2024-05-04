@@ -141,6 +141,8 @@ func configurePinRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.Ser
 		"DELETE /api/v1/pins/{pin_id}":      h.DeletePin,
 		"POST /api/v1/pins/{pin_id}/like":   h.CreateLike,
 		"DELETE /api/v1/pins/{pin_id}/like": h.DeleteLike,
+		"GET /api/v1/favorites":             h.GetFavorites,
+		"GET /api/v1/favorites/cover":       h.GetFavoritesCover,
 	}
 	checkAuthRoutes := map[string]http.HandlerFunc{
 		"GET /api/v1/pins/{pin_id}": h.GetPin,
