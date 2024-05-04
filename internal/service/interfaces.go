@@ -42,4 +42,6 @@ type IService interface {
 	DeleteSubscriptionToUser(ctx context.Context, userId, unsubscribeUserId entity.UserID) errs.ErrorInfo
 	GetUserSubscribers(ctx context.Context, userId entity.UserID) (entity.UserSubscribers, errs.ErrorInfo)
 	GetUserSubscriptions(ctx context.Context, userId entity.UserID) (entity.UserSubscriptions, errs.ErrorInfo)
+
+	Search(ctx context.Context, query string) (entity.SearchResult, errs.ErrorInfo)
 }

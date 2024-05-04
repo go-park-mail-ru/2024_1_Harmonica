@@ -46,4 +46,8 @@ type IRepository interface {
 	GetSubscriptionsInfo(ctx context.Context, userToGetInfoId, userId entity.UserID) (entity.UserProfileResponse, error)
 	GetUserSubscribers(ctx context.Context, userId entity.UserID) (entity.UserSubscribers, error)
 	GetUserSubscriptions(ctx context.Context, userId entity.UserID) (entity.UserSubscriptions, error)
+
+	SearchForUsers(ctx context.Context, query string) ([]entity.SearchUser, error)
+	SearchForPins(ctx context.Context, query string) ([]entity.SearchPin, error)
+	SearchForBoards(ctx context.Context, query string) ([]entity.SearchBoard, error)
 }

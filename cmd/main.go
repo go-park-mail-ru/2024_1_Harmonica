@@ -36,6 +36,13 @@ func runServer(addr string) {
 	}
 	defer connector.Disconnect()
 
+	conn, err := grpc.Dial(config.GetEnv("AUTH_MICROSERVICE_PORT", ":8002"), grpc.WithInsecure())
+	if err != nil {
+		logger.Info(err.Error())
+		return
+	}
+	defer conn.Close()
+
 	r := repository.NewRepository(connector, logger)
 	s := service.NewService(r)
 
@@ -47,6 +54,7 @@ func runServer(addr string) {
 	configurePinRoutes(logger, h, mux)
 	configureBoardRoutes(logger, h, mux)
 	configureChatRoutes(logger, h, mux)
+	configureSearchRoutes(logger, h, mux)
 	configureSubscriptionRoutes(logger, h, mux)
 
 	mux.Handle("GET /docs/swagger.json", http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))))
@@ -182,6 +190,15 @@ func configureChatRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.Se
 	}
 	for pattern, f := range authRoutes {
 		mux.HandleFunc(pattern, middleware.AuthRequired(logger, h.AuthService, f))
+	}
+}
+
+func configureSearchRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.ServeMux) {
+	checkAuthRoutes := map[string]http.HandlerFunc{
+		"GET /api/v1/search/{search_query}": h.Search,
+	}
+	for pattern, f := range checkAuthRoutes {
+		mux.HandleFunc(pattern, middleware.CheckAuth(logger, h.AuthService, f))
 	}
 }
 
