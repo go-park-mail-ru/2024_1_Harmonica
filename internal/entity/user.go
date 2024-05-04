@@ -52,11 +52,21 @@ func (u *UserList) Sanitize() {
 }
 
 type UserProfileResponse struct {
-	User           UserResponse `json:"user"`
-	FollowersCount uint64       `json:"followers_count"`
-	IsOwner        bool         `json:"is_owner"`
+	User               UserResponse `db:"user" json:"user"`
+	SubscriptionsCount uint64       `db:"subscriptions_count" json:"subscriptions_count"`
+	SubscribersCount   uint64       `db:"subscribers_count" json:"subscribers_count"`
+	IsSubscribed       bool         `db:"is_subscribed" json:"is_subscribed"` // важно для авторизованного пользователя
+	IsOwner            bool         `db:"is_owner" json:"is_owner"`
 }
 
 func (u *UserProfileResponse) Sanitize() {
 	u.User.Sanitize()
+}
+
+type UserSubscribers struct {
+	Subscribers []UserResponse `json:"subscribers"`
+}
+
+type UserSubscriptions struct {
+	Subscriptions []UserResponse `json:"subscriptions"`
 }

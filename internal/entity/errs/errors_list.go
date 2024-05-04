@@ -31,6 +31,9 @@ var (
 	ErrWSConnectionClosed  = errors.New("ws connection was closed")
 	ErrWSConnectionUpgrade = errors.New("can't upgrade http connection to ws")
 	ErrServerInternal      = errors.New("internal server error")
+	ErrNotFound            = errors.New("not found")
+	ErrMinioTurnedOff      = errors.New("minio server doesn't response")
+	ErrNotAllowedExtension = errors.New("this file extension is not allowed")
 )
 
 var ErrorCodes = map[error]struct {
@@ -65,6 +68,9 @@ var ErrorCodes = map[error]struct {
 	ErrWSConnectionClosed:  {HttpCode: 500, LocalCode: 26},
 	ErrWSConnectionUpgrade: {HttpCode: 500, LocalCode: 27},
 	ErrServerInternal:      {HttpCode: 500, LocalCode: 28},
+	ErrNotFound:            {HttpCode: 404, LocalCode: 29},
+	ErrMinioTurnedOff:      {HttpCode: 500, LocalCode: 30},
+	ErrNotAllowedExtension: {HttpCode: 400, LocalCode: 31},
 }
 
 var GetLocalErrorByCode = map[int64]error{
@@ -96,4 +102,7 @@ var GetLocalErrorByCode = map[int64]error{
 	26: ErrWSConnectionClosed,
 	27: ErrWSConnectionUpgrade,
 	28: ErrServerInternal,
+	29: ErrNotFound,
+	30: ErrMinioTurnedOff,
+	31: ErrNotAllowedExtension,
 }

@@ -17,6 +17,17 @@ func (s *RepositoryService) GetFeedPins(ctx context.Context, limit, offset int) 
 	return pins, emptyErrorInfo
 }
 
+func (s *RepositoryService) GetSubscriptionsFeedPins(ctx context.Context, userId entity.UserID, limit, offset int) (entity.FeedPins, errs.ErrorInfo) {
+	pins, err := s.repo.GetSubscriptionsFeedPins(ctx, userId, limit, offset)
+	if err != nil {
+		return entity.FeedPins{}, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrDBInternal,
+		}
+	}
+	return pins, emptyErrorInfo
+}
+
 func (s *RepositoryService) GetUserPins(ctx context.Context, authorNickname string, limit, offset int) (entity.UserPins, errs.ErrorInfo) {
 	user, err := s.repo.GetUserByNickname(ctx, authorNickname)
 	if err != nil {

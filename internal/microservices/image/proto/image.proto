@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package auth;
+
+option go_package = "microservices/image/proto";
+
+message GetImageRequest { 
+  string name = 1;
+}
+
+message GetImageResponse {
+  bytes image = 1;
+  int64 localError = 2;
+}
+
+message UploadImageRequest {
+  bytes image = 1;
+  string filename = 2;
+}
+
+message UploadImageResponse { 
+  string name = 1;
+  int64 localError = 2;
+}
+
+message FormUrlRequest {
+  string name = 1;
+}
+
+message FormUrlResponse {
+  string url = 1;
+}
+
+message GetImageBoundsRequest {
+  string url = 1;
+}
+
+message GetImageBoundsResponse {
+  int64 dx = 1;
+  int64 dy = 2;
+  int64 localError = 3;
+}
+
+service Image {
+  rpc GetImage(GetImageRequest) returns(GetImageResponse) {}
+  rpc UploadImage(UploadImageRequest) returns(UploadImageResponse) {}
+  rpc FormUrl(FormUrlRequest) returns(FormUrlResponse) {}
+  rpc GetImageBounds(GetImageBoundsRequest) returns(GetImageBoundsResponse) {}
+}

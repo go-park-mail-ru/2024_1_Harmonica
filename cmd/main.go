@@ -5,6 +5,8 @@ import (
 	"harmonica/internal/handler"
 	"harmonica/internal/handler/middleware"
 	auth "harmonica/internal/microservices/auth/proto"
+	image "harmonica/internal/microservices/image/proto"
+
 	"harmonica/internal/repository"
 	"harmonica/internal/service"
 	"log"
@@ -24,8 +26,10 @@ func runServer(addr string) {
 	logger := configureZapLogger()
 	defer logger.Sync()
 
+	authCli, imageCli := makeMicroservicesClients()
+
 	conf := config.New()
-	connector, err := repository.NewConnector(conf)
+	connector, err := repository.NewConnector(conf, imageCli)
 	if err != nil {
 		logger.Info(err.Error())
 		return
@@ -41,10 +45,9 @@ func runServer(addr string) {
 
 	r := repository.NewRepository(connector, logger)
 	s := service.NewService(r)
-	c := auth.NewAuthorizationClient(conn)
-	hub := handler.NewHub() // ws-server
-	h := handler.NewAPIHandler(s, logger, hub, c)
 
+	hub := handler.NewHub() // ws-server
+	h := handler.NewAPIHandler(s, logger, hub, authCli, imageCli)
 	mux := http.NewServeMux()
 
 	configureUserRoutes(logger, h, mux)
@@ -52,6 +55,7 @@ func runServer(addr string) {
 	configureBoardRoutes(logger, h, mux)
 	configureChatRoutes(logger, h, mux)
 	configureSearchRoutes(logger, h, mux)
+	configureSubscriptionRoutes(logger, h, mux)
 
 	mux.Handle("GET /docs/swagger.json", http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))))
 	mux.Handle("GET /swagger/", v3.NewHandler("My API", "/docs/swagger.json", "/swagger"))
@@ -63,14 +67,33 @@ func runServer(addr string) {
 	loggedMux := middleware.Logging(logger, mux)
 
 	server := http.Server{
-		Addr:    addr,
-		Handler: middleware.CSRF(middleware.CORS(loggedMux)),
+		Addr: addr,
 	}
+
 	if config.GetEnvAsBool("DEBUG", false) {
+		server.Handler = middleware.CORS(loggedMux)
 		server.ListenAndServe()
 		return
 	}
+	server.Handler = middleware.CSRF(middleware.CORS(loggedMux))
 	server.ListenAndServeTLS("/etc/letsencrypt/live/harmoniums.ru/fullchain.pem", "/etc/letsencrypt/live/harmoniums.ru/privkey.pem")
+}
+
+func makeMicroservicesClients() (auth.AuthorizationClient, image.ImageClient) {
+	authConn, err := grpc.Dial(config.GetEnv("AUTH_MICROSERVICE_PORT", ":8002"), grpc.WithInsecure())
+	if err != nil {
+		log.Print(err)
+		return nil, nil
+	}
+
+	imageConn, err := grpc.Dial(config.GetEnv("IMAGE_MICROSERVICE_PORT", ":8003"), grpc.WithInsecure())
+	if err != nil {
+		log.Print(err)
+		return nil, nil
+	}
+	authCli := auth.NewAuthorizationClient(authConn)
+	imageCli := image.NewImageClient(imageConn)
+	return authCli, imageCli
 }
 
 func configureZapLogger() *zap.Logger {
@@ -121,9 +144,10 @@ func configurePinRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.Ser
 	}
 	checkAuthRoutes := map[string]http.HandlerFunc{
 		"GET /api/v1/pins/{pin_id}": h.GetPin,
+		"GET /api/v1/pins":          h.Feed,
 	}
 	publicRoutes := map[string]http.HandlerFunc{
-		"GET /api/v1/pins":                    h.Feed,
+		//"GET /api/v1/pins":                    h.Feed,
 		"GET /api/v1/pins/created/{nickname}": h.UserPins,
 		"GET /api/v1/likes/{pin_id}/users":    h.UsersLiked,
 	}
@@ -175,6 +199,23 @@ func configureSearchRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.
 	}
 	for pattern, f := range checkAuthRoutes {
 		mux.HandleFunc(pattern, middleware.CheckAuth(logger, h.AuthService, f))
+	}
+}
+
+func configureSubscriptionRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.ServeMux) {
+	authRoutes := map[string]http.HandlerFunc{
+		"POST /api/v1/users/subscribe/{user_id}":   h.SubscribeToUser,
+		"DELETE /api/v1/users/subscribe/{user_id}": h.UnsubscribeFromUser,
+	}
+	publicRoutes := map[string]http.HandlerFunc{
+		"GET /api/v1/users/subscribers/{user_id}":   h.GetUserSubscribers,
+		"GET /api/v1/users/subscriptions/{user_id}": h.GetUserSubscriptions,
+	}
+	for pattern, f := range authRoutes {
+		mux.HandleFunc(pattern, middleware.AuthRequired(logger, h.AuthService, f))
+	}
+	for pattern, f := range publicRoutes {
+		mux.HandleFunc(pattern, f)
 	}
 }
 

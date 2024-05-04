@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"harmonica/config"
 
+	image "harmonica/internal/microservices/image/proto"
+
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/minio/minio-go/v7"
@@ -12,21 +14,15 @@ import (
 
 type Connector struct {
 	db *sqlx.DB
-	s3 *minio.Client
+	s3 image.ImageClient
 }
 
-func NewConnector(conf *config.Config) (*Connector, error) {
+func NewConnector(conf *config.Config, imageClient image.ImageClient) (*Connector, error) {
 	db, err := NewDBConnector(conf.DB)
 	if err != nil {
 		return &Connector{}, err
 	}
-
-	s3, err := NewS3Connector(conf.Minio)
-	if err != nil {
-		return &Connector{}, err
-	}
-
-	return &Connector{db: db, s3: s3}, nil
+	return &Connector{db: db, s3: imageClient}, nil
 }
 
 func NewDBConnector(conf config.DBConf) (*sqlx.DB, error) {
