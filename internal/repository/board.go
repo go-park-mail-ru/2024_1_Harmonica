@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"harmonica/internal/entity"
+	"harmonica/internal/microservices/image/proto"
 	"strings"
 	"time"
 
@@ -69,12 +70,13 @@ func (r *DBRepository) CreateBoard(ctx context.Context, board entity.Board,
 	if err != nil {
 		return entity.Board{}, err
 	}
-	dx, dy, err := r.GetImageBounds(ctx, board.CoverURL)
+
+	res, err := r.ImageService.GetImageBounds(ctx, &proto.GetImageBoundsRequest{Url: createdBoard.CoverURL})
 	if err != nil {
 		return entity.Board{}, err
 	}
-	createdBoard.CoverDX = dx
-	createdBoard.CoverDY = dy
+	createdBoard.CoverDX = res.Dx
+	createdBoard.CoverDY = res.Dy
 
 	start = time.Now()
 	_, err = tx.ExecContext(ctx, QueryInsertBoardAuthor, createdBoard.BoardID, userId)
@@ -97,12 +99,14 @@ func (r *DBRepository) GetBoardById(ctx context.Context, boardId entity.BoardID)
 	if err != nil {
 		return entity.Board{}, err
 	}
-	dx, dy, err := r.GetImageBounds(ctx, board.CoverURL)
+
+	res, err := r.ImageService.GetImageBounds(ctx, &proto.GetImageBoundsRequest{Url: board.CoverURL})
 	if err != nil {
 		return entity.Board{}, err
 	}
-	board.CoverDX = dx
-	board.CoverDY = dy
+	board.CoverDX = res.Dx
+	board.CoverDY = res.Dy
+
 	return board, nil
 }
 
@@ -115,12 +119,12 @@ func (r *DBRepository) GetBoardAuthors(ctx context.Context, boardId entity.Board
 		return []entity.BoardAuthor{}, err
 	}
 	for i, author := range authors {
-		dx, dy, err := r.GetImageBounds(ctx, author.AvatarURL)
+		res, err := r.ImageService.GetImageBounds(ctx, &proto.GetImageBoundsRequest{Url: author.AvatarURL})
 		if err != nil {
 			return []entity.BoardAuthor{}, err
 		}
-		author.AvatarDX = dx
-		author.AvatarDY = dy
+		author.AvatarDX = res.Dx
+		author.AvatarDY = res.Dy
 		authors[i] = author
 	}
 	return authors, nil
@@ -135,12 +139,12 @@ func (r *DBRepository) GetBoardPins(ctx context.Context, boardId entity.BoardID,
 		return []entity.BoardPinResponse{}, err
 	}
 	for i, pin := range pins {
-		dx, dy, err := r.GetImageBounds(ctx, pin.ContentUrl)
+		res, err := r.ImageService.GetImageBounds(ctx, &proto.GetImageBoundsRequest{Url: pin.ContentUrl})
 		if err != nil {
 			return []entity.BoardPinResponse{}, err
 		}
-		pin.ContentDX = dx
-		pin.ContentDY = dy
+		pin.ContentDX = res.Dx
+		pin.ContentDY = res.Dy
 		pins[i] = pin
 	}
 	return pins, nil
@@ -155,12 +159,13 @@ func (r *DBRepository) UpdateBoard(ctx context.Context, board entity.Board) (ent
 		return entity.Board{}, err
 	}
 	LogDBQuery(r, ctx, QueryUpdateBoard, time.Since(start))
-	dx, dy, err := r.GetImageBounds(ctx, board.CoverURL)
+
+	res, err := r.ImageService.GetImageBounds(ctx, &proto.GetImageBoundsRequest{Url: board.CoverURL})
 	if err != nil {
 		return entity.Board{}, err
 	}
-	updatedBoard.CoverDX = dx
-	updatedBoard.CoverDY = dy
+	board.CoverDX = res.Dx
+	board.CoverDY = res.Dy
 	return updatedBoard, err
 }
 

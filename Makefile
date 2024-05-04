@@ -23,3 +23,13 @@ mocks: ./internal/service/interfaces.go ./internal/repository/interfaces.go
 proto_auth:
 	export PATH="$(PATH):$(go env GOPATH)/bin" && \
 	protoc --go_out=. --go-grpc_out=. --go-grpc_opt=paths=source_relative --go_opt=paths=source_relative ./internal/microservices/auth/proto/auth.proto
+
+proto_image:
+	export PATH="$(PATH):$(go env GOPATH)/bin" && \
+	protoc --go_out=. --go-grpc_out=. --go-grpc_opt=paths=source_relative --go_opt=paths=source_relative ./internal/microservices/image/proto/image.proto
+
+run_auth:
+	go run cmd/auth/main.go
+
+run_image:
+	go run cmd/image/main.go

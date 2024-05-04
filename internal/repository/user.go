@@ -2,21 +2,27 @@ package repository
 
 import (
 	"context"
-	"fmt"
 	"harmonica/internal/entity"
+	"harmonica/internal/microservices/image/proto"
 	"time"
 
 	"go.uber.org/zap"
 )
 
 const (
-	QueryGetUserByEmail     = `SELECT user_id, email, nickname, "password", avatar_url FROM public.user WHERE email=$1`
-	QueryGetUserByNickname  = `SELECT user_id, email, nickname, "password", avatar_url FROM public.user WHERE nickname=$1`
-	QueryGetUserById        = `SELECT user_id, email, nickname, "password", avatar_url FROM public.user WHERE user_id=$1`
-	QueryRegisterUser       = `INSERT INTO public.user ("email", "nickname", "password") VALUES($1, $2, $3)`
+	QueryGetUserByEmail = `SELECT user_id, email, nickname, "password", avatar_url FROM public.user WHERE email=$1`
+
+	QueryGetUserByNickname = `SELECT user_id, email, nickname, "password", avatar_url FROM public.user WHERE nickname=$1`
+
+	QueryGetUserById = `SELECT user_id, email, nickname, "password", avatar_url FROM public.user WHERE user_id=$1`
+
+	QueryRegisterUser = `INSERT INTO public.user ("email", "nickname", "password") VALUES($1, $2, $3)`
+
 	QueryUpdateUserNickname = `UPDATE public.user SET nickname=$2 WHERE user_id=$1`
+
 	QueryUpdateUserPassword = `UPDATE public.user SET "password"=$2 WHERE user_id=$1`
-	QueryUpdateUserAvatar   = `UPDATE public.user SET "avatar_url"=$2 WHERE user_id=$1`
+
+	QueryUpdateUserAvatar = `UPDATE public.user SET "avatar_url"=$2 WHERE user_id=$1`
 )
 
 func (r *DBRepository) GetUserByEmail(ctx context.Context, email string) (entity.User, error) {
@@ -34,15 +40,14 @@ func (r *DBRepository) GetUserByEmail(ctx context.Context, email string) (entity
 		if err != nil {
 			return entity.User{}, err
 		}
-		dx, dy, err := r.GetImageBounds(ctx, user.AvatarURL)
+
+		res, err := r.ImageService.GetImageBounds(ctx, &proto.GetImageBoundsRequest{Url: user.AvatarURL})
 		if err != nil {
-			fmt.Print("IM HER", err)
 			return entity.User{}, err
 		}
-		user.AvatarDX = dx
-		user.AvatarDY = dy
+		user.AvatarDX = res.Dx
+		user.AvatarDY = res.Dy
 	}
-	fmt.Print("IM HER")
 	return user, nil
 }
 
@@ -59,12 +64,12 @@ func (r *DBRepository) GetUserByNickname(ctx context.Context, nickname string) (
 		if err != nil {
 			return entity.User{}, err
 		}
-		dx, dy, err := r.GetImageBounds(ctx, user.AvatarURL)
+		res, err := r.ImageService.GetImageBounds(ctx, &proto.GetImageBoundsRequest{Url: user.AvatarURL})
 		if err != nil {
 			return entity.User{}, err
 		}
-		user.AvatarDX = dx
-		user.AvatarDY = dy
+		user.AvatarDX = res.Dx
+		user.AvatarDY = res.Dy
 	}
 	return user, nil
 }
@@ -82,12 +87,13 @@ func (r *DBRepository) GetUserById(ctx context.Context, id entity.UserID) (entit
 		if err != nil {
 			return entity.User{}, err
 		}
-		dx, dy, err := r.GetImageBounds(ctx, user.AvatarURL)
+
+		res, err := r.ImageService.GetImageBounds(ctx, &proto.GetImageBoundsRequest{Url: user.AvatarURL})
 		if err != nil {
 			return entity.User{}, err
 		}
-		user.AvatarDX = dx
-		user.AvatarDY = dy
+		user.AvatarDX = res.Dx
+		user.AvatarDY = res.Dy
 	}
 	return user, nil
 }

@@ -73,7 +73,33 @@ func (h *APIHandler) Feed(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	pins, errInfo := h.service.GetFeedPins(ctx, limit, offset)
+
+	feedType := r.URL.Query().Get("type")
+	var (
+		pins    entity.FeedPins
+		errInfo errs.ErrorInfo
+		userId  entity.UserID
+		ok      bool
+	)
+	switch feedType {
+	case "subscriptions":
+		userIdFromSession := ctx.Value("user_id")
+		if userIdFromSession != nil {
+			userId, ok = userIdFromSession.(entity.UserID)
+			if !ok {
+				userId = 0
+			}
+		}
+		if userId != 0 {
+			pins, errInfo = h.service.GetSubscriptionsFeedPins(ctx, userId, limit, offset)
+			break
+		}
+		//pins, errInfo = h.service.GetFeedPins(ctx, limit, offset)
+		fallthrough
+	default:
+		pins, errInfo = h.service.GetFeedPins(ctx, limit, offset)
+	}
+
 	if errInfo != emptyErrorInfo {
 		WriteErrorResponse(w, h.logger, requestId, errInfo)
 		return
@@ -197,7 +223,7 @@ func (h *APIHandler) CreatePin(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{GeneralErr: err, LocalErr: localErr})
 		return
 	}
-	pin.ContentUrl = FormImgURL(imageName)
+	pin.ContentUrl = h.FormImgURL(imageName)
 
 	res, errInfo := h.service.CreatePin(ctx, pin)
 	if errInfo != emptyErrorInfo {

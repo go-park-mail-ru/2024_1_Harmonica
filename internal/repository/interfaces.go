@@ -3,9 +3,6 @@ package repository
 import (
 	"context"
 	"harmonica/internal/entity"
-	"mime/multipart"
-
-	"github.com/minio/minio-go/v7"
 )
 
 type IRepository interface {
@@ -16,6 +13,7 @@ type IRepository interface {
 	UpdateUser(ctx context.Context, user entity.User) error
 
 	GetFeedPins(ctx context.Context, limit, offset int) (entity.FeedPins, error)
+	GetSubscriptionsFeedPins(ctx context.Context, userId entity.UserID, limit, offset int) (entity.FeedPins, error)
 	GetUserPins(ctx context.Context, authorId entity.UserID, limit, offset int) (entity.UserPins, error)
 	GetPinById(ctx context.Context, PinId entity.PinID) (entity.PinPageResponse, error)
 	CreatePin(ctx context.Context, pin entity.Pin) (entity.PinID, error)
@@ -40,11 +38,17 @@ type IRepository interface {
 	CheckIsLiked(ctx context.Context, pinId entity.PinID, userId entity.UserID) (bool, error)
 	GetFavorites(ctx context.Context, userId entity.UserID, limit, offset int) (entity.FeedPins, error)
 
-	UploadImage(ctx context.Context, file multipart.File, fileHeader *multipart.FileHeader) (string, error)
-	GetImageBounds(ctx context.Context, url string) (int64, int64, error)
-	GetImage(ctx context.Context, name string) (*minio.Object, error)
-
 	CreateMessage(ctx context.Context, message entity.Message) error
 	GetMessages(ctx context.Context, firstUserId, secondUserId entity.UserID) (entity.Messages, error)
 	GetUserChats(ctx context.Context, userId entity.UserID) (entity.UserChats, error)
+
+	AddSubscriptionToUser(ctx context.Context, userId, subscribeUserId entity.UserID) error
+	DeleteSubscriptionToUser(ctx context.Context, userId, unsubscribeUserId entity.UserID) error
+	GetSubscriptionsInfo(ctx context.Context, userToGetInfoId, userId entity.UserID) (entity.UserProfileResponse, error)
+	GetUserSubscribers(ctx context.Context, userId entity.UserID) (entity.UserSubscribers, error)
+	GetUserSubscriptions(ctx context.Context, userId entity.UserID) (entity.UserSubscriptions, error)
+
+	SearchForUsers(ctx context.Context, query string) ([]entity.SearchUser, error)
+	SearchForPins(ctx context.Context, query string) ([]entity.SearchPin, error)
+	SearchForBoards(ctx context.Context, query string) ([]entity.SearchBoard, error)
 }
