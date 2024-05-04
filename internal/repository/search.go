@@ -9,7 +9,10 @@ import (
 )
 
 const (
-	QuerySearchForUser = `SELECT user_id, nickname, avatar_url FROM public."user" u WHERE LOWER(u.nickname) LIKE LOWER($1)
+	QuerySearchForUser = `SELECT 
+	(SELECT COUNT(*) FROM public.subscribe_on_person WHERE followed_user_id = u.user_id) AS subs,
+	user_id, nickname, avatar_url FROM public."user" u     
+	WHERE LOWER(u.nickname) LIKE LOWER($1)
 	ORDER BY u.register_at DESC LIMIT $2`
 
 	QuerySearchForPin = `SELECT pin_id, title, content_url FROM public.pin p WHERE TO_TSVECTOR(p.title) @@ PLAINTO_TSQUERY($1) OR

@@ -14,6 +14,7 @@ type SearchUser struct {
 	UserId    UserID `db:"user_id" json:"user_id"`
 	Nickname  string `db:"nickname" json:"nickname"`
 	AvatarURL string `db:"avatar_url" json:"avatar_url"`
+	SubsCount int    `db:"subs" json:"subscribers_count"`
 }
 
 type SearchPin struct {
