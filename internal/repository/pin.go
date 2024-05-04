@@ -77,12 +77,12 @@ func (r *DBRepository) GetSubscriptionsFeedPins(ctx context.Context, userId enti
 		return entity.FeedPins{}, err
 	}
 	for i, pin := range result.Pins {
-		dx, dy, err := r.GetImageBounds(ctx, pin.ContentUrl)
+		res, err := r.ImageService.GetImageBounds(ctx, &proto.GetImageBoundsRequest{Url: pin.ContentUrl})
 		if err != nil {
 			return entity.FeedPins{}, err
 		}
-		pin.ContentDX = dx
-		pin.ContentDY = dy
+		pin.ContentDX = res.Dx
+		pin.ContentDY = res.Dy
 		result.Pins[i] = pin
 	}
 	return result, nil
