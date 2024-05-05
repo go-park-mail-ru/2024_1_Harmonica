@@ -36,13 +36,6 @@ func runServer(addr string) {
 	}
 	defer connector.Disconnect()
 
-	conn, err := grpc.Dial(config.GetEnv("AUTH_MICROSERVICE_PORT", ":8002"), grpc.WithInsecure())
-	if err != nil {
-		logger.Info(err.Error())
-		return
-	}
-	defer conn.Close()
-
 	r := repository.NewRepository(connector, logger)
 	s := service.NewService(r)
 

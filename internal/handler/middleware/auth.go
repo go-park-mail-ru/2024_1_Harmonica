@@ -25,6 +25,9 @@ func CheckSession(r *http.Request, a auth.AuthorizationClient) (*http.Request, e
 	if err != nil {
 		return nil, err
 	}
+	if !res.Valid {
+		return nil, errs.GetLocalErrorByCode[res.LocalError]
+	}
 
 	ctx := r.Context()
 	ctx = context.WithValue(ctx, UserIdKey, entity.UserID(res.UserId))
