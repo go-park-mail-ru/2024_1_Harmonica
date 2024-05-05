@@ -28,8 +28,15 @@ proto_image:
 	export PATH="$(PATH):$(go env GOPATH)/bin" && \
 	protoc --go_out=. --go-grpc_out=. --go-grpc_opt=paths=source_relative --go_opt=paths=source_relative ./internal/microservices/image/proto/image.proto
 
+proto_like:
+	export PATH="$(PATH):$(go env GOPATH)/bin" && \
+	protoc --go_out=. --go-grpc_out=. --go-grpc_opt=paths=source_relative --go_opt=paths=source_relative ./internal/microservices/like/proto/like.proto
+
 run_auth:
 	go run cmd/auth/main.go
 
 run_image:
 	go run cmd/image/main.go
+
+run_likes:
+	go run cmd/like/main.go

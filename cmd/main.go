@@ -6,6 +6,7 @@ import (
 	"harmonica/internal/handler/middleware"
 	auth "harmonica/internal/microservices/auth/proto"
 	image "harmonica/internal/microservices/image/proto"
+	like "harmonica/internal/microservices/like/proto"
 
 	"harmonica/internal/repository"
 	"harmonica/internal/service"
@@ -26,7 +27,7 @@ func runServer(addr string) {
 	logger := configureZapLogger()
 	defer logger.Sync()
 
-	authCli, imageCli := makeMicroservicesClients()
+	authCli, imageCli, likeCli := makeMicroservicesClients()
 
 	conf := config.New()
 	connector, err := repository.NewConnector(conf, imageCli)
@@ -40,7 +41,7 @@ func runServer(addr string) {
 	s := service.NewService(r)
 
 	hub := handler.NewHub() // ws-server
-	h := handler.NewAPIHandler(s, logger, hub, authCli, imageCli)
+	h := handler.NewAPIHandler(s, logger, hub, authCli, imageCli, likeCli)
 	mux := http.NewServeMux()
 
 	configureUserRoutes(logger, h, mux)
@@ -72,21 +73,28 @@ func runServer(addr string) {
 	server.ListenAndServeTLS("/etc/letsencrypt/live/harmoniums.ru/fullchain.pem", "/etc/letsencrypt/live/harmoniums.ru/privkey.pem")
 }
 
-func makeMicroservicesClients() (auth.AuthorizationClient, image.ImageClient) {
+func makeMicroservicesClients() (auth.AuthorizationClient, image.ImageClient, like.LikeClient) {
 	authConn, err := grpc.Dial(config.GetEnv("AUTH_MICROSERVICE_PORT", ":8002"), grpc.WithInsecure())
 	if err != nil {
 		log.Print(err)
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	imageConn, err := grpc.Dial(config.GetEnv("IMAGE_MICROSERVICE_PORT", ":8003"), grpc.WithInsecure())
 	if err != nil {
 		log.Print(err)
-		return nil, nil
+		return nil, nil, nil
+	}
+
+	likeConn, err := grpc.Dial(config.GetEnv("LIKE_MICROSERVICE_PORT", ":8004"), grpc.WithInsecure())
+	if err != nil {
+		log.Print(err)
+		return nil, nil, nil
 	}
 	authCli := auth.NewAuthorizationClient(authConn)
 	imageCli := image.NewImageClient(imageConn)
-	return authCli, imageCli
+	likeCli := like.NewLikeClient(likeConn)
+	return authCli, imageCli, likeCli
 }
 
 func configureZapLogger() *zap.Logger {
