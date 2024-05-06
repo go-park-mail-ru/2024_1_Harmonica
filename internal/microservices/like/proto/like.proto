@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package like;
+
+option go_package = "microservices/like/proto";
+
+message MakeLikeRequest {
+    int64 pinId = 1;
+    int64 userId = 2;
+}
+
+message MakeLikeResponse {
+    bool valid = 1;
+    int64 localError = 2;
+}
+
+message GetUsersLikedRequest {
+    int64 pinId = 1;
+    int64 limit = 2;
+}
+
+message UserResponse {
+    int64 userId = 1;
+    string email = 2;
+    string nickname = 3;
+    string avatarUrl = 4;
+}
+
+message GetUsersLikedResponse {
+    repeated UserResponse users = 1;
+    bool valid = 2;
+    int64 localError = 3;
+}
+
+message CheckIsLikedRequest {
+    int64 pinId = 1;
+    int64 userId = 2;
+}
+
+message CheckIsLikedResponse {
+    bool liked = 1;
+    bool valid = 2;
+    int64 localError = 3;
+}
+
+message GetFavoritesRequest {
+    int64 userId = 1;
+    int64 limit = 2;
+    int64 offset = 3;
+}
+
+message PinAuthor {
+    int64 userId = 1;
+    string nickname = 2;
+    string avatarUrl = 3;
+}
+
+message FeedPin {
+    int64 pinId = 1;
+    string contentUrl = 2;
+    int64 contentDX = 3;
+    int64 contentDY = 4;
+    PinAuthor author = 5;
+}
+
+message GetFavoritesResponse {
+    repeated FeedPin pins = 1;
+    bool valid = 2;
+    int64 localError = 3;
+}
+
+service Like {
+  rpc SetLike(MakeLikeRequest) returns(MakeLikeResponse) {}
+  rpc ClearLike(MakeLikeRequest) returns(MakeLikeResponse) {}
+  rpc GetUsersLiked(GetUsersLikedRequest) returns(GetUsersLikedResponse) {}
+  rpc CheckIsLiked(CheckIsLikedRequest) returns(CheckIsLikedResponse) {}
+  rpc GetFavorites(GetFavoritesRequest) returns(GetFavoritesResponse) {}
+}

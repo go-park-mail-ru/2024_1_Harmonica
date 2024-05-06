@@ -4,7 +4,10 @@ import (
 	"context"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
+	"harmonica/internal/microservices/like/proto"
 	"net/http"
+
+	"google.golang.org/grpc/metadata"
 )
 
 const USERS_LIKED_LIMIT = 20
@@ -43,9 +46,14 @@ func (h *APIHandler) CreateLike(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, h.logger, requestId, errInfo)
 		return
 	}
-	errInfo = h.service.SetLike(ctx, pinId, userId)
-	if errInfo != emptyErrorInfo {
-		WriteErrorResponse(w, h.logger, requestId, errInfo)
+	res, err := h.LikeService.SetLike(metadata.NewOutgoingContext(r.Context(),
+		metadata.Pairs("request_id", requestId)), &proto.MakeLikeRequest{PinId: int64(pinId), UserId: int64(userId)})
+	if err != nil {
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{LocalErr: errs.ErrGRPCWentWrong})
+		return
+	}
+	if !res.Valid {
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{LocalErr: errs.GetLocalErrorByCode[res.LocalError]})
 		return
 	}
 	WriteDefaultResponse(w, h.logger, nil)
@@ -66,15 +74,20 @@ func (h *APIHandler) CreateLike(w http.ResponseWriter, r *http.Request) {
 func (h *APIHandler) DeleteLike(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	requestId := ctx.Value("request_id").(string)
+	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("request_id", requestId))
 
 	pinId, userId, errInfo := GetPinAndUserId(r, ctx)
 	if errInfo != emptyErrorInfo {
 		WriteErrorResponse(w, h.logger, requestId, errInfo)
 		return
 	}
-	errInfo = h.service.ClearLike(ctx, pinId, userId)
-	if errInfo != emptyErrorInfo {
-		WriteErrorResponse(w, h.logger, requestId, errInfo)
+	res, err := h.LikeService.ClearLike(ctx, &proto.MakeLikeRequest{PinId: int64(pinId), UserId: int64(userId)})
+	if err != nil {
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{LocalErr: errs.ErrGRPCWentWrong})
+		return
+	}
+	if !res.Valid {
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{LocalErr: errs.GetLocalErrorByCode[res.LocalError]})
 		return
 	}
 	WriteDefaultResponse(w, h.logger, nil)
@@ -105,32 +118,31 @@ func (h *APIHandler) UsersLiked(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pinId := entity.PinID(id)
-	res, errInfo := h.service.GetUsersLiked(ctx, pinId, USERS_LIKED_LIMIT)
-	if errInfo != emptyErrorInfo {
-		WriteErrorResponse(w, h.logger, requestId, errInfo)
+	res, err := h.LikeService.GetUsersLiked(metadata.NewOutgoingContext(r.Context(),
+		metadata.Pairs("request_id", requestId)), &proto.GetUsersLikedRequest{PinId: int64(pinId), Limit: USERS_LIKED_LIMIT})
+	if err != nil {
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{LocalErr: errs.ErrGRPCWentWrong})
 		return
 	}
-	WriteDefaultResponse(w, h.logger, res)
+	if !res.Valid {
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{LocalErr: errs.GetLocalErrorByCode[res.LocalError]})
+		return
+	}
+	ans := FromGRPCResponseToUsersList(res)
+	WriteDefaultResponse(w, h.logger, ans)
 }
 
-// Get last 4 pins for cover to favorites.
-//
-//	@Summary		Get last 4 pins for cover to favorites
-//	@Tags			Likes
-//	@Param			Cookie	header	string	true	"session-token"	default(session-token=)
-//	@Produce		json
-//	@Success		200	{object}	entity.FeedPins
-//	@Router			/favorites/cover [get]
-func (h *APIHandler) GetFavoritesCover(w http.ResponseWriter, r *http.Request) { // Просто верхние 4 из ленты (возможно переделать)
-	ctx := r.Context()
-	requestId := ctx.Value("request_id").(string)
-	limit, offset := 4, 0
-	feed, resError := h.service.GetFavorites(ctx, limit, offset)
-	if resError != emptyErrorInfo {
-		WriteErrorResponse(w, h.logger, requestId, resError)
-		return
+func FromGRPCResponseToUsersList(protoRes *proto.GetUsersLikedResponse) entity.UserList {
+	res := entity.UserList{}
+	for _, user := range protoRes.Users {
+		res.Users = append(res.Users, entity.UserResponse{
+			UserId:    entity.UserID(user.UserId),
+			Email:     user.Email,
+			Nickname:  user.Nickname,
+			AvatarURL: user.AvatarUrl,
+		})
 	}
-	WriteDefaultResponse(w, h.logger, feed)
+	return res
 }
 
 // Get feed of favorite pins by page.
@@ -144,6 +156,7 @@ func (h *APIHandler) GetFavoritesCover(w http.ResponseWriter, r *http.Request) {
 func (h *APIHandler) GetFavorites(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	requestId := ctx.Value("request_id").(string)
+	userId := ctx.Value("user_id").(entity.UserID)
 	limit, offset, err := GetLimitAndOffset(r)
 	if err != nil {
 		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{
@@ -152,10 +165,36 @@ func (h *APIHandler) GetFavorites(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	feed, resError := h.service.GetFavorites(ctx, limit, offset)
-	if resError != emptyErrorInfo {
-		WriteErrorResponse(w, h.logger, requestId, resError)
+	res, err := h.LikeService.GetFavorites(metadata.NewOutgoingContext(r.Context(),
+		metadata.Pairs("request_id", requestId)),
+		&proto.GetFavoritesRequest{UserId: int64(userId), Limit: int64(limit), Offset: int64(offset)})
+
+	if err != nil {
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{LocalErr: errs.ErrGRPCWentWrong})
 		return
 	}
+	if !res.Valid {
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{LocalErr: errs.GetLocalErrorByCode[res.LocalError]})
+		return
+	}
+	feed := FromGRPCResponseToFavoritesFeed(res)
 	WriteDefaultResponse(w, h.logger, feed)
+}
+
+func FromGRPCResponseToFavoritesFeed(protoRes *proto.GetFavoritesResponse) entity.FeedPins {
+	res := entity.FeedPins{}
+	for _, pin := range protoRes.Pins {
+		res.Pins = append(res.Pins, entity.FeedPinResponse{
+			PinId:      entity.PinID(pin.PinId),
+			ContentUrl: pin.ContentUrl,
+			ContentDX:  pin.ContentDX,
+			ContentDY:  pin.ContentDY,
+			PinAuthor: entity.PinAuthor{
+				UserId:    entity.UserID(pin.Author.UserId),
+				Nickname:  pin.Author.Nickname,
+				AvatarURL: pin.Author.AvatarUrl,
+			},
+		})
+	}
+	return res
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
+	like "harmonica/internal/microservices/like/proto"
 )
 
 func (s *RepositoryService) GetFeedPins(ctx context.Context, limit, offset int) (entity.FeedPins, errs.ErrorInfo) {
@@ -54,14 +55,18 @@ func (s *RepositoryService) GetPinById(ctx context.Context, pinId entity.PinID, 
 			LocalErr:   errs.ErrElementNotExist,
 		}
 	}
-	isLiked, err := s.repo.CheckIsLiked(ctx, pinId, userId)
+	res, err := s.LikeService.CheckIsLiked(ctx, &like.CheckIsLikedRequest{PinId: int64(pinId), UserId: int64(userId)})
 	if err != nil {
 		return entity.PinPageResponse{}, errs.ErrorInfo{
-			GeneralErr: err,
-			LocalErr:   errs.ErrDBInternal,
+			LocalErr: errs.ErrGRPCWentWrong,
 		}
 	}
-	pin.IsLiked = isLiked
+	if !res.Valid {
+		return entity.PinPageResponse{}, errs.ErrorInfo{
+			LocalErr: errs.GetLocalErrorByCode[res.LocalError],
+		}
+	}
+	pin.IsLiked = res.Liked
 	return pin, emptyErrorInfo
 }
 

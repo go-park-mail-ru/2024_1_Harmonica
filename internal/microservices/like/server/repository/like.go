@@ -12,8 +12,7 @@ import (
 const (
 	QuerySetLike       = `INSERT INTO public.like ("pin_id", "user_id") VALUES ($1, $2) ON CONFLICT DO NOTHING`
 	QueryClearLike     = `DELETE FROM public.like WHERE pin_id=$1 AND user_id=$2`
-	QueryGetUsersLiked = `SELECT nickname, avatar_url FROM public.user WHERE(user_id IN (SELECT user_id FROM public.like WHERE pin_id=$1)) LIMIT $2`
-	QueryFindLike      = `SELECT EXISTS(SELECT pin_id, user_id FROM public.like WHERE pin_id=$1 AND user_id=$2)`
+	QueryGetUsersLiked = `SELECT user_id, email, nickname, avatar_url FROM public.user WHERE(user_id IN (SELECT user_id FROM public.like WHERE pin_id=$1)) LIMIT $2`
 	QueryIsLiked       = `SELECT EXISTS(SELECT 1 FROM public.like WHERE user_id=$2 AND pin_id=$1)`
 
 	QueryGetFavorites = `SELECT pin.author_id, avatar_url, nickname, pin.pin_id, content_url FROM public.like 
@@ -73,7 +72,7 @@ func (r *DBRepository) GetFavorites(ctx context.Context, userId entity.UserID, l
 		return entity.FeedPins{}, err
 	}
 	for i, pin := range result.Pins {
-		res, err := r.ImageService.GetImageBounds(ctx, &proto.GetImageBoundsRequest{Url: pin.ContentUrl})
+		res, err := r.imageService.GetImageBounds(ctx, &proto.GetImageBoundsRequest{Url: pin.ContentUrl})
 		if err != nil {
 			return entity.FeedPins{}, err
 		}
