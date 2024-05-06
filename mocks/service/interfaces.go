@@ -8,11 +8,9 @@ import (
 	context "context"
 	entity "harmonica/internal/entity"
 	errs "harmonica/internal/entity/errs"
-	multipart "mime/multipart"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	minio "github.com/minio/minio-go/v7"
 )
 
 // MockIService is a mock of IService interface.
@@ -52,18 +50,18 @@ func (mr *MockIServiceMockRecorder) AddPinToBoard(ctx, boardId, pinId, userId in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddPinToBoard", reflect.TypeOf((*MockIService)(nil).AddPinToBoard), ctx, boardId, pinId, userId)
 }
 
-// ClearLike mocks base method.
-func (m *MockIService) ClearLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) errs.ErrorInfo {
+// AddSubscriptionToUser mocks base method.
+func (m *MockIService) AddSubscriptionToUser(ctx context.Context, userId, subscribeUserId entity.UserID) errs.ErrorInfo {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ClearLike", ctx, pinId, userId)
+	ret := m.ctrl.Call(m, "AddSubscriptionToUser", ctx, userId, subscribeUserId)
 	ret0, _ := ret[0].(errs.ErrorInfo)
 	return ret0
 }
 
-// ClearLike indicates an expected call of ClearLike.
-func (mr *MockIServiceMockRecorder) ClearLike(ctx, pinId, userId interface{}) *gomock.Call {
+// AddSubscriptionToUser indicates an expected call of AddSubscriptionToUser.
+func (mr *MockIServiceMockRecorder) AddSubscriptionToUser(ctx, userId, subscribeUserId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClearLike", reflect.TypeOf((*MockIService)(nil).ClearLike), ctx, pinId, userId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddSubscriptionToUser", reflect.TypeOf((*MockIService)(nil).AddSubscriptionToUser), ctx, userId, subscribeUserId)
 }
 
 // CreateBoard mocks base method.
@@ -79,6 +77,20 @@ func (m *MockIService) CreateBoard(ctx context.Context, board entity.Board, user
 func (mr *MockIServiceMockRecorder) CreateBoard(ctx, board, userId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateBoard", reflect.TypeOf((*MockIService)(nil).CreateBoard), ctx, board, userId)
+}
+
+// CreateMessage mocks base method.
+func (m *MockIService) CreateMessage(ctx context.Context, message entity.Message) errs.ErrorInfo {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateMessage", ctx, message)
+	ret0, _ := ret[0].(errs.ErrorInfo)
+	return ret0
+}
+
+// CreateMessage indicates an expected call of CreateMessage.
+func (mr *MockIServiceMockRecorder) CreateMessage(ctx, message interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateMessage", reflect.TypeOf((*MockIService)(nil).CreateMessage), ctx, message)
 }
 
 // CreatePin mocks base method.
@@ -138,6 +150,20 @@ func (mr *MockIServiceMockRecorder) DeletePinFromBoard(ctx, boardId, pinId, user
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePinFromBoard", reflect.TypeOf((*MockIService)(nil).DeletePinFromBoard), ctx, boardId, pinId, userId)
 }
 
+// DeleteSubscriptionToUser mocks base method.
+func (m *MockIService) DeleteSubscriptionToUser(ctx context.Context, userId, unsubscribeUserId entity.UserID) errs.ErrorInfo {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteSubscriptionToUser", ctx, userId, unsubscribeUserId)
+	ret0, _ := ret[0].(errs.ErrorInfo)
+	return ret0
+}
+
+// DeleteSubscriptionToUser indicates an expected call of DeleteSubscriptionToUser.
+func (mr *MockIServiceMockRecorder) DeleteSubscriptionToUser(ctx, userId, unsubscribeUserId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSubscriptionToUser", reflect.TypeOf((*MockIService)(nil).DeleteSubscriptionToUser), ctx, userId, unsubscribeUserId)
+}
+
 // GetBoardById mocks base method.
 func (m *MockIService) GetBoardById(ctx context.Context, boardId entity.BoardID, userId entity.UserID, limit, offset int) (entity.FullBoard, errs.ErrorInfo) {
 	m.ctrl.T.Helper()
@@ -168,19 +194,19 @@ func (mr *MockIServiceMockRecorder) GetFeedPins(ctx, limit, offset interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeedPins", reflect.TypeOf((*MockIService)(nil).GetFeedPins), ctx, limit, offset)
 }
 
-// GetImage mocks base method.
-func (m *MockIService) GetImage(ctx context.Context, name string) (*minio.Object, error) {
+// GetMessages mocks base method.
+func (m *MockIService) GetMessages(ctx context.Context, firstUserId, secondUserId entity.UserID) (entity.Messages, errs.ErrorInfo) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetImage", ctx, name)
-	ret0, _ := ret[0].(*minio.Object)
-	ret1, _ := ret[1].(error)
+	ret := m.ctrl.Call(m, "GetMessages", ctx, firstUserId, secondUserId)
+	ret0, _ := ret[0].(entity.Messages)
+	ret1, _ := ret[1].(errs.ErrorInfo)
 	return ret0, ret1
 }
 
-// GetImage indicates an expected call of GetImage.
-func (mr *MockIServiceMockRecorder) GetImage(ctx, name interface{}) *gomock.Call {
+// GetMessages indicates an expected call of GetMessages.
+func (mr *MockIServiceMockRecorder) GetMessages(ctx, firstUserId, secondUserId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetImage", reflect.TypeOf((*MockIService)(nil).GetImage), ctx, name)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessages", reflect.TypeOf((*MockIService)(nil).GetMessages), ctx, firstUserId, secondUserId)
 }
 
 // GetPinById mocks base method.
@@ -196,6 +222,21 @@ func (m *MockIService) GetPinById(ctx context.Context, PinId entity.PinID, UserI
 func (mr *MockIServiceMockRecorder) GetPinById(ctx, PinId, UserId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPinById", reflect.TypeOf((*MockIService)(nil).GetPinById), ctx, PinId, UserId)
+}
+
+// GetSubscriptionsFeedPins mocks base method.
+func (m *MockIService) GetSubscriptionsFeedPins(ctx context.Context, userId entity.UserID, limit, offset int) (entity.FeedPins, errs.ErrorInfo) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSubscriptionsFeedPins", ctx, userId, limit, offset)
+	ret0, _ := ret[0].(entity.FeedPins)
+	ret1, _ := ret[1].(errs.ErrorInfo)
+	return ret0, ret1
+}
+
+// GetSubscriptionsFeedPins indicates an expected call of GetSubscriptionsFeedPins.
+func (mr *MockIServiceMockRecorder) GetSubscriptionsFeedPins(ctx, userId, limit, offset interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubscriptionsFeedPins", reflect.TypeOf((*MockIService)(nil).GetSubscriptionsFeedPins), ctx, userId, limit, offset)
 }
 
 // GetUserBoards mocks base method.
@@ -258,6 +299,21 @@ func (mr *MockIServiceMockRecorder) GetUserByNickname(ctx, nickname interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByNickname", reflect.TypeOf((*MockIService)(nil).GetUserByNickname), ctx, nickname)
 }
 
+// GetUserChats mocks base method.
+func (m *MockIService) GetUserChats(ctx context.Context, userId entity.UserID) (entity.UserChats, errs.ErrorInfo) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserChats", ctx, userId)
+	ret0, _ := ret[0].(entity.UserChats)
+	ret1, _ := ret[1].(errs.ErrorInfo)
+	return ret0, ret1
+}
+
+// GetUserChats indicates an expected call of GetUserChats.
+func (mr *MockIServiceMockRecorder) GetUserChats(ctx, userId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserChats", reflect.TypeOf((*MockIService)(nil).GetUserChats), ctx, userId)
+}
+
 // GetUserPins mocks base method.
 func (m *MockIService) GetUserPins(ctx context.Context, authorNickname string, limit, offset int) (entity.UserPins, errs.ErrorInfo) {
 	m.ctrl.T.Helper()
@@ -273,19 +329,49 @@ func (mr *MockIServiceMockRecorder) GetUserPins(ctx, authorNickname, limit, offs
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserPins", reflect.TypeOf((*MockIService)(nil).GetUserPins), ctx, authorNickname, limit, offset)
 }
 
-// GetUsersLiked mocks base method.
-func (m *MockIService) GetUsersLiked(ctx context.Context, pinId entity.PinID, limit int) (entity.UserList, errs.ErrorInfo) {
+// GetUserProfileByNickname mocks base method.
+func (m *MockIService) GetUserProfileByNickname(ctx context.Context, nickname string, userId entity.UserID) (entity.UserProfileResponse, errs.ErrorInfo) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUsersLiked", ctx, pinId, limit)
-	ret0, _ := ret[0].(entity.UserList)
+	ret := m.ctrl.Call(m, "GetUserProfileByNickname", ctx, nickname, userId)
+	ret0, _ := ret[0].(entity.UserProfileResponse)
 	ret1, _ := ret[1].(errs.ErrorInfo)
 	return ret0, ret1
 }
 
-// GetUsersLiked indicates an expected call of GetUsersLiked.
-func (mr *MockIServiceMockRecorder) GetUsersLiked(ctx, pinId, limit interface{}) *gomock.Call {
+// GetUserProfileByNickname indicates an expected call of GetUserProfileByNickname.
+func (mr *MockIServiceMockRecorder) GetUserProfileByNickname(ctx, nickname, userId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUsersLiked", reflect.TypeOf((*MockIService)(nil).GetUsersLiked), ctx, pinId, limit)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserProfileByNickname", reflect.TypeOf((*MockIService)(nil).GetUserProfileByNickname), ctx, nickname, userId)
+}
+
+// GetUserSubscribers mocks base method.
+func (m *MockIService) GetUserSubscribers(ctx context.Context, userId entity.UserID) (entity.UserSubscribers, errs.ErrorInfo) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserSubscribers", ctx, userId)
+	ret0, _ := ret[0].(entity.UserSubscribers)
+	ret1, _ := ret[1].(errs.ErrorInfo)
+	return ret0, ret1
+}
+
+// GetUserSubscribers indicates an expected call of GetUserSubscribers.
+func (mr *MockIServiceMockRecorder) GetUserSubscribers(ctx, userId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserSubscribers", reflect.TypeOf((*MockIService)(nil).GetUserSubscribers), ctx, userId)
+}
+
+// GetUserSubscriptions mocks base method.
+func (m *MockIService) GetUserSubscriptions(ctx context.Context, userId entity.UserID) (entity.UserSubscriptions, errs.ErrorInfo) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserSubscriptions", ctx, userId)
+	ret0, _ := ret[0].(entity.UserSubscriptions)
+	ret1, _ := ret[1].(errs.ErrorInfo)
+	return ret0, ret1
+}
+
+// GetUserSubscriptions indicates an expected call of GetUserSubscriptions.
+func (mr *MockIServiceMockRecorder) GetUserSubscriptions(ctx, userId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserSubscriptions", reflect.TypeOf((*MockIService)(nil).GetUserSubscriptions), ctx, userId)
 }
 
 // RegisterUser mocks base method.
@@ -302,18 +388,19 @@ func (mr *MockIServiceMockRecorder) RegisterUser(ctx, user interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterUser", reflect.TypeOf((*MockIService)(nil).RegisterUser), ctx, user)
 }
 
-// SetLike mocks base method.
-func (m *MockIService) SetLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) errs.ErrorInfo {
+// Search mocks base method.
+func (m *MockIService) Search(ctx context.Context, query string) (entity.SearchResult, errs.ErrorInfo) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetLike", ctx, pinId, userId)
-	ret0, _ := ret[0].(errs.ErrorInfo)
-	return ret0
+	ret := m.ctrl.Call(m, "Search", ctx, query)
+	ret0, _ := ret[0].(entity.SearchResult)
+	ret1, _ := ret[1].(errs.ErrorInfo)
+	return ret0, ret1
 }
 
-// SetLike indicates an expected call of SetLike.
-func (mr *MockIServiceMockRecorder) SetLike(ctx, pinId, userId interface{}) *gomock.Call {
+// Search indicates an expected call of Search.
+func (mr *MockIServiceMockRecorder) Search(ctx, query interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetLike", reflect.TypeOf((*MockIService)(nil).SetLike), ctx, pinId, userId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Search", reflect.TypeOf((*MockIService)(nil).Search), ctx, query)
 }
 
 // UpdateBoard mocks base method.
@@ -359,19 +446,4 @@ func (m *MockIService) UpdateUser(ctx context.Context, user entity.User) (entity
 func (mr *MockIServiceMockRecorder) UpdateUser(ctx, user interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUser", reflect.TypeOf((*MockIService)(nil).UpdateUser), ctx, user)
-}
-
-// UploadImage mocks base method.
-func (m *MockIService) UploadImage(ctx context.Context, file multipart.File, fileHeader *multipart.FileHeader) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UploadImage", ctx, file, fileHeader)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UploadImage indicates an expected call of UploadImage.
-func (mr *MockIServiceMockRecorder) UploadImage(ctx, file, fileHeader interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadImage", reflect.TypeOf((*MockIService)(nil).UploadImage), ctx, file, fileHeader)
 }

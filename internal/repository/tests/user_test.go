@@ -3,7 +3,6 @@ package test_repository
 /*
 import (
 	"database/sql/driver"
-	"go.uber.org/zap"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"harmonica/internal/repository"
@@ -40,6 +39,8 @@ func TestGetUserByEmail(t *testing.T) {
 
 func TestGetUserByNickname(t *testing.T) {
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+	CtxWithRequestId := context.Background()
+	CtxWithRequestId = context.WithValue(CtxWithRequestId, "request_id", "1935")
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
@@ -63,6 +64,8 @@ func TestGetUserByNickname(t *testing.T) {
 }
 
 func TestGetUserById(t *testing.T) {
+	CtxWithRequestId := context.Background()
+	CtxWithRequestId = context.WithValue(CtxWithRequestId, "request_id", "1935")
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
@@ -87,6 +90,8 @@ func TestGetUserById(t *testing.T) {
 }
 
 func TestRegisterUser(t *testing.T) {
+	CtxWithRequestId := context.Background()
+	CtxWithRequestId = context.WithValue(CtxWithRequestId, "request_id", "1935")
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
@@ -112,6 +117,8 @@ func TestRegisterUser(t *testing.T) {
 }
 
 func TestUpdateUser(t *testing.T) {
+	CtxWithRequestId := context.Background()
+	CtxWithRequestId = context.WithValue(CtxWithRequestId, "request_id", "1935")
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)

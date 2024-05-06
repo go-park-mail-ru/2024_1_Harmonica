@@ -15,7 +15,11 @@ swag:
 
 MOCKS_DESTINATION=mocks
 .PHONY: mocks
-mocks: ./internal/service/interfaces.go ./internal/repository/interfaces.go
+mocks:  ./internal/service/interfaces.go \
+		./internal/repository/interfaces.go \
+		./internal/microservices/image/proto/image_grpc.pb.go \
+		./internal/microservices/auth/proto/auth_grpc.pb.go \
+		./internal/microservices/like/proto/like_grpc.pb.go 
 	@echo "Generating mocks..."
 	@rm -rf $(MOCKS_DESTINATION)
 	@for file in $^; do mockgen -source=$$file -destination=$(MOCKS_DESTINATION)/$$file; done
