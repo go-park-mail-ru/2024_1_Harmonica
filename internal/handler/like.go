@@ -74,14 +74,14 @@ func (h *APIHandler) CreateLike(w http.ResponseWriter, r *http.Request) {
 func (h *APIHandler) DeleteLike(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	requestId := ctx.Value("request_id").(string)
+	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("request_id", requestId))
 
 	pinId, userId, errInfo := GetPinAndUserId(r, ctx)
 	if errInfo != emptyErrorInfo {
 		WriteErrorResponse(w, h.logger, requestId, errInfo)
 		return
 	}
-	res, err := h.LikeService.ClearLike(metadata.NewOutgoingContext(r.Context(),
-		metadata.Pairs("request_id", requestId)), &proto.MakeLikeRequest{PinId: int64(pinId), UserId: int64(userId)})
+	res, err := h.LikeService.ClearLike(ctx, &proto.MakeLikeRequest{PinId: int64(pinId), UserId: int64(userId)})
 	if err != nil {
 		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{LocalErr: errs.ErrGRPCWentWrong})
 		return
