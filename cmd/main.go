@@ -38,7 +38,7 @@ func runServer(addr string) {
 	defer connector.Disconnect()
 
 	r := repository.NewRepository(connector, logger)
-	s := service.NewService(r)
+	s := service.NewService(r, likeCli)
 
 	hub := handler.NewHub() // ws-server
 	h := handler.NewAPIHandler(s, logger, hub, authCli, imageCli, likeCli)
@@ -143,7 +143,6 @@ func configurePinRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.Ser
 		"POST /api/v1/pins/{pin_id}/like":   h.CreateLike,
 		"DELETE /api/v1/pins/{pin_id}/like": h.DeleteLike,
 		"GET /api/v1/favorites":             h.GetFavorites,
-		"GET /api/v1/favorites/cover":       h.GetFavoritesCover,
 	}
 	checkAuthRoutes := map[string]http.HandlerFunc{
 		"GET /api/v1/pins/{pin_id}": h.GetPin,

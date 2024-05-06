@@ -6,7 +6,10 @@ import (
 	"harmonica/internal/entity/errs"
 )
 
-var emptyUser = entity.User{}
+var (
+	emptyUser      = entity.User{}
+	emptyErrorInfo = errs.ErrorInfo{}
+)
 
 func (s *RepositoryService) GetUserByEmail(ctx context.Context, email string) (entity.User, errs.ErrorInfo) {
 	user, err := s.repo.GetUserByEmail(ctx, email)

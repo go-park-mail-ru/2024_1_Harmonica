@@ -6,6 +6,8 @@ import (
 	"harmonica/internal/entity/errs"
 	"harmonica/internal/microservices/like/proto"
 	"net/http"
+
+	"google.golang.org/grpc/metadata"
 )
 
 const USERS_LIKED_LIMIT = 20
@@ -44,7 +46,8 @@ func (h *APIHandler) CreateLike(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, h.logger, requestId, errInfo)
 		return
 	}
-	res, err := h.LikeService.SetLike(ctx, &proto.MakeLikeRequest{PinId: int64(pinId), UserId: int64(userId)})
+	res, err := h.LikeService.SetLike(metadata.NewOutgoingContext(r.Context(),
+		metadata.Pairs("request_id", requestId)), &proto.MakeLikeRequest{PinId: int64(pinId), UserId: int64(userId)})
 	if err != nil {
 		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{LocalErr: errs.ErrGRPCWentWrong})
 		return
@@ -77,7 +80,8 @@ func (h *APIHandler) DeleteLike(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, h.logger, requestId, errInfo)
 		return
 	}
-	res, err := h.LikeService.ClearLike(ctx, &proto.MakeLikeRequest{PinId: int64(pinId), UserId: int64(userId)})
+	res, err := h.LikeService.ClearLike(metadata.NewOutgoingContext(r.Context(),
+		metadata.Pairs("request_id", requestId)), &proto.MakeLikeRequest{PinId: int64(pinId), UserId: int64(userId)})
 	if err != nil {
 		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{LocalErr: errs.ErrGRPCWentWrong})
 		return
@@ -114,7 +118,8 @@ func (h *APIHandler) UsersLiked(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pinId := entity.PinID(id)
-	res, err := h.LikeService.GetUsersLiked(ctx, &proto.GetUsersLikedRequest{PinId: int64(pinId), Limit: USERS_LIKED_LIMIT})
+	res, err := h.LikeService.GetUsersLiked(metadata.NewOutgoingContext(r.Context(),
+		metadata.Pairs("request_id", requestId)), &proto.GetUsersLikedRequest{PinId: int64(pinId), Limit: USERS_LIKED_LIMIT})
 	if err != nil {
 		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{LocalErr: errs.ErrGRPCWentWrong})
 		return
@@ -140,26 +145,6 @@ func FromGRPCResponseToUsersList(protoRes *proto.GetUsersLikedResponse) entity.U
 	return res
 }
 
-// Get last 4 pins for cover to favorites.
-//
-//	@Summary		Get last 4 pins for cover to favorites
-//	@Tags			Likes
-//	@Param			Cookie	header	string	true	"session-token"	default(session-token=)
-//	@Produce		json
-//	@Success		200	{object}	entity.FeedPins
-//	@Router			/favorites/cover [get]
-func (h *APIHandler) GetFavoritesCover(w http.ResponseWriter, r *http.Request) { // Просто верхние 4 из ленты (возможно переделать)
-	ctx := r.Context() // remake
-	requestId := ctx.Value("request_id").(string)
-	limit, offset := 4, 0
-	feed, resError := h.service.GetFavorites(ctx, limit, offset)
-	if resError != emptyErrorInfo {
-		WriteErrorResponse(w, h.logger, requestId, resError)
-		return
-	}
-	WriteDefaultResponse(w, h.logger, feed)
-}
-
 // Get feed of favorite pins by page.
 //
 //	@Summary		Get feed of favorite pins by page
@@ -180,7 +165,8 @@ func (h *APIHandler) GetFavorites(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	res, err := h.LikeService.GetFavorites(ctx,
+	res, err := h.LikeService.GetFavorites(metadata.NewOutgoingContext(r.Context(),
+		metadata.Pairs("request_id", requestId)),
 		&proto.GetFavoritesRequest{UserId: int64(userId), Limit: int64(limit), Offset: int64(offset)})
 
 	if err != nil {
@@ -192,12 +178,6 @@ func (h *APIHandler) GetFavorites(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	feed := FromGRPCResponseToFavoritesFeed(res)
-	/*feed, resError := h.service.GetFavorites(ctx, limit, offset)
-	if resError != emptyErrorInfo {
-		WriteErrorResponse(w, h.logger, requestId, resError)
-		return
-	}
-	*/
 	WriteDefaultResponse(w, h.logger, feed)
 }
 
