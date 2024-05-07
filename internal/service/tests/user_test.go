@@ -1,11 +1,11 @@
 package test_service
 
-/*
 import (
 	"context"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"harmonica/internal/service"
+	mock_proto "harmonica/mocks/microservices/like/proto"
 	mock_repository "harmonica/mocks/repository"
 	"testing"
 
@@ -13,149 +13,246 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetUserByEmail(t *testing.T) {
-	type mockArgs struct {
-		Ctx   context.Context
-		Email string
+func TestService_GetUserByEmail(t *testing.T) {
+	type ExpectedReturn struct {
+		User      entity.User
+		ErrorInfo errs.ErrorInfo
 	}
-	type mockReturn struct {
-		User entity.User
-		Err  error
+	type ExpectedMockReturn struct {
+		User  entity.User
+		Error error
 	}
-	type funcArgs struct {
-		Ctx   context.Context
-		Email string
+	mockBehaviour := func(repo *mock_repository.MockIRepository, ctx context.Context,
+		mockArgs string, mockReturn ExpectedMockReturn) {
+		repo.EXPECT().GetUserByEmail(ctx, mockArgs).Return(
+			mockReturn.User, mockReturn.Error)
 	}
-	type funcReturn struct {
-		User entity.User
-		Err  errs.ErrorInfo
-	}
-	type test struct {
-		Name               string
-		MockArgs           mockArgs
-		MockReturn         mockReturn
-		FuncArgs           funcArgs
-		ExpectedFuncReturn funcReturn
-	}
-	tests := []test{
+	testTable := []struct {
+		name               string
+		args               string
+		expectedReturn     ExpectedReturn
+		expectedMockArgs   string
+		expectedMockReturn ExpectedMockReturn
+	}{
 		{
-			Name: "Correct work test 1",
-			MockArgs: mockArgs{
-				Ctx:   context.Background(),
-				Email: "email@dot.com",
+			name: "OK test case 1",
+			args: "email@mail.ru",
+			expectedReturn: ExpectedReturn{
+				User: entity.User{UserID: 1, Email: "email@mail.ru"},
 			},
-			MockReturn: mockReturn{},
-			FuncArgs: funcArgs{
-				Ctx:   context.Background(),
-				Email: "email@dot.com",
+			expectedMockArgs: "email@mail.ru",
+			expectedMockReturn: ExpectedMockReturn{
+				User: entity.User{UserID: 1, Email: "email@mail.ru"},
 			},
-			ExpectedFuncReturn: funcReturn{},
 		},
 		{
-			Name: "Uncorrect work test 1",
-			MockArgs: mockArgs{
-				Ctx:   context.Background(),
-				Email: "email@dot.com",
+			name: "Error test case 1",
+			args: "email@mail.ru",
+			expectedReturn: ExpectedReturn{
+				ErrorInfo: errs.ErrorInfo{GeneralErr: errs.ErrDBInternal, LocalErr: errs.ErrDBInternal},
 			},
-			MockReturn: mockReturn{
-				Err: errs.ErrDBInternal,
-			},
-			FuncArgs: funcArgs{
-				Ctx:   context.Background(),
-				Email: "email@dot.com",
-			},
-			ExpectedFuncReturn: funcReturn{
-				entity.User{},
-				errs.ErrorInfo{
-					GeneralErr: errs.ErrDBInternal,
-					LocalErr:   errs.ErrDBInternal,
-				},
+			expectedMockArgs: "email@mail.ru",
+			expectedMockReturn: ExpectedMockReturn{
+				Error: errs.ErrDBInternal,
 			},
 		},
 	}
-	ctrl := gomock.NewController(t)
-	repo := mock_repository.NewMockIRepository(ctrl)
-	for _, test := range tests {
-		repo.EXPECT().GetUserByEmail(test.MockArgs.Ctx, test.MockArgs.Email).Return(
-			test.MockReturn.User, test.MockReturn.Err)
-		service := service.NewService(repo)
-		user, err := service.GetUserByEmail(test.FuncArgs.Ctx, test.FuncArgs.Email)
-		assert.Equal(t, test.ExpectedFuncReturn.User, user)
-		assert.Equal(t, test.ExpectedFuncReturn.Err, err)
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			repo := mock_repository.NewMockIRepository(ctrl)
+			likeClient := mock_proto.NewMockLikeClient(ctrl)
+			mockBehaviour(repo, context.Background(), testCase.expectedMockArgs, testCase.expectedMockReturn)
+			service := service.NewService(repo, likeClient)
+			user, errInfo := service.GetUserByEmail(context.Background(), testCase.args)
+			assert.Equal(t, testCase.expectedReturn.User, user)
+			assert.Equal(t, testCase.expectedReturn.ErrorInfo, errInfo)
+		})
 	}
 }
 
-func TestGetUserByNickname(t *testing.T) {
-	type mockArgs struct {
-		Ctx  context.Context
-		Nick string
+func TestService_GetUserByNickname(t *testing.T) {
+	type ExpectedReturn struct {
+		User      entity.User
+		ErrorInfo errs.ErrorInfo
 	}
-	type mockReturn struct {
-		User entity.User
-		Err  error
+	type ExpectedMockReturn struct {
+		User  entity.User
+		Error error
 	}
-	type funcArgs struct {
-		Ctx  context.Context
-		Nick string
+	mockBehaviour := func(repo *mock_repository.MockIRepository, ctx context.Context,
+		mockArgs string, mockReturn ExpectedMockReturn) {
+		repo.EXPECT().GetUserByNickname(ctx, mockArgs).Return(
+			mockReturn.User, mockReturn.Error)
 	}
-	type funcReturn struct {
-		User entity.User
-		Err  errs.ErrorInfo
-	}
-	type test struct {
-		Name               string
-		MockArgs           mockArgs
-		MockReturn         mockReturn
-		FuncArgs           funcArgs
-		ExpectedFuncReturn funcReturn
-	}
-	tests := []test{
+	testTable := []struct {
+		name               string
+		args               string
+		expectedReturn     ExpectedReturn
+		expectedMockArgs   string
+		expectedMockReturn ExpectedMockReturn
+	}{
 		{
-			Name: "Correct work test 1",
-			MockArgs: mockArgs{
-				Ctx:  context.Background(),
-				Nick: "nickdot.com",
+			name: "OK test case 1",
+			args: "nickname1",
+			expectedReturn: ExpectedReturn{
+				User: entity.User{UserID: 1, Nickname: "nickname1"},
 			},
-			MockReturn: mockReturn{},
-			FuncArgs: funcArgs{
-				Ctx:  context.Background(),
-				Nick: "nickdot.com",
+			expectedMockArgs: "nickname1",
+			expectedMockReturn: ExpectedMockReturn{
+				User: entity.User{UserID: 1, Nickname: "nickname1"},
 			},
-			ExpectedFuncReturn: funcReturn{},
 		},
 		{
-			Name: "Uncorrect work test 1",
-			MockArgs: mockArgs{
-				Ctx:  context.Background(),
-				Nick: "nickdot.com",
+			name: "Error test case 1",
+			args: "nickname1",
+			expectedReturn: ExpectedReturn{
+				ErrorInfo: errs.ErrorInfo{GeneralErr: errs.ErrDBInternal, LocalErr: errs.ErrDBInternal},
 			},
-			MockReturn: mockReturn{
-				Err: errs.ErrDBInternal,
-			},
-			FuncArgs: funcArgs{
-				Ctx:  context.Background(),
-				Nick: "nickdot.com",
-			},
-			ExpectedFuncReturn: funcReturn{
-				entity.User{},
-				errs.ErrorInfo{
-					GeneralErr: errs.ErrDBInternal,
-					LocalErr:   errs.ErrDBInternal,
-				},
+			expectedMockArgs: "nickname1",
+			expectedMockReturn: ExpectedMockReturn{
+				Error: errs.ErrDBInternal,
 			},
 		},
 	}
-	ctrl := gomock.NewController(t)
-	repo := mock_repository.NewMockIRepository(ctrl)
-	for _, test := range tests {
-		repo.EXPECT().GetUserByNickname(test.MockArgs.Ctx, test.MockArgs.Nick).Return(
-			test.MockReturn.User, test.MockReturn.Err)
-		service := service.NewService(repo)
-		user, err := service.GetUserByNickname(test.FuncArgs.Ctx, test.FuncArgs.Nick)
-		assert.Equal(t, test.ExpectedFuncReturn.User, user)
-		assert.Equal(t, test.ExpectedFuncReturn.Err, err)
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			repo := mock_repository.NewMockIRepository(ctrl)
+			likeClient := mock_proto.NewMockLikeClient(ctrl)
+			mockBehaviour(repo, context.Background(), testCase.expectedMockArgs, testCase.expectedMockReturn)
+			service := service.NewService(repo, likeClient)
+			user, errInfo := service.GetUserByNickname(context.Background(), testCase.args)
+			assert.Equal(t, testCase.expectedReturn.User, user)
+			assert.Equal(t, testCase.expectedReturn.ErrorInfo, errInfo)
+		})
 	}
 }
+
+func TestService_GetUserById(t *testing.T) {
+	type ExpectedReturn struct {
+		User      entity.User
+		ErrorInfo errs.ErrorInfo
+	}
+	type ExpectedMockReturn struct {
+		User  entity.User
+		Error error
+	}
+	mockBehaviour := func(repo *mock_repository.MockIRepository, ctx context.Context,
+		mockArgs entity.UserID, mockReturn ExpectedMockReturn) {
+		repo.EXPECT().GetUserById(ctx, mockArgs).Return(
+			mockReturn.User, mockReturn.Error)
+	}
+	testTable := []struct {
+		name               string
+		args               entity.UserID
+		expectedReturn     ExpectedReturn
+		expectedMockArgs   entity.UserID
+		expectedMockReturn ExpectedMockReturn
+	}{
+		{
+			name: "OK test case 1",
+			args: 1,
+			expectedReturn: ExpectedReturn{
+				User: entity.User{UserID: 1},
+			},
+			expectedMockArgs: 1,
+			expectedMockReturn: ExpectedMockReturn{
+				User: entity.User{UserID: 1},
+			},
+		},
+		{
+			name: "Error test case 1",
+			args: 1,
+			expectedReturn: ExpectedReturn{
+				ErrorInfo: errs.ErrorInfo{GeneralErr: errs.ErrDBInternal, LocalErr: errs.ErrDBInternal},
+			},
+			expectedMockArgs: 1,
+			expectedMockReturn: ExpectedMockReturn{
+				Error: errs.ErrDBInternal,
+			},
+		},
+	}
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			repo := mock_repository.NewMockIRepository(ctrl)
+			likeClient := mock_proto.NewMockLikeClient(ctrl)
+			mockBehaviour(repo, context.Background(), testCase.expectedMockArgs, testCase.expectedMockReturn)
+			service := service.NewService(repo, likeClient)
+			user, errInfo := service.GetUserById(context.Background(), testCase.args)
+			assert.Equal(t, testCase.expectedReturn.User, user)
+			assert.Equal(t, testCase.expectedReturn.ErrorInfo, errInfo)
+		})
+	}
+}
+
+func TestService_RegisterUser(t *testing.T) {
+	type ExpectedReturn struct {
+		User      entity.User
+		ErrorInfo errs.ErrorInfo
+	}
+	type ExpectedMockReturn struct {
+		User  entity.User
+		Error error
+	}
+	mockBehaviour := func(repo *mock_repository.MockIRepository, ctx context.Context,
+		mockArgs entity.UserID, mockReturn ExpectedMockReturn) {
+		repo.EXPECT().GetUserByEmail(ctx, mockArgs).Return(
+			mockReturn.User, mockReturn.Error).AnyTimes()
+		repo.EXPECT().GetUserByNickname(ctx, mockArgs).Return(
+			mockReturn.User, mockReturn.Error).AnyTimes()
+		repo.EXPECT().RegisterUser(ctx, mockArgs)
+	}
+	testTable := []struct {
+		name               string
+		args               entity.UserID
+		expectedReturn     ExpectedReturn
+		expectedMockArgs   entity.UserID
+		expectedMockReturn ExpectedMockReturn
+	}{
+		{
+			name: "OK test case 1",
+			args: 1,
+			expectedReturn: ExpectedReturn{
+				User: entity.User{UserID: 1},
+			},
+			expectedMockArgs: 1,
+			expectedMockReturn: ExpectedMockReturn{
+				User: entity.User{UserID: 1},
+			},
+		},
+		{
+			name: "Error test case 1",
+			args: 1,
+			expectedReturn: ExpectedReturn{
+				ErrorInfo: errs.ErrorInfo{GeneralErr: errs.ErrDBInternal, LocalErr: errs.ErrDBInternal},
+			},
+			expectedMockArgs: 1,
+			expectedMockReturn: ExpectedMockReturn{
+				Error: errs.ErrDBInternal,
+			},
+		},
+	}
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			repo := mock_repository.NewMockIRepository(ctrl)
+			likeClient := mock_proto.NewMockLikeClient(ctrl)
+			mockBehaviour(repo, context.Background(), testCase.expectedMockArgs, testCase.expectedMockReturn)
+			service := service.NewService(repo, likeClient)
+			user, errInfo := service.GetUserById(context.Background(), testCase.args)
+			assert.Equal(t, testCase.expectedReturn.User, user)
+			assert.Equal(t, testCase.expectedReturn.ErrorInfo, errInfo)
+		})
+	}
+}
+
+/*
 
 func TestGetUserById(t *testing.T) {
 	type mockArgs struct {
