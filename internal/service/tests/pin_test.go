@@ -1,719 +1,558 @@
 package test_service
 
-/*
 import (
 	"context"
-	"harmonica/internal/entity"
-	"harmonica/internal/entity/errs"
-	"harmonica/internal/service"
-	mock_repository "harmonica/mocks/repository"
-	"testing"
-
+	"errors"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"harmonica/internal/entity"
+	"harmonica/internal/entity/errs"
+	like "harmonica/internal/microservices/like/proto"
+	"harmonica/internal/service"
+	mock_proto "harmonica/mocks/microservices/like/proto"
+	mock_repository "harmonica/mocks/repository"
+	"testing"
 )
 
-type mockGetPinByIDArgs struct {
-	Ctx   context.Context
-	PinId entity.PinID
-}
-type mockGetPinByIDReturn struct {
-	Pin entity.PinPageResponse
-	Err error
-}
-type mockGetPinByID struct {
-	Args   mockGetPinByIDArgs
-	Return mockGetPinByIDReturn
-}
+const (
+	Limit  = 10
+	Offset = 10
+)
 
-var GetPinByIDCorrectValues = []mockGetPinByID{
-	{
-		Args: mockGetPinByIDArgs{
-			Ctx:   context.Background(),
-			PinId: 1,
-		},
-		Return: mockGetPinByIDReturn{
-			Pin: entity.PinPageResponse{},
-			Err: nil,
-		},
-	},
-}
-var GetPinByIDUncorrectValues = []mockGetPinByID{
-	{
-		Args: mockGetPinByIDArgs{
-			Ctx:   context.Background(),
-			PinId: 1,
-		},
-		Return: mockGetPinByIDReturn{
-			Pin: entity.PinPageResponse{},
-			Err: errs.ErrDBInternal,
-		},
-	},
-}
-
-func TestGetPinById(t *testing.T) {
-	type funcArgs struct {
-		Ctx   context.Context
-		PinId entity.PinID
+func TestService_GetFeedPins(t *testing.T) {
+	type ExpectedReturn struct {
+		FeedPins  entity.FeedPins
+		ErrorInfo errs.ErrorInfo
 	}
-	type funcReturn struct {
-		Pin entity.PinPageResponse
-		Err errs.ErrorInfo
+	type ExpectedMockReturn struct {
+		FeedPins entity.FeedPins
+		Error    error
 	}
-	type test struct {
-		Name               string
-		MockGetPinByID     mockGetPinByID
-		FuncArgs           funcArgs
-		ExpectedFuncReturn funcReturn
-		waitCheckCall      bool
-		CheckReturn        bool
-		ErrCheckReturn     error
+	mockBehaviour := func(repo *mock_repository.MockIRepository, ctx context.Context,
+		limit int, offset int, mockReturn ExpectedMockReturn) {
+		repo.EXPECT().GetFeedPins(ctx, limit, offset).Return(mockReturn.FeedPins, mockReturn.Error)
 	}
-	tests := []test{
+	testTable := []struct {
+		name               string
+		expectedReturn     ExpectedReturn
+		expectedMockReturn ExpectedMockReturn
+	}{
 		{
-			Name:           "Correct work test 1",
-			MockGetPinByID: GetPinByIDCorrectValues[0],
-			FuncArgs: funcArgs{
-				Ctx:   context.Background(),
-				PinId: 1,
+			name: "OK test case 1",
+			expectedReturn: ExpectedReturn{
+				FeedPins: entity.FeedPins{
+					Pins: []entity.FeedPinResponse{
+						{
+							PinId:      1,
+							ContentUrl: "bobrdobr.ru/1",
+							PinAuthor: entity.PinAuthor{
+								UserId:    123,
+								Nickname:  "valera",
+								AvatarURL: "bobrdobr.users.ru/123",
+							},
+						},
+					},
+				},
 			},
-			ExpectedFuncReturn: funcReturn{},
-			waitCheckCall:      true,
-		},
-		{
-			Name:           "Error work test 1",
-			MockGetPinByID: GetPinByIDUncorrectValues[0],
-			FuncArgs: funcArgs{
-				Ctx:   context.Background(),
-				PinId: 1,
-			},
-			ExpectedFuncReturn: funcReturn{
-				Pin: entity.PinPageResponse{},
-				Err: errs.ErrorInfo{
-					GeneralErr: errs.ErrDBInternal,
-					LocalErr:   errs.ErrElementNotExist,
+			expectedMockReturn: ExpectedMockReturn{
+				FeedPins: entity.FeedPins{
+					Pins: []entity.FeedPinResponse{
+						{
+							PinId:      1,
+							ContentUrl: "bobrdobr.ru/1",
+							PinAuthor: entity.PinAuthor{
+								UserId:    123,
+								Nickname:  "valera",
+								AvatarURL: "bobrdobr.users.ru/123",
+							},
+						},
+					},
 				},
 			},
 		},
 		{
-			Name:           "Error work test 2",
-			MockGetPinByID: GetPinByIDCorrectValues[0],
-			FuncArgs: funcArgs{
-				Ctx:   context.Background(),
-				PinId: 1,
+			name: "Error test case 1",
+			expectedReturn: ExpectedReturn{
+				ErrorInfo: errs.ErrorInfo{GeneralErr: errs.ErrDBInternal, LocalErr: errs.ErrDBInternal},
 			},
-			ExpectedFuncReturn: funcReturn{
-				Pin: entity.PinPageResponse{},
-				Err: errs.ErrorInfo{
-					GeneralErr: errs.ErrDBInternal,
-					LocalErr:   errs.ErrDBInternal,
-				},
+			expectedMockReturn: ExpectedMockReturn{
+				Error: errs.ErrDBInternal,
 			},
-			ErrCheckReturn: errs.ErrDBInternal,
-			waitCheckCall:  true,
 		},
 	}
-	ctrl := gomock.NewController(t)
-	repo := mock_repository.NewMockIRepository(ctrl)
-	for _, test := range tests {
-		repo.EXPECT().GetPinById(test.MockGetPinByID.Args.Ctx, test.MockGetPinByID.Args.PinId).Return(
-			test.MockGetPinByID.Return.Pin, test.MockGetPinByID.Return.Err)
-		if test.waitCheckCall {
-			repo.EXPECT().CheckIsLiked(test.MockGetPinByID.Args.Ctx, test.MockGetPinByID.Args.PinId, entity.UserID(1)).Return(
-				test.CheckReturn, test.ErrCheckReturn)
-		}
-		service := service.NewService(repo)
-		res, err := service.GetPinById(test.FuncArgs.Ctx, test.FuncArgs.PinId, entity.UserID(1))
-		assert.Equal(t, test.ExpectedFuncReturn.Pin, res)
-		assert.Equal(t, test.ExpectedFuncReturn.Err, err)
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			repo := mock_repository.NewMockIRepository(ctrl)
+			likeClient := mock_proto.NewMockLikeClient(ctrl)
+			mockBehaviour(repo, context.Background(), Limit, Offset, testCase.expectedMockReturn)
+			s := service.NewService(repo, likeClient)
+			pins, errInfo := s.GetFeedPins(context.Background(), Limit, Offset)
+			assert.Equal(t, testCase.expectedReturn.FeedPins, pins)
+			assert.Equal(t, testCase.expectedReturn.ErrorInfo, errInfo)
+		})
 	}
 }
 
-func TestCreatePin(t *testing.T) {
-	type mockArgs struct {
-		Ctx context.Context
-		Pin entity.Pin
+func TestService_GetSubscriptionsFeedPins(t *testing.T) {
+	type ExpectedReturn struct {
+		FeedPins  entity.FeedPins
+		ErrorInfo errs.ErrorInfo
 	}
-	type mockReturn struct {
-		Pin entity.PinID
-		Err error
+	type ExpectedMockReturn struct {
+		FeedPins entity.FeedPins
+		Error    error
 	}
-	type funcArgs struct {
-		Ctx context.Context
-		Pin entity.Pin
+	mockBehaviour := func(repo *mock_repository.MockIRepository, ctx context.Context,
+		userId entity.UserID, limit int, offset int, mockReturn ExpectedMockReturn) {
+		repo.EXPECT().GetSubscriptionsFeedPins(ctx, userId, limit, offset).Return(mockReturn.FeedPins, mockReturn.Error)
 	}
-	type funcReturn struct {
-		Pin entity.PinPageResponse
-		Err errs.ErrorInfo
-	}
-	type test struct {
-		Name               string
-		MockGetPinByID     mockGetPinByID
-		MockArgs           mockArgs
-		MockReturn         mockReturn
-		FuncArgs           funcArgs
-		ExpectedFuncReturn funcReturn
-		NotExpectGetPin    bool
-	}
-
-	tests := []test{
+	testTable := []struct {
+		name               string
+		args               entity.UserID
+		expectedReturn     ExpectedReturn
+		expectedMockReturn ExpectedMockReturn
+	}{
 		{
-			Name:           "Correct test 1",
-			MockGetPinByID: GetPinByIDCorrectValues[0],
-			MockArgs: mockArgs{
-				context.Background(),
-				entity.Pin{},
-			},
-			MockReturn: mockReturn{
-				entity.PinID(1),
-				nil,
-			},
-			FuncArgs: funcArgs{
-				context.Background(),
-				entity.Pin{},
-			},
-			ExpectedFuncReturn: funcReturn{
-				Pin: entity.PinPageResponse{},
-			},
+			name: "OK test case 1",
+			args: 1,
 		},
 		{
-			Name:           "Uncorrect test 1",
-			MockGetPinByID: GetPinByIDUncorrectValues[0],
-			MockArgs: mockArgs{
-				context.Background(),
-				entity.Pin{},
+			name: "Error test case 1",
+			args: 1,
+			expectedReturn: ExpectedReturn{
+				ErrorInfo: errs.ErrorInfo{GeneralErr: errs.ErrDBInternal, LocalErr: errs.ErrDBInternal},
 			},
-			MockReturn: mockReturn{
-				entity.PinID(1),
-				nil,
+			expectedMockReturn: ExpectedMockReturn{
+				Error: errs.ErrDBInternal,
 			},
-			FuncArgs: funcArgs{
-				context.Background(),
-				entity.Pin{},
-			},
-			ExpectedFuncReturn: funcReturn{
-				Pin: entity.PinPageResponse{},
-				Err: errs.ErrorInfo{
-					GeneralErr: errs.ErrDBInternal,
-					LocalErr:   errs.ErrDBInternal,
-				},
-			},
-		},
-		{
-			Name:           "Uncorrect test 2",
-			MockGetPinByID: GetPinByIDCorrectValues[0],
-			MockArgs: mockArgs{
-				context.Background(),
-				entity.Pin{},
-			},
-			MockReturn: mockReturn{
-				entity.PinID(1),
-				errs.ErrPermissionDenied,
-			},
-			FuncArgs: funcArgs{
-				context.Background(),
-				entity.Pin{},
-			},
-			ExpectedFuncReturn: funcReturn{
-				Pin: entity.PinPageResponse{},
-				Err: errs.ErrorInfo{
-					GeneralErr: errs.ErrPermissionDenied,
-					LocalErr:   errs.ErrDBInternal,
-				},
-			},
-			NotExpectGetPin: true,
 		},
 	}
-
-	ctrl := gomock.NewController(t)
-	repo := mock_repository.NewMockIRepository(ctrl)
-
-	for _, test := range tests {
-		if !test.NotExpectGetPin {
-			repo.EXPECT().GetPinById(test.MockGetPinByID.Args.Ctx, test.MockGetPinByID.Args.PinId).Return(
-				test.MockGetPinByID.Return.Pin, test.MockGetPinByID.Return.Err)
-		}
-		repo.EXPECT().CreatePin(test.MockArgs.Ctx, test.MockArgs.Pin).Return(test.MockReturn.Pin, test.MockReturn.Err)
-		service := service.NewService(repo)
-		res, err := service.CreatePin(test.FuncArgs.Ctx, test.FuncArgs.Pin)
-		assert.Equal(t, test.ExpectedFuncReturn.Pin, res)
-		assert.Equal(t, test.ExpectedFuncReturn.Err, err)
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			repo := mock_repository.NewMockIRepository(ctrl)
+			likeClient := mock_proto.NewMockLikeClient(ctrl)
+			mockBehaviour(repo, context.Background(), testCase.args, Limit, Offset, testCase.expectedMockReturn)
+			s := service.NewService(repo, likeClient)
+			pins, errInfo := s.GetSubscriptionsFeedPins(context.Background(), testCase.args, Limit, Offset)
+			assert.Equal(t, testCase.expectedReturn.FeedPins, pins)
+			assert.Equal(t, testCase.expectedReturn.ErrorInfo, errInfo)
+		})
 	}
 }
 
-func TestUpdatePin(t *testing.T) {
-	type mockArgs struct {
-		Ctx context.Context
-		Pin entity.Pin
+func TestService_GetUserPins(t *testing.T) {
+	type ExpectedReturn struct {
+		UserPins  entity.UserPins
+		ErrorInfo errs.ErrorInfo
 	}
-	type mockReturn struct {
-		Err error
+	type ExpectedMockReturn struct {
+		User     entity.User
+		UserPins entity.UserPins
+		Error1   error
+		Error2   error
 	}
-	type funcArgs struct {
-		Ctx context.Context
-		Pin entity.Pin
+	mockBehaviour := func(repo *mock_repository.MockIRepository, ctx context.Context,
+		mockArgs entity.User, limit int, offset int, mockReturn ExpectedMockReturn) {
+		repo.EXPECT().GetUserByNickname(ctx, mockArgs.Nickname).Return(mockReturn.User, mockReturn.Error1)
+		repo.EXPECT().GetUserPins(ctx, mockArgs.UserID, limit, offset).Return(mockReturn.UserPins, mockReturn.Error2).MaxTimes(1)
 	}
-	type funcReturn struct {
-		Pin entity.PinPageResponse
-		Err errs.ErrorInfo
-	}
-	type test struct {
-		Name               string
-		MockGetPinByID     []mockGetPinByID
-		MockArgs           mockArgs
-		MockReturn         mockReturn
-		FuncArgs           funcArgs
-		ExpectedFuncReturn funcReturn
-		NotExpectUpdatePin bool
-	}
-	tests := []test{
+	testTable := []struct {
+		name               string
+		args               entity.User
+		expectedReturn     ExpectedReturn
+		expectedMockArgs   entity.User
+		expectedMockReturn ExpectedMockReturn
+	}{
 		{
-			Name:           "Correct test 1",
-			MockGetPinByID: []mockGetPinByID{GetPinByIDCorrectValues[0], GetPinByIDCorrectValues[0]},
-			MockArgs: mockArgs{
-				context.Background(),
-				entity.Pin{PinId: entity.PinID(1)},
+			name:             "OK test case 1",
+			args:             entity.User{UserID: 1, Nickname: "nickname"},
+			expectedReturn:   ExpectedReturn{},
+			expectedMockArgs: entity.User{UserID: 1, Nickname: "nickname"},
+			expectedMockReturn: ExpectedMockReturn{
+				User: entity.User{UserID: 1, Nickname: "nickname"},
 			},
-			MockReturn: mockReturn{
-				nil,
-			},
-			FuncArgs: funcArgs{
-				context.Background(),
-				entity.Pin{PinId: entity.PinID(1)},
-			},
-			ExpectedFuncReturn: funcReturn{},
 		},
 		{
-			Name:           "Uncorrect test 1",
-			MockGetPinByID: []mockGetPinByID{GetPinByIDCorrectValues[0]},
-			MockArgs: mockArgs{
-				context.Background(),
-				entity.Pin{PinId: entity.PinID(1)},
+			name: "Error test case 1",
+			args: entity.User{UserID: 1, Nickname: "nickname"},
+			expectedReturn: ExpectedReturn{
+				ErrorInfo: errs.ErrorInfo{GeneralErr: errs.ErrDBInternal, LocalErr: errs.ErrDBInternal},
 			},
-			MockReturn: mockReturn{
-				errs.ErrDBInternal,
+			expectedMockArgs: entity.User{UserID: 1, Nickname: "nickname"},
+			expectedMockReturn: ExpectedMockReturn{
+				Error1: errs.ErrDBInternal,
 			},
-			FuncArgs: funcArgs{
-				context.Background(),
-				entity.Pin{PinId: entity.PinID(1)},
-			},
-			ExpectedFuncReturn: funcReturn{
-				Pin: entity.PinPageResponse{},
-				Err: errs.ErrorInfo{
-					GeneralErr: errs.ErrDBInternal,
-					LocalErr:   errs.ErrDBInternal,
-				},
-			},
-			NotExpectUpdatePin: false,
 		},
 		{
-			Name:           "Uncorrect test 2",
-			MockGetPinByID: []mockGetPinByID{GetPinByIDUncorrectValues[0]},
-			MockArgs: mockArgs{
-				context.Background(),
-				entity.Pin{PinId: entity.PinID(1)},
+			name: "Error test case 2",
+			args: entity.User{UserID: 1, Nickname: "nickname"},
+			expectedReturn: ExpectedReturn{
+				ErrorInfo: errs.ErrorInfo{GeneralErr: errs.ErrDBInternal, LocalErr: errs.ErrDBInternal},
 			},
-			MockReturn: mockReturn{},
-			FuncArgs: funcArgs{
-				context.Background(),
-				entity.Pin{PinId: entity.PinID(1)},
-			},
-			ExpectedFuncReturn: funcReturn{
-				Pin: entity.PinPageResponse{},
-				Err: errs.ErrorInfo{
-					GeneralErr: errs.ErrDBInternal,
-					LocalErr:   errs.ErrElementNotExist,
-				},
-			},
-			NotExpectUpdatePin: true,
-		},
-		{
-			Name:           "Uncorrect test 3",
-			MockGetPinByID: []mockGetPinByID{GetPinByIDCorrectValues[0]},
-			MockArgs: mockArgs{
-				context.Background(),
-				entity.Pin{PinId: entity.PinID(1)},
-			},
-			MockReturn: mockReturn{},
-			FuncArgs: funcArgs{
-				context.Background(),
-				entity.Pin{PinId: entity.PinID(1), AuthorId: entity.UserID(10)},
-			},
-			ExpectedFuncReturn: funcReturn{
-				Pin: entity.PinPageResponse{},
-				Err: errs.ErrorInfo{
-					GeneralErr: nil,
-					LocalErr:   errs.ErrPermissionDenied,
-				},
-			},
-			NotExpectUpdatePin: true,
-		},
-		{
-			Name:           "Uncorrect test 4",
-			MockGetPinByID: []mockGetPinByID{GetPinByIDCorrectValues[0], GetPinByIDUncorrectValues[0]},
-			MockArgs: mockArgs{
-				context.Background(),
-				entity.Pin{PinId: entity.PinID(1)},
-			},
-			MockReturn: mockReturn{},
-			FuncArgs: funcArgs{
-				context.Background(),
-				entity.Pin{PinId: entity.PinID(1)},
-			},
-			ExpectedFuncReturn: funcReturn{
-				Pin: entity.PinPageResponse{},
-				Err: errs.ErrorInfo{
-					GeneralErr: nil,
-					LocalErr:   errs.ErrDBInternal,
-				},
+			expectedMockArgs: entity.User{UserID: 1, Nickname: "nickname"},
+			expectedMockReturn: ExpectedMockReturn{
+				User:   entity.User{UserID: 1, Nickname: "nickname"},
+				Error2: errs.ErrDBInternal,
 			},
 		},
 	}
-	ctrl := gomock.NewController(t)
-	repo := mock_repository.NewMockIRepository(ctrl)
-
-	for _, test := range tests {
-		for _, request := range test.MockGetPinByID {
-			repo.EXPECT().GetPinById(request.Args.Ctx, request.Args.PinId).Return(
-				request.Return.Pin, request.Return.Err)
-		}
-		if !test.NotExpectUpdatePin {
-			repo.EXPECT().UpdatePin(test.MockArgs.Ctx, test.MockArgs.Pin).Return(test.MockReturn.Err)
-		}
-		service := service.NewService(repo)
-		res, err := service.UpdatePin(test.FuncArgs.Ctx, test.FuncArgs.Pin)
-		assert.Equal(t, test.ExpectedFuncReturn.Pin, res)
-		assert.Equal(t, test.ExpectedFuncReturn.Err, err)
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			repo := mock_repository.NewMockIRepository(ctrl)
+			likeClient := mock_proto.NewMockLikeClient(ctrl)
+			mockBehaviour(repo, context.Background(), testCase.expectedMockArgs, Limit, Offset, testCase.expectedMockReturn)
+			s := service.NewService(repo, likeClient)
+			pins, errInfo := s.GetUserPins(context.Background(), testCase.args.Nickname, Limit, Offset)
+			assert.Equal(t, testCase.expectedReturn.UserPins, pins)
+			assert.Equal(t, testCase.expectedReturn.ErrorInfo, errInfo)
+		})
 	}
 }
 
-func TestDeletePin(t *testing.T) {
-	type mockArgs struct {
-		Ctx   context.Context
-		PinID entity.PinID
+func TestService_GetPinById(t *testing.T) {
+	type Args struct {
+		PinId  entity.PinID
+		UserId entity.UserID
 	}
-	type mockReturn struct {
-		Err error
+	type ExpectedReturn struct {
+		PinPageResponse entity.PinPageResponse
+		ErrorInfo       errs.ErrorInfo
 	}
-	type funcArgs struct {
-		Ctx context.Context
-		Pin entity.Pin
+	type ExpectedMockReturn struct {
+		Pin             entity.PinPageResponse
+		CheckIsLikedRes *like.CheckIsLikedResponse
+		Error1          error
+		Error2          error
 	}
-	type funcReturn struct {
-		Err errs.ErrorInfo
+	mockBehaviour := func(repo *mock_repository.MockIRepository, likeService *mock_proto.MockLikeClient, ctx context.Context, mockArgs Args, mockReturn ExpectedMockReturn) {
+		repo.EXPECT().GetPinById(ctx, mockArgs.PinId).Return(mockReturn.Pin, mockReturn.Error1)
+		likeService.EXPECT().CheckIsLiked(ctx, &like.CheckIsLikedRequest{PinId: int64(mockArgs.PinId),
+			UserId: int64(mockArgs.UserId)}).Return(mockReturn.CheckIsLikedRes, mockReturn.Error2).MaxTimes(1)
 	}
-	type test struct {
-		Name               string
-		MockGetPinByID     mockGetPinByID
-		MockArgs           mockArgs
-		MockReturn         mockReturn
-		FuncArgs           funcArgs
-		ExpectedFuncReturn funcReturn
-		NotExpectDeletePin bool
-	}
-
-	tests := []test{
+	testTable := []struct {
+		name               string
+		args               Args
+		expectedReturn     ExpectedReturn
+		expectedMockReturn ExpectedMockReturn
+	}{
 		{
-			Name:           "Correct test 1",
-			MockGetPinByID: GetPinByIDCorrectValues[0],
-			MockArgs: mockArgs{
-				context.Background(),
-				entity.PinID(1),
-			},
-			MockReturn: mockReturn{
-				nil,
-			},
-			FuncArgs: funcArgs{
-				context.Background(),
-				entity.Pin{PinId: entity.PinID(1)},
-			},
-			ExpectedFuncReturn: funcReturn{},
-		},
-		{
-			Name:           "Uncorrect test 1",
-			MockGetPinByID: GetPinByIDCorrectValues[0],
-			MockArgs: mockArgs{
-				context.Background(),
-				entity.PinID(1),
-			},
-			MockReturn: mockReturn{
-				errs.ErrDBInternal,
-			},
-			FuncArgs: funcArgs{
-				context.Background(),
-				entity.Pin{PinId: entity.PinID(1)},
-			},
-			ExpectedFuncReturn: funcReturn{
-				Err: errs.ErrorInfo{
-					GeneralErr: errs.ErrDBInternal,
-					LocalErr:   errs.ErrDBInternal,
+			name: "OK test case 1",
+			args: Args{PinId: 1, UserId: 1},
+			expectedReturn: ExpectedReturn{
+				PinPageResponse: entity.PinPageResponse{
+					PinId:   1,
+					Title:   "Test Pin",
+					IsLiked: true,
 				},
 			},
+			expectedMockReturn: ExpectedMockReturn{
+				Pin:             entity.PinPageResponse{PinId: 1, Title: "Test Pin"},
+				CheckIsLikedRes: &like.CheckIsLikedResponse{Valid: true, Liked: true},
+			},
 		},
 		{
-			Name:           "Uncorrect test 2",
-			MockGetPinByID: GetPinByIDUncorrectValues[0],
-			MockArgs:       mockArgs{},
-			MockReturn:     mockReturn{},
-			FuncArgs: funcArgs{
-				context.Background(),
-				entity.Pin{PinId: entity.PinID(1)},
+			name: "Error test case 1",
+			args: Args{PinId: 2, UserId: 1},
+			expectedReturn: ExpectedReturn{
+				PinPageResponse: entity.PinPageResponse{},
+				ErrorInfo:       errs.ErrorInfo{GeneralErr: errors.New("pin not found"), LocalErr: errs.ErrElementNotExist},
 			},
-			ExpectedFuncReturn: funcReturn{
-				Err: errs.ErrorInfo{
-					GeneralErr: errs.ErrDBInternal,
-					LocalErr:   errs.ErrElementNotExist,
-				},
+			expectedMockReturn: ExpectedMockReturn{
+				Pin:             entity.PinPageResponse{},
+				CheckIsLikedRes: &like.CheckIsLikedResponse{Valid: true, Liked: true},
+				Error1:          errors.New("pin not found"),
 			},
-			NotExpectDeletePin: true,
 		},
 		{
-			Name:           "Uncorrect test 3",
-			MockGetPinByID: GetPinByIDCorrectValues[0],
-			MockArgs: mockArgs{
-				context.Background(),
-				entity.PinID(1),
+			name: "Error test case 2",
+			args: Args{PinId: 1, UserId: 1},
+			expectedReturn: ExpectedReturn{
+				PinPageResponse: entity.PinPageResponse{},
+				ErrorInfo:       errs.ErrorInfo{LocalErr: errs.ErrGRPCWentWrong},
 			},
-			MockReturn: mockReturn{},
-			FuncArgs: funcArgs{
-				context.Background(),
-				entity.Pin{PinId: entity.PinID(1), AuthorId: entity.UserID(100)},
+			expectedMockReturn: ExpectedMockReturn{
+				Pin:             entity.PinPageResponse{},
+				CheckIsLikedRes: &like.CheckIsLikedResponse{Valid: true, Liked: true},
+				Error2:          errors.New("grpc error"),
 			},
-			ExpectedFuncReturn: funcReturn{
-				Err: errs.ErrorInfo{
-					GeneralErr: nil,
-					LocalErr:   errs.ErrPermissionDenied,
-				},
+		},
+		{
+			name: "Error test case 3",
+			args: Args{PinId: 1, UserId: 1},
+			expectedReturn: ExpectedReturn{
+				PinPageResponse: entity.PinPageResponse{},
+				ErrorInfo:       errs.ErrorInfo{LocalErr: errs.ErrDBInternal},
 			},
-			NotExpectDeletePin: true,
+			expectedMockReturn: ExpectedMockReturn{
+				CheckIsLikedRes: &like.CheckIsLikedResponse{Valid: false, LocalError: int64(errs.ErrorCodes[errs.ErrDBInternal].LocalCode)},
+			},
 		},
 	}
-
-	ctrl := gomock.NewController(t)
-	repo := mock_repository.NewMockIRepository(ctrl)
-
-	for _, test := range tests {
-		repo.EXPECT().GetPinById(test.MockGetPinByID.Args.Ctx, test.MockGetPinByID.Args.PinId).Return(
-			test.MockGetPinByID.Return.Pin, test.MockGetPinByID.Return.Err)
-		if !test.NotExpectDeletePin {
-			repo.EXPECT().DeletePin(test.MockArgs.Ctx, test.MockArgs.PinID).Return(test.MockReturn.Err)
-		}
-		service := service.NewService(repo)
-		err := service.DeletePin(test.FuncArgs.Ctx, test.FuncArgs.Pin)
-		assert.Equal(t, test.ExpectedFuncReturn.Err, err)
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			repo := mock_repository.NewMockIRepository(ctrl)
+			likeService := mock_proto.NewMockLikeClient(ctrl)
+			mockBehaviour(repo, likeService, context.Background(), testCase.args, testCase.expectedMockReturn)
+			s := service.NewService(repo, likeService)
+			pin, errInfo := s.GetPinById(context.Background(), testCase.args.PinId, testCase.args.UserId)
+			assert.Equal(t, testCase.expectedReturn.PinPageResponse, pin)
+			assert.Equal(t, testCase.expectedReturn.ErrorInfo, errInfo)
+		})
 	}
 }
 
-func TestGetUserPins(t *testing.T) {
-
-	type mockArgs struct {
-		Ctx      context.Context
-		Nickname string
-		UserID   entity.UserID
-		Limit    int
-		Offset   int
+func TestService_CreatePin(t *testing.T) {
+	type ExpectedReturn struct {
+		Pin       entity.PinPageResponse
+		ErrorInfo errs.ErrorInfo
 	}
-	type mockReturn struct {
-		UserResp entity.User
-		PinsResp entity.UserPins
-		UserErr  error
-		PinsErr  error
+	type ExpectedMockReturn struct {
+		Pin    entity.PinPageResponse
+		Error1 error
+		Error2 error
 	}
-	type funcArgs struct {
-		Ctx      context.Context
-		Nickname string
-		Limit    int
-		Offset   int
+	mockBehaviour := func(repo *mock_repository.MockIRepository, ctx context.Context,
+		mockArgs entity.Pin, mockReturn ExpectedMockReturn) {
+		repo.EXPECT().CreatePin(ctx, mockArgs).Return(mockReturn.Pin.PinId, mockReturn.Error1)
+		repo.EXPECT().GetPinById(ctx, mockArgs.PinId).Return(mockReturn.Pin, mockReturn.Error2).MaxTimes(1)
 	}
-	type funcReturn struct {
-		Pins entity.UserPins
-		Err  errs.ErrorInfo
-	}
-	type test struct {
-		Name               string
-		MockArgs           mockArgs
-		MockReturn         mockReturn
-		FuncArgs           funcArgs
-		ExpectedFuncReturn funcReturn
-		NotExpectGetPins   bool
-	}
-
-	tests := []test{
+	testTable := []struct {
+		name               string
+		args               entity.Pin
+		expectedReturn     ExpectedReturn
+		expectedMockArgs   entity.Pin
+		expectedMockReturn ExpectedMockReturn
+	}{
 		{
-			Name: "Correct test 1",
-			MockArgs: mockArgs{
-				Ctx:      context.Background(),
-				Nickname: "Nickname123",
-				UserID:   entity.UserID(1),
-				Limit:    10,
-				Offset:   10,
+			name: "OK test case 1",
+			args: entity.Pin{PinId: 1},
+			expectedReturn: ExpectedReturn{
+				Pin: entity.PinPageResponse{PinId: 1},
 			},
-			MockReturn: mockReturn{
-				UserResp: entity.User{UserID: entity.UserID(1), Nickname: "Nickname123"},
-				PinsResp: entity.UserPins{},
-				UserErr:  nil,
-				PinsErr:  nil,
-			},
-			FuncArgs: funcArgs{
-				Ctx:      context.Background(),
-				Nickname: "Nickname123",
-				Limit:    10,
-				Offset:   10,
-			},
-			ExpectedFuncReturn: funcReturn{},
-		},
-		{
-			Name: "Uncorrect test 1",
-			MockArgs: mockArgs{
-				Ctx:      context.Background(),
-				Nickname: "Nickname123",
-				UserID:   entity.UserID(1),
-				Limit:    10,
-				Offset:   10,
-			},
-			MockReturn: mockReturn{
-				UserResp: entity.User{UserID: entity.UserID(1), Nickname: "Nickname123"},
-				PinsResp: entity.UserPins{},
-				UserErr:  nil,
-				PinsErr:  errs.ErrDBInternal,
-			},
-			FuncArgs: funcArgs{
-				Ctx:      context.Background(),
-				Nickname: "Nickname123",
-				Limit:    10,
-				Offset:   10,
-			},
-			ExpectedFuncReturn: funcReturn{
-				Err: errs.ErrorInfo{
-					GeneralErr: errs.ErrDBInternal,
-					LocalErr:   errs.ErrDBInternal,
-				},
+			expectedMockArgs: entity.Pin{PinId: 1},
+			expectedMockReturn: ExpectedMockReturn{
+				Pin: entity.PinPageResponse{PinId: 1},
 			},
 		},
 		{
-			Name: "Uncorrect test 2",
-			MockArgs: mockArgs{
-				Ctx:      context.Background(),
-				Nickname: "Nickname123",
-				UserID:   entity.UserID(1),
-				Limit:    10,
-				Offset:   10,
+			name: "Error test case 1",
+			args: entity.Pin{PinId: 1},
+			expectedReturn: ExpectedReturn{
+				ErrorInfo: errs.ErrorInfo{GeneralErr: errs.ErrDBInternal, LocalErr: errs.ErrDBInternal},
 			},
-			MockReturn: mockReturn{
-				UserResp: entity.User{UserID: entity.UserID(1), Nickname: "Nickname123"},
-				PinsResp: entity.UserPins{},
-				UserErr:  errs.ErrDBInternal,
-				PinsErr:  nil,
+			expectedMockArgs: entity.Pin{PinId: 1},
+			expectedMockReturn: ExpectedMockReturn{
+				Error1: errs.ErrDBInternal,
 			},
-			FuncArgs: funcArgs{
-				Ctx:      context.Background(),
-				Nickname: "Nickname123",
-				Limit:    10,
-				Offset:   10,
+		},
+		{
+			name: "Error test case 2",
+			args: entity.Pin{PinId: 1},
+			expectedReturn: ExpectedReturn{
+				ErrorInfo: errs.ErrorInfo{GeneralErr: errs.ErrDBInternal, LocalErr: errs.ErrDBInternal},
 			},
-			ExpectedFuncReturn: funcReturn{
-				Err: errs.ErrorInfo{
-					GeneralErr: errs.ErrDBInternal,
-					LocalErr:   errs.ErrDBInternal,
-				},
+			expectedMockArgs: entity.Pin{PinId: 1},
+			expectedMockReturn: ExpectedMockReturn{
+				Pin:    entity.PinPageResponse{PinId: 1},
+				Error2: errs.ErrDBInternal,
 			},
-			NotExpectGetPins: true,
 		},
 	}
-
-	ctrl := gomock.NewController(t)
-	repo := mock_repository.NewMockIRepository(ctrl)
-	for _, test := range tests {
-		repo.EXPECT().GetUserByNickname(test.MockArgs.Ctx, test.MockArgs.Nickname).Return(
-			test.MockReturn.UserResp, test.MockReturn.UserErr)
-		if !test.NotExpectGetPins {
-			repo.EXPECT().GetUserPins(test.MockArgs.Ctx, test.MockArgs.UserID, test.MockArgs.Limit, test.MockArgs.Offset).Return(
-				test.MockReturn.PinsResp, test.MockReturn.PinsErr)
-		}
-		service := service.NewService(repo)
-		res, err := service.GetUserPins(test.FuncArgs.Ctx, test.FuncArgs.Nickname, test.FuncArgs.Limit, test.FuncArgs.Offset)
-		assert.Equal(t, test.ExpectedFuncReturn.Pins, res)
-		assert.Equal(t, test.ExpectedFuncReturn.Err, err)
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			repo := mock_repository.NewMockIRepository(ctrl)
+			likeClient := mock_proto.NewMockLikeClient(ctrl)
+			mockBehaviour(repo, context.Background(), testCase.expectedMockArgs, testCase.expectedMockReturn)
+			s := service.NewService(repo, likeClient)
+			pin, errInfo := s.CreatePin(context.Background(), testCase.args)
+			assert.Equal(t, testCase.expectedReturn.Pin, pin)
+			assert.Equal(t, testCase.expectedReturn.ErrorInfo, errInfo)
+		})
 	}
 }
 
-func TestGetFeedPins(t *testing.T) {
-	type mockArgs struct {
-		Ctx    context.Context
-		Limit  int
-		Offset int
+func TestService_UpdatePin(t *testing.T) {
+	type ExpectedReturn struct {
+		Pin       entity.PinPageResponse
+		ErrorInfo errs.ErrorInfo
 	}
-	type mockReturn struct {
-		PinsResp entity.FeedPins
-		Err      error
+	type ExpectedMockReturn struct {
+		Pin    entity.PinPageResponse
+		Error1 error
+		Error2 error
+		Error3 error
 	}
-	type funcArgs struct {
-		Ctx    context.Context
-		Limit  int
-		Offset int
+	mockBehaviour := func(repo *mock_repository.MockIRepository, ctx context.Context,
+		mockArgs entity.Pin, mockReturn ExpectedMockReturn) {
+		repo.EXPECT().GetPinById(ctx, mockArgs.PinId).Return(mockReturn.Pin, mockReturn.Error1).MaxTimes(1)
+		repo.EXPECT().UpdatePin(ctx, mockArgs).Return(mockReturn.Error2).MaxTimes(1)
+		repo.EXPECT().GetPinById(ctx, mockArgs.PinId).Return(mockReturn.Pin, mockReturn.Error3).MaxTimes(1)
 	}
-	type funcReturn struct {
-		Pins entity.FeedPins
-		Err  errs.ErrorInfo
-	}
-	type test struct {
-		Name               string
-		MockArgs           mockArgs
-		MockReturn         mockReturn
-		FuncArgs           funcArgs
-		ExpectedFuncReturn funcReturn
-	}
-
-	tests := []test{
+	testTable := []struct {
+		name               string
+		args               entity.Pin
+		expectedReturn     ExpectedReturn
+		expectedMockArgs   entity.Pin
+		expectedMockReturn ExpectedMockReturn
+	}{
 		{
-			Name: "Correct test 1",
-			MockArgs: mockArgs{
-				Ctx:    context.Background(),
-				Limit:  10,
-				Offset: 10,
+			name: "OK test case 1",
+			args: entity.Pin{PinId: 1},
+			expectedReturn: ExpectedReturn{
+				Pin: entity.PinPageResponse{PinId: 1},
 			},
-			MockReturn: mockReturn{},
-			FuncArgs: funcArgs{
-				Ctx:    context.Background(),
-				Limit:  10,
-				Offset: 10,
+			expectedMockArgs: entity.Pin{PinId: 1},
+			expectedMockReturn: ExpectedMockReturn{
+				Pin: entity.PinPageResponse{PinId: 1},
 			},
-			ExpectedFuncReturn: funcReturn{},
 		},
 		{
-			Name: "Uncorrect test 1",
-			MockArgs: mockArgs{
-				Ctx:    context.Background(),
-				Limit:  10,
-				Offset: 10,
+			name: "Error test case 1",
+			args: entity.Pin{PinId: 1},
+			expectedReturn: ExpectedReturn{
+				ErrorInfo: errs.ErrorInfo{GeneralErr: errs.ErrDBInternal, LocalErr: errs.ErrElementNotExist},
 			},
-			MockReturn: mockReturn{
-				PinsResp: entity.FeedPins{},
-				Err:      errs.ErrDBInternal,
+			expectedMockArgs: entity.Pin{PinId: 1},
+			expectedMockReturn: ExpectedMockReturn{
+				Error1: errs.ErrDBInternal,
 			},
-			FuncArgs: funcArgs{
-				Ctx:    context.Background(),
-				Limit:  10,
-				Offset: 10,
+		},
+		{
+			name: "Error test case 2",
+			args: entity.Pin{PinId: 1},
+			expectedReturn: ExpectedReturn{
+				ErrorInfo: errs.ErrorInfo{GeneralErr: errs.ErrDBInternal, LocalErr: errs.ErrDBInternal},
 			},
-			ExpectedFuncReturn: funcReturn{
-				Err: errs.ErrorInfo{
-					GeneralErr: errs.ErrDBInternal,
-					LocalErr:   errs.ErrDBInternal,
-				},
+			expectedMockArgs: entity.Pin{PinId: 1},
+			expectedMockReturn: ExpectedMockReturn{
+				Pin:    entity.PinPageResponse{PinId: 1},
+				Error2: errs.ErrDBInternal,
+			},
+		},
+		{
+			name: "Error test case 3",
+			args: entity.Pin{PinId: 1},
+			expectedReturn: ExpectedReturn{
+				ErrorInfo: errs.ErrorInfo{GeneralErr: errs.ErrDBInternal, LocalErr: errs.ErrDBInternal},
+			},
+			expectedMockArgs: entity.Pin{PinId: 1},
+			expectedMockReturn: ExpectedMockReturn{
+				Pin:    entity.PinPageResponse{PinId: 1},
+				Error3: errs.ErrDBInternal,
+			},
+		},
+		{
+			name: "Error test case 4",
+			args: entity.Pin{PinId: 1, AuthorId: 1},
+			expectedReturn: ExpectedReturn{
+				ErrorInfo: errs.ErrorInfo{LocalErr: errs.ErrPermissionDenied},
+			},
+			expectedMockArgs: entity.Pin{PinId: 1},
+			expectedMockReturn: ExpectedMockReturn{
+				Pin: entity.PinPageResponse{PinId: 1, PinAuthor: entity.PinAuthor{UserId: 123}},
 			},
 		},
 	}
-
-	ctrl := gomock.NewController(t)
-	repo := mock_repository.NewMockIRepository(ctrl)
-	for _, test := range tests {
-		repo.EXPECT().GetFeedPins(test.MockArgs.Ctx, test.MockArgs.Limit, test.MockArgs.Offset).Return(
-			test.MockReturn.PinsResp, test.MockReturn.Err)
-		service := service.NewService(repo)
-		res, err := service.GetFeedPins(test.FuncArgs.Ctx, test.FuncArgs.Limit, test.FuncArgs.Offset)
-		assert.Equal(t, test.ExpectedFuncReturn.Pins, res)
-		assert.Equal(t, test.ExpectedFuncReturn.Err, err)
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			repo := mock_repository.NewMockIRepository(ctrl)
+			likeClient := mock_proto.NewMockLikeClient(ctrl)
+			mockBehaviour(repo, context.Background(), testCase.expectedMockArgs, testCase.expectedMockReturn)
+			s := service.NewService(repo, likeClient)
+			pin, errInfo := s.UpdatePin(context.Background(), testCase.args)
+			assert.Equal(t, testCase.expectedReturn.Pin, pin)
+			assert.Equal(t, testCase.expectedReturn.ErrorInfo, errInfo)
+		})
 	}
 }
-*/
+
+func TestService_DeletePin(t *testing.T) {
+	type ExpectedReturn struct {
+		ErrorInfo errs.ErrorInfo
+	}
+	type ExpectedMockReturn struct {
+		Pin    entity.PinPageResponse
+		Error1 error
+		Error2 error
+	}
+	mockBehaviour := func(repo *mock_repository.MockIRepository, ctx context.Context,
+		mockArgs entity.Pin, mockReturn ExpectedMockReturn) {
+		repo.EXPECT().GetPinById(ctx, mockArgs.PinId).Return(mockReturn.Pin, mockReturn.Error1)
+		repo.EXPECT().DeletePin(ctx, mockArgs.PinId).Return(mockReturn.Error2).MaxTimes(1)
+	}
+	testTable := []struct {
+		name               string
+		args               entity.Pin
+		expectedReturn     ExpectedReturn
+		expectedMockArgs   entity.Pin
+		expectedMockReturn ExpectedMockReturn
+	}{
+		{
+			name:             "OK test case 1",
+			args:             entity.Pin{PinId: 1},
+			expectedReturn:   ExpectedReturn{},
+			expectedMockArgs: entity.Pin{PinId: 1},
+			expectedMockReturn: ExpectedMockReturn{
+				Pin: entity.PinPageResponse{PinId: 1},
+			},
+		},
+		{
+			name: "Error test case 1",
+			args: entity.Pin{PinId: 1},
+			expectedReturn: ExpectedReturn{
+				ErrorInfo: errs.ErrorInfo{GeneralErr: errs.ErrDBInternal, LocalErr: errs.ErrElementNotExist},
+			},
+			expectedMockArgs: entity.Pin{PinId: 1},
+			expectedMockReturn: ExpectedMockReturn{
+				Error1: errs.ErrDBInternal,
+			},
+		},
+		{
+			name: "Error test case 2",
+			args: entity.Pin{PinId: 1},
+			expectedReturn: ExpectedReturn{
+				ErrorInfo: errs.ErrorInfo{GeneralErr: errs.ErrDBInternal, LocalErr: errs.ErrDBInternal},
+			},
+			expectedMockArgs: entity.Pin{PinId: 1},
+			expectedMockReturn: ExpectedMockReturn{
+				Pin:    entity.PinPageResponse{PinId: 1},
+				Error2: errs.ErrDBInternal,
+			},
+		},
+		{
+			name: "Error test case 3",
+			args: entity.Pin{PinId: 1, AuthorId: 1},
+			expectedReturn: ExpectedReturn{
+				ErrorInfo: errs.ErrorInfo{LocalErr: errs.ErrPermissionDenied},
+			},
+			expectedMockArgs: entity.Pin{PinId: 1},
+			expectedMockReturn: ExpectedMockReturn{
+				Pin: entity.PinPageResponse{PinId: 1, PinAuthor: entity.PinAuthor{UserId: 123}},
+			},
+		},
+	}
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			repo := mock_repository.NewMockIRepository(ctrl)
+			likeClient := mock_proto.NewMockLikeClient(ctrl)
+			mockBehaviour(repo, context.Background(), testCase.expectedMockArgs, testCase.expectedMockReturn)
+			s := service.NewService(repo, likeClient)
+			errInfo := s.DeletePin(context.Background(), testCase.args)
+			assert.Equal(t, testCase.expectedReturn.ErrorInfo, errInfo)
+		})
+	}
+}
