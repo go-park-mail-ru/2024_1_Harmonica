@@ -1,6 +1,5 @@
 package tests
 
-/*
 import (
 	"bytes"
 	"context"
@@ -9,15 +8,18 @@ import (
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"harmonica/internal/handler"
+	"harmonica/internal/microservices/auth/proto"
+	grpcAuth "harmonica/mocks/microservices/auth/proto"
+	mock_proto "harmonica/mocks/microservices/auth/proto"
 	mock_service "harmonica/mocks/service"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
-	"golang.org/x/crypto/bcrypt"
 )
 
 var users = []entity.User{
@@ -51,6 +53,10 @@ func MakeUserResponseBody(user entity.User) string {
 	return fmt.Sprintf(`{"user_id":%d,"email":"%s","nickname":"%s","avatar_url":"%s"}`,
 		user.UserID, user.Email, user.Nickname, user.AvatarURL)
 }
+func MakeUserResponseBodyWithBounds(user entity.User) string {
+	return fmt.Sprintf(`{"user_id":%d,"email":"%s","nickname":"%s","avatar_url":"%s","avatar_width":0,"avatar_height":0}`,
+		user.UserID, user.Email, user.Nickname, user.AvatarURL)
+}
 
 func MakeErrorResponse(err error) string {
 	return fmt.Sprintf(`{"code":%d,"message":"%s"}`,
@@ -79,172 +85,337 @@ func MakeErrorListResponse(errsList ...error) string {
 	return string(jsonData)
 }
 
-func TestLogin(t *testing.T) {
-	type mockArgs struct {
-		Email string
-	}
-	type mockReturn struct {
-		User entity.User
-		Err  errs.ErrorInfo
-	}
-	type expectedResponse struct {
-		Body string
-		Code int
-	}
-	type test struct {
-		Name             string
-		MockArgs         mockArgs
-		MockReturn       mockReturn
-		Request          []byte
-		ExpectedResponse expectedResponse
-		Ctx              context.Context
-	}
-	tests := []test{
+func TestHandler_Login(t *testing.T) {
+	curTime := time.Time{}
+	timeString := curTime.Format(time.RFC3339Nano)
+	userJsonString := fmt.Sprintf(`{"user_id":%d,"email":"%s","nickname":"%s","avatar_url":"","avatar_width":0,"avatar_height":0}`,
+		0, "email@mail.ru", "MIRACLE")
+
+	type AuthServiceMockBehavior func(
+		mockClient *grpcAuth.MockAuthorizationClient,
+		req *proto.LoginUserRequest,
+		expectedResponse *proto.LoginUserResponse,
+	)
+
+	testTable := []struct {
+		name               string
+		requestBody        map[string]string
+		expectedStatusCode int
+		expectedJSON       string
+
+		expectedRequest         *proto.LoginUserRequest
+		expectedResponse        *proto.LoginUserResponse
+		authServiceMockBehavior AuthServiceMockBehavior
+
+		context context.Context
+	}{
 		{
-			Name: "Correct test 1",
-			MockArgs: mockArgs{
-				Email: users[0].Email,
+			name:               "OK test case 1",
+			requestBody:        map[string]string{"email": "email@mail.ru", "password": "Passw0rd", "nickname": "MIRACLE"},
+			expectedStatusCode: 200,
+			expectedJSON:       userJsonString,
+			expectedRequest: &proto.LoginUserRequest{
+				UserId:   0,
+				Email:    "email@mail.ru",
+				Nickname: "MIRACLE",
+				Password: "Passw0rd",
 			},
-			MockReturn: mockReturn{
-				User: users[0],
+			expectedResponse: &proto.LoginUserResponse{
+				UserId:     0,
+				Email:      "email@mail.ru",
+				Nickname:   "MIRACLE",
+				Password:   "Passw0rd",
+				RegisterAt: timeString,
+				LocalError: 0,
+				Valid:      true,
+				AvatarURL:  "",
+				ExpiresAt:  timeString,
 			},
-			Request: []byte(fmt.Sprintf(`{"email":"%s","password":"%s"}`, users[0].Email, users[0].Password)),
-			ExpectedResponse: expectedResponse{
-				Body: MakeUserResponseBody(users[0]),
-				Code: 200,
+			authServiceMockBehavior: func(mockClient *mock_proto.MockAuthorizationClient,
+				req *proto.LoginUserRequest, expectedResponse *proto.LoginUserResponse) {
+				mockClient.EXPECT().Login(gomock.Any(), req).Return(expectedResponse, nil)
 			},
-			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
+			context: context.WithValue(context.Background(), "request_id", "1"),
 		},
 		{
-			Name: "Correct test 2",
-			MockArgs: mockArgs{
-				Email: users[1].Email,
+			name:               "Error test case 1",
+			requestBody:        map[string]string{"email": "email@mail.ru", "password": "Passw0rd", "nickname": "MIRACLE"},
+			expectedStatusCode: 500,
+			expectedJSON:       MakeErrorResponse(errs.ErrDBInternal),
+			expectedRequest: &proto.LoginUserRequest{
+				UserId:   0,
+				Email:    "email@mail.ru",
+				Nickname: "MIRACLE",
+				Password: "Passw0rd",
 			},
-			MockReturn: mockReturn{
-				User: users[1],
+			expectedResponse: &proto.LoginUserResponse{
+				UserId:     0,
+				Email:      "email@mail.ru",
+				Nickname:   "MIRACLE",
+				Password:   "Passw0rd",
+				RegisterAt: timeString,
+				LocalError: 11,
+				Valid:      false,
+				AvatarURL:  "",
+				ExpiresAt:  timeString,
 			},
-			Request: []byte(fmt.Sprintf(`{"email":"%s","password":"%s"}`, users[1].Email, users[1].Password)),
-			ExpectedResponse: expectedResponse{
-				Body: MakeUserResponseBody(users[1]),
-				Code: 200,
+			authServiceMockBehavior: func(mockClient *mock_proto.MockAuthorizationClient,
+				req *proto.LoginUserRequest, expectedResponse *proto.LoginUserResponse) {
+				mockClient.EXPECT().Login(gomock.Any(), req).Return(expectedResponse, nil)
 			},
-			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
+			context: context.WithValue(context.Background(), "request_id", "1"),
 		},
 		{
-			Name: "Correct test 3",
-			MockArgs: mockArgs{
-				Email: users[2].Email,
+			name:               "Error test case 2",
+			requestBody:        map[string]string{"email": "email@mail.ru", "password": "Passw0rd", "nickname": "MIRACLE"},
+			expectedStatusCode: 500,
+			expectedJSON:       MakeErrorResponse(errs.ErrCantParseTime),
+			expectedRequest: &proto.LoginUserRequest{
+				UserId:   0,
+				Email:    "email@mail.ru",
+				Nickname: "MIRACLE",
+				Password: "Passw0rd",
 			},
-			MockReturn: mockReturn{
-				User: users[2],
+			expectedResponse: &proto.LoginUserResponse{
+				UserId:     0,
+				Email:      "email@mail.ru",
+				Nickname:   "MIRACLE",
+				Password:   "Passw0rd",
+				RegisterAt: timeString,
+				LocalError: 0,
+				Valid:      true,
+				AvatarURL:  "",
+				ExpiresAt:  "9 часов утра, 07.05.24",
 			},
-			Request: []byte(fmt.Sprintf(`{"email":"%s","password":"%s"}`, users[2].Email, users[2].Password)),
-			ExpectedResponse: expectedResponse{
-				Body: MakeUserResponseBody(users[2]),
-				Code: 200,
+			authServiceMockBehavior: func(mockClient *mock_proto.MockAuthorizationClient,
+				req *proto.LoginUserRequest, expectedResponse *proto.LoginUserResponse) {
+				mockClient.EXPECT().Login(gomock.Any(), req).Return(expectedResponse, nil)
 			},
-			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
-		},
-		{
-			Name: "Incorrect test 1",
-			MockArgs: mockArgs{
-				Email: users[3].Email,
-			},
-			MockReturn: mockReturn{
-				User: users[3],
-			},
-			Request: []byte(fmt.Sprintf(`{"email":"%s","password":"%s"}`, users[3].Email, users[3].Password)),
-			ExpectedResponse: expectedResponse{
-				Body: MakeErrorResponse(errs.ErrInvalidInputFormat),
-				Code: 400,
-			},
-			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
-		},
-		{
-			Name: "Incorrect test 2",
-			MockArgs: mockArgs{
-				Email: users[0].Email,
-			},
-			MockReturn: mockReturn{
-				User: users[0],
-			},
-			Request: []byte(`"alala`),
-			ExpectedResponse: expectedResponse{
-				Body: MakeErrorResponse(errs.ErrReadingRequestBody),
-				Code: 400,
-			},
-			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
+			context: context.WithValue(context.Background(), "request_id", "1"),
 		},
 	}
-	ctrl := gomock.NewController(t)
-	serviceMock := mock_service.NewMockIService(ctrl)
-	h := handler.NewAPIHandler(serviceMock, zap.L())
-	for _, curTest := range tests {
-		curHashedPassword, err := bcrypt.GenerateFromPassword([]byte(curTest.MockReturn.User.Password), bcrypt.DefaultCost)
-		if err != nil {
-			t.Errorf("error hashng passwords: %v", err)
-			return
-		}
-		curTest.MockReturn.User.Password = string(curHashedPassword)
-		r := httptest.NewRequest(http.MethodPost, "/api/v1/login", bytes.NewBuffer(curTest.Request))
-		r = r.WithContext(curTest.Ctx)
-		w := httptest.NewRecorder()
-		serviceMock.EXPECT().GetUserByEmail(curTest.Ctx, curTest.MockArgs.Email).
-			Return(curTest.MockReturn.User, curTest.MockReturn.Err).MaxTimes(1)
-		h.Login(w, r)
-		assert.Equal(t, w.Code, curTest.ExpectedResponse.Code)
-		assert.Equal(t, w.Body.String(), curTest.ExpectedResponse.Body)
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockAuthServiceClient := mock_proto.NewMockAuthorizationClient(ctrl)
+			testCase.authServiceMockBehavior(mockAuthServiceClient, testCase.expectedRequest, testCase.expectedResponse)
+			serviceMock := mock_service.NewMockIService(ctrl)
+
+			h := handler.NewAPIHandler(serviceMock, zap.L(), nil, mockAuthServiceClient, nil, nil)
+			requestJSON, _ := json.Marshal(&testCase.requestBody)
+
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest(http.MethodPost, "/api/v1/login", bytes.NewBuffer(requestJSON))
+			r = r.WithContext(testCase.context)
+
+			h.Login(w, r)
+
+			assert.Equal(t, testCase.expectedStatusCode, w.Code)
+			assert.Equal(t, testCase.expectedJSON, w.Body.String())
+		})
 	}
 }
 
-func TestLogout(t *testing.T) {
-	type expectedResponse struct {
-		Body string
-		Code int
-	}
-	type test struct {
-		Name             string
-		ExpectedResponse expectedResponse
-		Cookie           *http.Cookie
-		Ctx              context.Context
-	}
-	tests := []test{
+func TestHandler_IsAuth(t *testing.T) {
+	userJsonString := fmt.Sprintf(`{"user_id":%d,"email":"%s","nickname":"%s","avatar_url":"","avatar_width":0,"avatar_height":0}`,
+		0, "email@mail.ru", "MIRACLE")
+	errorJsonStringDBErr := `{"code":11,"message":"internal db error"}`
+
+	type AuthServiceMockBehavior func(
+		mockClient *grpcAuth.MockAuthorizationClient,
+		req *proto.Empty,
+		expectedResponse *proto.IsAuthResponse,
+	)
+
+	testTable := []struct {
+		name               string
+		expectedStatusCode int
+		expectedJSON       string
+
+		expectedRequest         *proto.Empty
+		expectedResponse        *proto.IsAuthResponse
+		authServiceMockBehavior AuthServiceMockBehavior
+
+		context context.Context
+	}{
 		{
-			Name: "Correct test 1",
-			ExpectedResponse: expectedResponse{
-				Code: 204,
+			name:               "OK test case 1",
+			expectedStatusCode: 200,
+			expectedJSON:       userJsonString,
+			expectedRequest:    &proto.Empty{},
+			expectedResponse: &proto.IsAuthResponse{
+				IsAuthorized: true,
+				User: &proto.IsAuthUserResponse{
+					UserId:    0,
+					Email:     "email@mail.ru",
+					Nickname:  "MIRACLE",
+					AvatarURL: "",
+				},
+				LocalError: 0,
+				Valid:      true,
 			},
-			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
+			authServiceMockBehavior: func(mockClient *mock_proto.MockAuthorizationClient,
+				req *proto.Empty, expectedResponse *proto.IsAuthResponse) {
+				mockClient.EXPECT().IsAuth(gomock.Any(), req).Return(expectedResponse, nil)
+			},
+			context: context.WithValue(context.WithValue(context.Background(), "request_id", "1"), "user_id", entity.UserID(1)),
 		},
 		{
-			Name: "Correct test 1",
-			ExpectedResponse: expectedResponse{
-				Code: 204,
+			name:               "Error test case 1",
+			expectedStatusCode: 500,
+			expectedJSON:       errorJsonStringDBErr,
+			expectedRequest:    &proto.Empty{},
+			expectedResponse: &proto.IsAuthResponse{
+				IsAuthorized: true,
+				User: &proto.IsAuthUserResponse{
+					UserId:    0,
+					Email:     "email@mail.ru",
+					Nickname:  "MIRACLE",
+					AvatarURL: "",
+				},
+				LocalError: 11,
+				Valid:      false,
 			},
-			Cookie: &http.Cookie{
-				Name:  "session_token",
-				Value: "token",
+			authServiceMockBehavior: func(mockClient *mock_proto.MockAuthorizationClient,
+				req *proto.Empty, expectedResponse *proto.IsAuthResponse) {
+				mockClient.EXPECT().IsAuth(gomock.Any(), req).Return(expectedResponse, nil)
 			},
-			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
+			context: context.WithValue(context.WithValue(context.Background(), "request_id", "1"), "user_id", entity.UserID(1)),
+		},
+		{
+			name:               "Error test case 2",
+			expectedStatusCode: 500,
+			expectedJSON:       errorJsonStringDBErr,
+			expectedRequest:    &proto.Empty{},
+			expectedResponse: &proto.IsAuthResponse{
+				IsAuthorized: true,
+				User: &proto.IsAuthUserResponse{
+					UserId:    0,
+					Email:     "email@mail.ru",
+					Nickname:  "MIRACLE",
+					AvatarURL: "",
+				},
+				LocalError: 11,
+				Valid:      false,
+			},
+			authServiceMockBehavior: func(mockClient *mock_proto.MockAuthorizationClient,
+				req *proto.Empty, expectedResponse *proto.IsAuthResponse) {
+				mockClient.EXPECT().IsAuth(gomock.Any(), req).Return(expectedResponse, nil)
+			},
+			context: context.WithValue(context.WithValue(context.Background(), "request_id", "1"), "user_id", entity.UserID(1)),
 		},
 	}
-	ctrl := gomock.NewController(t)
-	serviceMock := mock_service.NewMockIService(ctrl)
-	h := handler.NewAPIHandler(serviceMock, zap.L())
-	for _, curTest := range tests {
-		r := httptest.NewRequest(http.MethodGet, "/api/v1/logout", nil)
-		if curTest.Cookie != nil {
-			r.AddCookie(curTest.Cookie)
-		}
-		r = r.WithContext(curTest.Ctx)
-		w := httptest.NewRecorder()
-		h.Logout(w, r)
-		assert.Equal(t, w.Code, curTest.ExpectedResponse.Code)
-		assert.Equal(t, w.Body.String(), curTest.ExpectedResponse.Body)
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockAuthServiceClient := mock_proto.NewMockAuthorizationClient(ctrl)
+			testCase.authServiceMockBehavior(mockAuthServiceClient, testCase.expectedRequest, testCase.expectedResponse)
+			serviceMock := mock_service.NewMockIService(ctrl)
+
+			h := handler.NewAPIHandler(serviceMock, zap.L(), nil, mockAuthServiceClient, nil, nil)
+
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest(http.MethodGet, "/api/v1/is_auth", bytes.NewBuffer([]byte{}))
+			r = r.WithContext(testCase.context)
+
+			h.IsAuth(w, r)
+
+			assert.Equal(t, testCase.expectedStatusCode, w.Code)
+			assert.Equal(t, testCase.expectedJSON, w.Body.String())
+		})
+	}
+}
+
+func TestHandler_Logout(t *testing.T) {
+	type AuthServiceMockBehavior func(
+		mockClient *grpcAuth.MockAuthorizationClient,
+		req *proto.LogoutRequest,
+		expectedResponse *proto.LogoutResponse,
+	)
+
+	testTable := []struct {
+		name               string
+		expectedStatusCode int
+		expectedJSON       string
+
+		expectedRequest         *proto.LogoutRequest
+		expectedResponse        *proto.LogoutResponse
+		authServiceMockBehavior AuthServiceMockBehavior
+
+		expectCookie bool
+
+		context context.Context
+	}{
+		{
+			name:               "OK test case 1",
+			expectedStatusCode: 204,
+			expectedJSON:       ``,
+			expectedRequest: &proto.LogoutRequest{
+				SessionToken: "ses1",
+			},
+			expectedResponse: &proto.LogoutResponse{},
+			authServiceMockBehavior: func(mockClient *mock_proto.MockAuthorizationClient,
+				req *proto.LogoutRequest, expectedResponse *proto.LogoutResponse) {
+				mockClient.EXPECT().Logout(gomock.Any(), req).Return(expectedResponse, nil)
+			},
+			context:      context.WithValue(context.Background(), "request_id", "1"),
+			expectCookie: true,
+		},
+		{
+			name:               "OK test case 1",
+			expectedStatusCode: 204,
+			expectedJSON:       ``,
+			expectedRequest: &proto.LogoutRequest{
+				SessionToken: "ses1",
+			},
+			expectedResponse: &proto.LogoutResponse{},
+			authServiceMockBehavior: func(mockClient *mock_proto.MockAuthorizationClient,
+				req *proto.LogoutRequest, expectedResponse *proto.LogoutResponse) {
+				mockClient.EXPECT().Logout(gomock.Any(), req).Return(expectedResponse, nil).AnyTimes()
+			},
+			context:      context.WithValue(context.Background(), "request_id", "1"),
+			expectCookie: false,
+		},
+	}
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockAuthServiceClient := mock_proto.NewMockAuthorizationClient(ctrl)
+			testCase.authServiceMockBehavior(mockAuthServiceClient, testCase.expectedRequest, testCase.expectedResponse)
+			serviceMock := mock_service.NewMockIService(ctrl)
+
+			h := handler.NewAPIHandler(serviceMock, zap.L(), nil, mockAuthServiceClient, nil, nil)
+
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest(http.MethodGet, "/api/v1/logout", bytes.NewBuffer([]byte{}))
+			r = r.WithContext(testCase.context)
+			if testCase.expectCookie {
+				r.AddCookie(&http.Cookie{Name: "session_token", Value: "ses1"})
+			}
+
+			h.Logout(w, r)
+
+			assert.Equal(t, testCase.expectedStatusCode, w.Code)
+			assert.Equal(t, testCase.expectedJSON, w.Body.String())
+		})
 	}
 }
 
 func TestRegister(t *testing.T) {
+	curTime := time.Time{}
+	timeString := curTime.Format(time.RFC3339Nano)
+
+	type AuthServiceMockBehavior func(
+		mockClient *grpcAuth.MockAuthorizationClient,
+		req *proto.LoginUserRequest,
+		expectedResponse *proto.LoginUserResponse,
+	)
 	type mockArgs struct {
 		User entity.User
 	}
@@ -264,6 +435,10 @@ func TestRegister(t *testing.T) {
 		Request          []byte
 		ExpectedResponse expectedResponse
 		Ctx              context.Context
+
+		expectedRequest         *proto.LoginUserRequest
+		expectedResponse        *proto.LoginUserResponse
+		authServiceMockBehavior AuthServiceMockBehavior
 	}
 	tests := []test{
 		{
@@ -276,91 +451,81 @@ func TestRegister(t *testing.T) {
 			},
 			Request: []byte(fmt.Sprintf(`{"email":"%s","nickname":"%s","password":"%s"}`,
 				users[0].Email, users[0].Nickname, users[0].Password)),
+			expectedRequest: &proto.LoginUserRequest{
+				UserId:     int64(users[0].UserID),
+				Email:      users[0].Email,
+				Nickname:   users[0].Nickname,
+				Password:   users[0].Password,
+				AvatarURL:  users[0].AvatarURL,
+				RegisterAt: timeString,
+			},
+			expectedResponse: &proto.LoginUserResponse{
+				UserId:     int64(users[0].UserID),
+				Email:      users[0].Email,
+				Nickname:   users[0].Nickname,
+				Password:   users[0].Password,
+				AvatarURL:  users[0].AvatarURL,
+				Valid:      true,
+				LocalError: 0,
+				ExpiresAt:  timeString,
+			},
+			authServiceMockBehavior: func(mockClient *grpcAuth.MockAuthorizationClient,
+				req *proto.LoginUserRequest, expectedResponse *proto.LoginUserResponse) {
+				mockClient.EXPECT().Login(gomock.Any(), req).Return(expectedResponse, nil).AnyTimes()
+			},
 			ExpectedResponse: expectedResponse{
-				Body: MakeUserResponseBody(users[0]),
+				Body: MakeUserResponseBodyWithBounds(users[0]),
 				Code: 200,
 			},
 			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 		{
-			Name: "Correct test 2",
-			MockArgs: mockArgs{
-				User: users[1],
-			},
-			MockReturn: mockReturn{
-				User: users[1],
-			},
-			Request: []byte(fmt.Sprintf(`{"email":"%s","nickname":"%s","password":"%s"}`,
-				users[1].Email, users[1].Nickname, users[1].Password)),
-			ExpectedResponse: expectedResponse{
-				Body: MakeUserResponseBody(users[1]),
-				Code: 200,
-			},
-			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
-		},
-		{
-			Name: "Incorrect test 1",
-			MockArgs: mockArgs{
-				User: users[2],
-			},
-			MockReturn: mockReturn{
-				RegisterErrs: []errs.ErrorInfo{
-					{LocalErr: errs.ErrDBUniqueEmail},
-					{LocalErr: errs.ErrDBUniqueEmail},
-				},
-			},
-			Request: []byte(fmt.Sprintf(`{"email":"%s","nickname":"%s","password":"%s"}`,
-				users[2].Email, users[2].Nickname, users[2].Password)),
-			ExpectedResponse: expectedResponse{
-				Body: MakeErrorListResponse(errs.ErrDBUniqueEmail, errs.ErrDBUniqueEmail),
-				Code: 500,
-			},
-			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
-		},
-		{
-			Name: "Incorrect test 2",
+			Name: "Uncorrect test 1",
 			MockArgs: mockArgs{
 				User: users[0],
 			},
 			MockReturn: mockReturn{
-				GetUserErr: errs.ErrorInfo{LocalErr: errs.ErrUserNotExist},
+				User: users[0],
 			},
 			Request: []byte(fmt.Sprintf(`{"email":"%s","nickname":"%s","password":"%s"}`,
 				users[0].Email, users[0].Nickname, users[0].Password)),
-			ExpectedResponse: expectedResponse{
-				Body: MakeErrorListResponse(errs.ErrUserNotExist),
-				Code: 404,
+			expectedRequest: &proto.LoginUserRequest{
+				UserId:     int64(users[0].UserID),
+				Email:      users[0].Email,
+				Nickname:   users[0].Nickname,
+				Password:   users[0].Password,
+				AvatarURL:  users[0].AvatarURL,
+				RegisterAt: timeString,
 			},
-			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
-		},
-		{
-			Name:       "Incorrect test 3",
-			MockArgs:   mockArgs{},
-			MockReturn: mockReturn{},
-			Request: []byte(fmt.Sprintf(`{"email":"%s","nickname":"%s","password":"%s"}`,
-				users[3].Email, users[3].Nickname, users[3].Password)),
-			ExpectedResponse: expectedResponse{
-				Body: MakeErrorListResponse(errs.ErrInvalidInputFormat),
-				Code: 400,
+			expectedResponse: &proto.LoginUserResponse{
+				UserId:     int64(users[0].UserID),
+				Email:      users[0].Email,
+				Nickname:   users[0].Nickname,
+				Password:   users[0].Password,
+				AvatarURL:  users[0].AvatarURL,
+				Valid:      false,
+				LocalError: 11,
+				ExpiresAt:  timeString,
 			},
-			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
-		},
-		{
-			Name:       "Incorrect test 4",
-			MockArgs:   mockArgs{},
-			MockReturn: mockReturn{},
-			Request:    []byte(`{"blabla"")`),
+			authServiceMockBehavior: func(mockClient *grpcAuth.MockAuthorizationClient,
+				req *proto.LoginUserRequest, expectedResponse *proto.LoginUserResponse) {
+				mockClient.EXPECT().Login(gomock.Any(), req).Return(expectedResponse, nil).AnyTimes()
+			},
 			ExpectedResponse: expectedResponse{
-				Body: MakeErrorListResponse(errs.ErrReadingRequestBody),
-				Code: 400,
+				Body: MakeErrorResponse(errs.ErrDBInternal),
+				Code: 500,
 			},
 			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
 		},
 	}
-	ctrl := gomock.NewController(t)
-	serviceMock := mock_service.NewMockIService(ctrl)
-	h := handler.NewAPIHandler(serviceMock, zap.L())
 	for _, curTest := range tests {
+		ctrl := gomock.NewController(t)
+
+		mockAuthServiceClient := mock_proto.NewMockAuthorizationClient(ctrl)
+		curTest.authServiceMockBehavior(mockAuthServiceClient, curTest.expectedRequest, curTest.expectedResponse)
+		serviceMock := mock_service.NewMockIService(ctrl)
+
+		h := handler.NewAPIHandler(serviceMock, zap.L(), nil, mockAuthServiceClient, nil, nil)
 		r := httptest.NewRequest(http.MethodPost, "/api/v1/register", bytes.NewBuffer(curTest.Request))
 		r = r.WithContext(curTest.Ctx)
 		w := httptest.NewRecorder()
@@ -373,79 +538,3 @@ func TestRegister(t *testing.T) {
 		assert.Equal(t, w.Body.String(), curTest.ExpectedResponse.Body)
 	}
 }
-
-func TestIsAuth(t *testing.T) {
-	type mockArgs struct {
-		User entity.User
-	}
-	type mockReturn struct {
-		User entity.User
-		Err  errs.ErrorInfo
-	}
-	type expectedResponse struct {
-		Body string
-		Code int
-	}
-	type test struct {
-		Name             string
-		MockArgs         mockArgs
-		MockReturn       mockReturn
-		RequestCtx       context.Context
-		ExpectedResponse expectedResponse
-		Ctx              context.Context
-	}
-	tests := []test{
-		{
-			Name: "Correct test 1",
-			MockArgs: mockArgs{
-				User: users[0],
-			},
-			MockReturn: mockReturn{
-				User: users[0],
-			},
-			ExpectedResponse: expectedResponse{
-				Body: MakeUserResponseBody(users[0]),
-				Code: 200,
-			},
-			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
-		},
-		{
-			Name:       "Incorrect test 1",
-			MockArgs:   mockArgs{},
-			MockReturn: mockReturn{},
-			ExpectedResponse: expectedResponse{
-				Body: MakeErrorResponse(errs.ErrUnauthorized),
-				Code: 401,
-			},
-			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
-		},
-		{
-			Name: "Incorrect test 2",
-			MockArgs: mockArgs{
-				User: users[0],
-			},
-
-			MockReturn: mockReturn{},
-			ExpectedResponse: expectedResponse{
-				Body: MakeErrorResponse(errs.ErrUnauthorized),
-				Code: 401,
-			},
-			Ctx: context.WithValue(context.Background(), "request_id", "req_id"),
-		},
-	}
-	ctrl := gomock.NewController(t)
-	serviceMock := mock_service.NewMockIService(ctrl)
-	h := handler.NewAPIHandler(serviceMock, zap.L())
-	for _, curTest := range tests {
-		r := httptest.NewRequest(http.MethodPost, "/api/v1/is_auth", nil)
-		w := httptest.NewRecorder()
-		ctx := context.WithValue(curTest.Ctx, "user_id", curTest.MockArgs.User.UserID)
-		r = r.WithContext(ctx)
-		serviceMock.EXPECT().GetUserById(ctx, curTest.MockArgs.User.UserID).
-			Return(curTest.MockReturn.User, curTest.MockReturn.Err).MaxTimes(1)
-		h.IsAuth(w, r)
-		assert.Equal(t, w.Code, curTest.ExpectedResponse.Code, curTest.Name)
-		assert.Equal(t, w.Body.String(), curTest.ExpectedResponse.Body)
-	}
-}
-*/

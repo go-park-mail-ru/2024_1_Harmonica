@@ -1,6 +1,5 @@
 package tests
 
-/*
 import (
 	"bytes"
 	"context"
@@ -21,8 +20,8 @@ import (
 
 func MakeGetPinResponse(pin entity.PinPageResponse) string {
 	return fmt.Sprintf(`{"pin_id":%d,"created_at":"0001-01-01T00:00:00Z","title":"%s","description":"%s",`+
-		`"allow_comments":%t,"click_url":"%s","content_url":"%s","likes_count":%d,"is_owner":%t,"is_liked":%t,`+
-		`"author":{"user_id":%d,"nickname":"%s","avatar_url":"%s"}}`,
+		`"allow_comments":%t,"click_url":"%s","content_url":"%s","content_width":0,"content_height":0,"likes_count":%d,`+
+		`"is_owner":%t,"is_liked":%t,"author":{"user_id":%d,"nickname":"%s","avatar_url":"%s","avatar_width":0,"avatar_height":0}}`,
 		pin.PinId, pin.Title, pin.Description, pin.AllowComments, pin.ClickUrl, pin.ContentUrl,
 		pin.LikesCount, pin.IsOwner, pin.IsLiked, pin.PinAuthor.UserId, pin.PinAuthor.Nickname, pin.PinAuthor.AvatarURL)
 }
@@ -139,7 +138,7 @@ func TestGetPin(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	serviceMock := mock_service.NewMockIService(ctrl)
-	h := handler.NewAPIHandler(serviceMock, zap.L())
+	h := handler.NewAPIHandler(serviceMock, zap.L(), nil, nil, nil, nil)
 	for _, curTest := range tests {
 		r := httptest.NewRequest(http.MethodGet, "/api/v1/pins/", nil)
 		ctx := context.WithValue(curTest.MockArgs.Ctx, "request_id", "req_id")
@@ -248,7 +247,7 @@ func TestUpdatePin(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	serviceMock := mock_service.NewMockIService(ctrl)
-	h := handler.NewAPIHandler(serviceMock, zap.L())
+	h := handler.NewAPIHandler(serviceMock, zap.L(), nil, nil, nil, nil)
 	for _, curTest := range tests {
 		reqBytes, err := json.Marshal(curTest.MockArgs.Pin)
 		if err != nil {
@@ -350,7 +349,7 @@ func TestDeletePin(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	serviceMock := mock_service.NewMockIService(ctrl)
-	h := handler.NewAPIHandler(serviceMock, zap.L())
+	h := handler.NewAPIHandler(serviceMock, zap.L(), nil, nil, nil, nil)
 	for _, curTest := range tests {
 		r := httptest.NewRequest(http.MethodDelete, "/api/v1/pins/", nil)
 		r.SetPathValue("pin_id", fmt.Sprintf(`%d`, curTest.MockArgs.Slug))
@@ -364,4 +363,3 @@ func TestDeletePin(t *testing.T) {
 		assert.Equal(t, curTest.ExpectedResponse.Body, w.Body.String())
 	}
 }
-*/

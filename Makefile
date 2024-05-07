@@ -3,7 +3,7 @@ run:
 
 test:
 	go test -v -coverpkg ./... ./... -coverprofile cover.out.tmp && \
-	cat cover.out.tmp | grep -v "mock" | grep -v "docs.go" > cover.out && \
+	cat cover.out.tmp | grep -v "mock" | grep -v "docs.go" | grep -v "proto" > cover.out && \
 	rm cover.out.tmp && \
 	go tool cover -func cover.out
 
