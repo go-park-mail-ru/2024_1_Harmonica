@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	auth "harmonica/internal/microservices/auth/proto"
@@ -116,10 +117,10 @@ func (h *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 	WriteUserResponse(w, h.logger, registeredUser)
 }
 
-// Update user.
+// Get user.
 //
-//	@Summary		Update user
-//	@Description	Update user by description and user id.
+//	@Summary		Get user
+//	@Description	Get user by nickname.
 //	@Tags			Users
 //	@Produce		json
 //	@Accept			json
@@ -181,7 +182,6 @@ func (h *APIHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	requestId := ctx.Value("request_id").(string)
-
 	userIdFromSlug, err := ReadInt64Slug(r, "user_id")
 	if err != nil {
 		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(err, errs.ErrInvalidSlug))
@@ -196,7 +196,6 @@ func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrDiffUserId))
 		return
 	}
-
 	var user entity.User
 
 	_, _, err = r.FormFile("image")
@@ -211,9 +210,9 @@ func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		}
 		user.AvatarURL = h.FormImgURL(name)
 	}
-
 	userParams := r.FormValue("user")
 	err = json.Unmarshal([]byte(userParams), &user)
+	fmt.Println(r.FormValue("user"), err)
 	if err != nil {
 		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(err, errs.ErrReadingRequestBody))
 		return
