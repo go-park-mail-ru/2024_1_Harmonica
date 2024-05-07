@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
+	"google.golang.org/grpc/metadata"
 )
 
 // Registration
@@ -66,6 +67,7 @@ func (h *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+	pass := user.Password
 	user.Password = string(hashPassword)
 
 	errsList := h.service.RegisterUser(ctx, user)
@@ -87,12 +89,13 @@ func (h *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("request_id", requestId))
 	res, err := h.AuthService.Login(ctx, &auth.LoginUserRequest{
 		UserId:     int64(registeredUser.UserID),
 		Email:      registeredUser.Email,
 		Nickname:   registeredUser.Nickname,
 		AvatarURL:  registeredUser.AvatarURL,
-		Password:   registeredUser.Password,
+		Password:   pass,
 		RegisterAt: registeredUser.RegisterAt.Format(time.RFC3339Nano),
 	})
 	if err != nil {
