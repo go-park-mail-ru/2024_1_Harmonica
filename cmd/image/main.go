@@ -12,25 +12,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
-
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-	"gopkg.in/natefinch/lumberjack.v2"
 )
-
-func configureZapLogger() *zap.Logger {
-	ws := zapcore.AddSync(&lumberjack.Logger{
-		Filename:   "logs/image/harmonium.log",
-		MaxSize:    1024, // MB
-		MaxBackups: 10,
-		MaxAge:     60, // days
-		Compress:   true,
-	})
-	encoderConfig := zap.NewProductionEncoderConfig()
-	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	core := zapcore.NewCore(zapcore.NewJSONEncoder(encoderConfig), ws, zap.NewAtomicLevelAt(zap.InfoLevel))
-	return zap.New(core, zap.AddCaller(), zap.AddStacktrace(zap.ErrorLevel))
-}
 
 func init() {
 	if err := godotenv.Load("conf.env"); err != nil {
@@ -39,7 +21,7 @@ func init() {
 }
 
 func main() {
-	logger := configureZapLogger()
+	logger := config.ConfigureZapLogger("image")
 	defer logger.Sync()
 
 	conf := config.New()

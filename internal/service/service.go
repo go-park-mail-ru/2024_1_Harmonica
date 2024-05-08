@@ -24,8 +24,8 @@ func NewService(r repository.IRepository, l like.LikeClient) *Service {
 	}
 }
 
-func NewServiceForTests(s IService) *Service {
-	return &Service{
-		IService: s,
-	}
-}
+//func NewServiceForTests(s IService) *Service {
+//	return &Service{
+//		IService: s,
+//	}
+//}

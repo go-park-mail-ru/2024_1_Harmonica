@@ -1,9 +1,12 @@
 run:
-	go run ./cmd
+	go run ./cmd/image/main.go & \
+	go run ./cmd/like/main.go & \
+	go run ./cmd/auth/main.go & \
+	go run ./cmd/main.go 
 
 test:
 	go test -v -coverpkg ./... ./... -coverprofile cover.out.tmp && \
-	cat cover.out.tmp | grep -v "mock" | grep -v "docs.go" > cover.out && \
+	cat cover.out.tmp | grep -v "mock" | grep -v "docs.go" | grep -v "proto" > cover.out && \
 	rm cover.out.tmp && \
 	go tool cover -func cover.out
 
@@ -15,7 +18,17 @@ swag:
 
 MOCKS_DESTINATION=mocks
 .PHONY: mocks
-mocks: ./internal/service/interfaces.go ./internal/repository/interfaces.go
+mocks:  ./internal/service/interfaces.go \
+		./internal/repository/interfaces.go \
+		./internal/microservices/image/proto/image_grpc.pb.go \
+		./internal/microservices/auth/proto/auth_grpc.pb.go \
+		./internal/microservices/like/proto/like_grpc.pb.go \
+		./internal/microservices/like/server/service/interfaces.go \
+		./internal/microservices/like/server/repository/interfaces.go \
+		./internal/microservices/auth/server/service/interfaces.go \
+		./internal/microservices/auth/server/repository/interfaces.go \
+		./internal/microservices/image/server/service/interfaces.go \
+		./internal/microservices/image/server/repository/interfaces.go 
 	@echo "Generating mocks..."
 	@rm -rf $(MOCKS_DESTINATION)
 	@for file in $^; do mockgen -source=$$file -destination=$(MOCKS_DESTINATION)/$$file; done

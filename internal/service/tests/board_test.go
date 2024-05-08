@@ -1,352 +1,291 @@
 package test_service
 
-/*
 import (
 	"context"
+	"database/sql"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"harmonica/internal/service"
+	mock_proto "harmonica/mocks/microservices/like/proto"
 	mock_repository "harmonica/mocks/repository"
 	"testing"
 )
 
-func TestCreateBoard(t *testing.T) {
-	type mockArgs struct {
-		Ctx    context.Context
+func TestService_CreateBoard(t *testing.T) {
+	type Args struct {
 		Board  entity.Board
 		UserId entity.UserID
 	}
-	type mockReturn struct {
-		BoardCreate    entity.Board
-		ErrBoardCreate error
-		Author         entity.User
-		AuthorErr      error
+	type ExpectedReturn struct {
+		FullBoard entity.FullBoard
+		ErrorInfo errs.ErrorInfo
 	}
-	type funcArgs struct {
-		Ctx    context.Context
+	type ExpectedMockArgs struct {
 		Board  entity.Board
 		UserId entity.UserID
 	}
-	type funcReturn struct {
-		Board entity.FullBoard
-		Err   errs.ErrorInfo
+	type ExpectedMockReturn struct {
+		Board  entity.Board
+		User   entity.User
+		Error1 error
+		Error2 error
 	}
-	type test struct {
-		Name                   string
-		MockArgs               mockArgs
-		MockReturn             mockReturn
-		FuncArgs               funcArgs
-		ExpectedFuncReturn     funcReturn
-		ExcpectGetUserByIdCall bool
+	mockBehaviour := func(repo *mock_repository.MockIRepository, ctx context.Context,
+		mockArgs ExpectedMockArgs, mockReturn ExpectedMockReturn) {
+		repo.EXPECT().CreateBoard(ctx, mockArgs.Board, mockArgs.UserId).Return(mockReturn.Board, mockReturn.Error1)
+		repo.EXPECT().GetUserById(ctx, mockArgs.UserId).Return(mockReturn.User, mockReturn.Error2).MaxTimes(1)
 	}
-	tests := []test{
+	testTable := []struct {
+		name               string
+		args               Args
+		expectedReturn     ExpectedReturn
+		expectedMockArgs   ExpectedMockArgs
+		expectedMockReturn ExpectedMockReturn
+	}{
 		{
-			Name: "Correct work test 1",
-			MockArgs: mockArgs{
-				Ctx:    context.Background(),
-				Board:  entity.Board{},
-				UserId: entity.UserID(1),
+			name: "OK test case 1",
+			args: Args{
+				Board:  entity.Board{Title: "board 1"},
+				UserId: 1,
 			},
-			MockReturn: mockReturn{
-				BoardCreate:    entity.Board{},
-				ErrBoardCreate: nil,
-				Author:         entity.User{},
-				AuthorErr:      nil,
-			},
-			FuncArgs: funcArgs{
-				Ctx:    context.Background(),
-				Board:  entity.Board{},
-				UserId: entity.UserID(1),
-			},
-			ExpectedFuncReturn: funcReturn{
-				Board: entity.FullBoard{
+			expectedReturn: ExpectedReturn{
+				FullBoard: entity.FullBoard{
+					Board: entity.Board{Title: "board 1"},
 					BoardAuthors: []entity.BoardAuthor{
-						{
-							UserId: entity.UserID(1),
-						},
+						{UserId: 1},
 					},
 				},
 			},
-			ExcpectGetUserByIdCall: true,
+			expectedMockArgs: ExpectedMockArgs{
+				Board:  entity.Board{Title: "board 1"},
+				UserId: 1,
+			},
+			expectedMockReturn: ExpectedMockReturn{
+				Board: entity.Board{Title: "board 1"},
+				User:  entity.User{UserID: 1},
+			},
 		},
 		{
-			Name: "Uncorrect work test 1",
-			MockArgs: mockArgs{
-				Ctx:    context.Background(),
-				Board:  entity.Board{},
-				UserId: entity.UserID(1),
+			name: "Error test case 1",
+			args: Args{
+				Board: entity.Board{Title: "board 1"},
 			},
-			MockReturn: mockReturn{
-				BoardCreate:    entity.Board{},
-				ErrBoardCreate: nil,
-				Author:         entity.User{},
-				AuthorErr:      errs.ErrDBInternal,
+			expectedReturn: ExpectedReturn{
+				ErrorInfo: errs.ErrorInfo{GeneralErr: errs.ErrDBInternal, LocalErr: errs.ErrDBInternal},
 			},
-			FuncArgs: funcArgs{
-				Ctx:    context.Background(),
-				Board:  entity.Board{},
-				UserId: entity.UserID(1),
+			expectedMockArgs: ExpectedMockArgs{
+				Board: entity.Board{Title: "board 1"},
 			},
-			ExpectedFuncReturn: funcReturn{
-				Board: entity.FullBoard{},
-				Err: errs.ErrorInfo{
-					GeneralErr: errs.ErrDBInternal,
-					LocalErr:   errs.ErrDBInternal,
-				},
+			expectedMockReturn: ExpectedMockReturn{
+				Error1: errs.ErrDBInternal,
 			},
-			ExcpectGetUserByIdCall: true,
 		},
 		{
-			Name: "Uncorrect work test 2",
-			MockArgs: mockArgs{
-				Ctx:    context.Background(),
-				Board:  entity.Board{},
-				UserId: entity.UserID(1),
+			name: "Error test case 2",
+			args: Args{
+				Board: entity.Board{Title: "board 1"},
 			},
-			MockReturn: mockReturn{
-				BoardCreate:    entity.Board{},
-				ErrBoardCreate: errs.ErrDBInternal,
-				Author:         entity.User{},
-				AuthorErr:      errs.ErrDBInternal,
+			expectedReturn: ExpectedReturn{
+				ErrorInfo: errs.ErrorInfo{GeneralErr: errs.ErrDBInternal, LocalErr: errs.ErrDBInternal},
 			},
-			FuncArgs: funcArgs{
-				Ctx:    context.Background(),
-				Board:  entity.Board{},
-				UserId: entity.UserID(1),
+			expectedMockArgs: ExpectedMockArgs{
+				Board: entity.Board{Title: "board 1"},
 			},
-			ExpectedFuncReturn: funcReturn{
-				Board: entity.FullBoard{},
-				Err: errs.ErrorInfo{
-					GeneralErr: errs.ErrDBInternal,
-					LocalErr:   errs.ErrDBInternal,
-				},
+			expectedMockReturn: ExpectedMockReturn{
+				Error2: errs.ErrDBInternal,
 			},
-			ExcpectGetUserByIdCall: false,
 		},
 	}
-	ctrl := gomock.NewController(t)
-	repo := mock_repository.NewMockIRepository(ctrl)
-	for _, test := range tests {
-		repo.EXPECT().CreateBoard(test.MockArgs.Ctx, test.MockArgs.Board, test.MockArgs.UserId).Return(
-			test.MockReturn.BoardCreate, test.MockReturn.ErrBoardCreate)
-		if test.ExcpectGetUserByIdCall {
-			repo.EXPECT().GetUserById(test.MockArgs.Ctx, test.MockArgs.UserId).Return(
-				test.MockReturn.Author, test.MockReturn.AuthorErr)
-		}
-		service := service.NewService(repo)
-		board, err := service.CreateBoard(test.FuncArgs.Ctx, test.FuncArgs.Board, test.FuncArgs.UserId)
-		assert.Equal(t, test.ExpectedFuncReturn.Board, board)
-		assert.Equal(t, test.ExpectedFuncReturn.Err, err)
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			repo := mock_repository.NewMockIRepository(ctrl)
+			likeClient := mock_proto.NewMockLikeClient(ctrl)
+			mockBehaviour(repo, context.Background(), testCase.expectedMockArgs, testCase.expectedMockReturn)
+			s := service.NewService(repo, likeClient)
+			fullBoard, errInfo := s.CreateBoard(context.Background(), testCase.args.Board, testCase.args.UserId)
+			assert.Equal(t, testCase.expectedReturn.FullBoard, fullBoard)
+			assert.Equal(t, testCase.expectedReturn.ErrorInfo, errInfo)
+		})
 	}
 }
 
-func TestGetBoardById(t *testing.T) {
-	type mockArgs struct {
-		Ctx     context.Context
+func TestService_GetBoardById(t *testing.T) {
+	type Args struct {
 		BoardId entity.BoardID
 		UserId  entity.UserID
-		Limit   int
-		Offset  int
 	}
-	type mockReturn struct {
-		BoardByID                    entity.Board
-		ErrBoardByID                 error
-		CheckBoardAuthorExistence    bool
-		ErrCheckBoardAuthorExistence error
-		GetBoardAuthors              []entity.BoardAuthor
-		ErrGetBoardAuthors           error
-		GetBoardPins                 []entity.BoardPinResponse
-		ErrGetBoardPins              error
+	type ExpectedReturn struct {
+		FullBoard entity.FullBoard
+		ErrorInfo errs.ErrorInfo
 	}
-	type funcArgs struct {
-		Ctx     context.Context
+	type ExpectedMockArgs struct {
 		BoardId entity.BoardID
 		UserId  entity.UserID
-		Limit   int
-		Offset  int
 	}
-	type funcReturn struct {
-		Board entity.FullBoard
-		Err   errs.ErrorInfo
+	type ExpectedMockReturn struct {
+		Board        entity.Board
+		IsAuthor     bool
+		BoardAuthors []entity.BoardAuthor
+		BoardPins    []entity.BoardPinResponse
+		Error1       error
+		Error2       error
+		Error3       error
+		Error4       error
 	}
-	type test struct {
-		Name               string
-		MockArgs           mockArgs
-		MockReturn         mockReturn
-		FuncArgs           funcArgs
-		ExpectedFuncReturn funcReturn
+	mockBehaviour := func(repo *mock_repository.MockIRepository, ctx context.Context,
+		mockArgs ExpectedMockArgs, mockReturn ExpectedMockReturn) {
+		repo.EXPECT().GetBoardById(ctx, mockArgs.BoardId).Return(mockReturn.Board, mockReturn.Error1)
+		repo.EXPECT().CheckBoardAuthorExistence(ctx, mockArgs.UserId, mockArgs.BoardId).Return(mockReturn.IsAuthor, mockReturn.Error2).MaxTimes(1)
+		repo.EXPECT().GetBoardAuthors(ctx, mockArgs.BoardId).Return(mockReturn.BoardAuthors, mockReturn.Error3).MaxTimes(1)
+		repo.EXPECT().GetBoardPins(ctx, mockArgs.BoardId, Limit, Offset).Return(mockReturn.BoardPins, mockReturn.Error4).MaxTimes(1)
 	}
-	tests := []test{
+	testTable := []struct {
+		name               string
+		args               Args
+		expectedReturn     ExpectedReturn
+		expectedMockArgs   ExpectedMockArgs
+		expectedMockReturn ExpectedMockReturn
+	}{
 		{
-			Name: "Correct work test 1",
-			MockArgs: mockArgs{
-				Ctx:     context.Background(),
-				BoardId: entity.BoardID(1),
-				UserId:  entity.UserID(1),
-				Limit:   10,
-				Offset:  10,
+			name: "OK test case 1",
+			args: Args{
+				BoardId: 100,
+				UserId:  1,
 			},
-			MockReturn: mockReturn{
-				BoardByID: entity.Board{BoardID: entity.BoardID(1)},
-			},
-			FuncArgs: funcArgs{
-				Ctx:     context.Background(),
-				BoardId: entity.BoardID(1),
-				UserId:  entity.UserID(1),
-				Limit:   10,
-				Offset:  10,
-			},
-			ExpectedFuncReturn: funcReturn{
-				Board: entity.FullBoard{
-					Board: entity.Board{BoardID: entity.BoardID(1)},
+			expectedReturn: ExpectedReturn{
+				FullBoard: entity.FullBoard{
+					Board: entity.Board{
+						BoardID: 100,
+						IsOwner: true,
+					},
+					BoardAuthors: []entity.BoardAuthor{
+						{UserId: 1},
+					},
+					Pins: make([]entity.BoardPinResponse, 0),
 				},
+			},
+			expectedMockArgs: ExpectedMockArgs{
+				BoardId: 100,
+				UserId:  1,
+			},
+			expectedMockReturn: ExpectedMockReturn{
+				Board:    entity.Board{BoardID: 100},
+				IsAuthor: true,
+				BoardAuthors: []entity.BoardAuthor{
+					{UserId: 1},
+				},
+				BoardPins: []entity.BoardPinResponse{},
 			},
 		},
 		{
-			Name: "Correct work test 1",
-			MockArgs: mockArgs{
-				Ctx:     context.Background(),
-				BoardId: entity.BoardID(1),
-				UserId:  entity.UserID(1),
-				Limit:   10,
-				Offset:  10,
+			name: "Error test case 1",
+			args: Args{
+				BoardId: 100,
 			},
-			MockReturn: mockReturn{
-				BoardByID:       entity.Board{BoardID: entity.BoardID(1)},
-				ErrGetBoardPins: errs.ErrDBInternal,
+			expectedReturn: ExpectedReturn{
+				ErrorInfo: errs.ErrorInfo{GeneralErr: sql.ErrNoRows, LocalErr: errs.ErrElementNotExist},
 			},
-			FuncArgs: funcArgs{
-				Ctx:     context.Background(),
-				BoardId: entity.BoardID(1),
-				UserId:  entity.UserID(1),
-				Limit:   10,
-				Offset:  10,
+			expectedMockArgs: ExpectedMockArgs{
+				BoardId: 100,
 			},
-			ExpectedFuncReturn: funcReturn{
-				Board: entity.FullBoard{},
-				Err: errs.ErrorInfo{
-					GeneralErr: errs.ErrDBInternal,
-					LocalErr:   errs.ErrDBInternal,
-				},
+			expectedMockReturn: ExpectedMockReturn{
+				Error1: sql.ErrNoRows,
 			},
 		},
 		{
-			Name: "Uncorrect work test 2",
-			MockArgs: mockArgs{
-				Ctx:     context.Background(),
-				BoardId: entity.BoardID(1),
-				UserId:  entity.UserID(1),
-				Limit:   10,
-				Offset:  10,
+			name: "Error test case 2",
+			args: Args{
+				BoardId: 100,
+				UserId:  1,
 			},
-			MockReturn: mockReturn{
-				BoardByID:          entity.Board{BoardID: entity.BoardID(1)},
-				ErrGetBoardAuthors: errs.ErrDBInternal,
+			expectedReturn: ExpectedReturn{
+				ErrorInfo: errs.ErrorInfo{LocalErr: errs.ErrPermissionDenied},
 			},
-			FuncArgs: funcArgs{
-				Ctx:     context.Background(),
-				BoardId: entity.BoardID(1),
-				UserId:  entity.UserID(1),
-				Limit:   10,
-				Offset:  10,
+			expectedMockArgs: ExpectedMockArgs{
+				BoardId: 100,
+				UserId:  1,
 			},
-			ExpectedFuncReturn: funcReturn{
-				Board: entity.FullBoard{},
-				Err: errs.ErrorInfo{
-					GeneralErr: errs.ErrDBInternal,
-					LocalErr:   errs.ErrDBInternal,
-				},
+			expectedMockReturn: ExpectedMockReturn{
+				IsAuthor: false,
+				Board:    entity.Board{BoardID: 100, VisibilityType: entity.VisibilityPrivate},
 			},
 		},
 		{
-			Name: "Uncorrect work test 3",
-			MockArgs: mockArgs{
-				Ctx:     context.Background(),
-				BoardId: entity.BoardID(1),
-				UserId:  entity.UserID(1),
-				Limit:   10,
-				Offset:  10,
+			name: "Error test case 3",
+			args: Args{
+				BoardId: 100,
+				UserId:  1,
 			},
-			MockReturn: mockReturn{
-				BoardByID:                    entity.Board{BoardID: entity.BoardID(1)},
-				ErrGetBoardAuthors:           errs.ErrDBInternal,
-				ErrCheckBoardAuthorExistence: errs.ErrDBInternal,
+			expectedReturn: ExpectedReturn{
+				ErrorInfo: errs.ErrorInfo{GeneralErr: errs.ErrDBInternal, LocalErr: errs.ErrDBInternal},
 			},
-			FuncArgs: funcArgs{
-				Ctx:     context.Background(),
-				BoardId: entity.BoardID(1),
-				UserId:  entity.UserID(1),
-				Limit:   10,
-				Offset:  10,
+			expectedMockArgs: ExpectedMockArgs{
+				BoardId: 100,
+				UserId:  1,
 			},
-			ExpectedFuncReturn: funcReturn{
-				Board: entity.FullBoard{},
-				Err: errs.ErrorInfo{
-					GeneralErr: errs.ErrDBInternal,
-					LocalErr:   errs.ErrDBInternal,
-				},
+			expectedMockReturn: ExpectedMockReturn{
+				IsAuthor: false,
+				Board:    entity.Board{BoardID: 100, VisibilityType: entity.VisibilityPrivate},
+				Error2:   errs.ErrDBInternal,
 			},
 		},
 		{
-			Name: "Uncorrect work test 4",
-			MockArgs: mockArgs{
-				Ctx:     context.Background(),
-				BoardId: entity.BoardID(1),
-				UserId:  entity.UserID(1),
-				Limit:   10,
-				Offset:  10,
+			name: "Error test case 4",
+			args: Args{
+				BoardId: 100,
+				UserId:  1,
 			},
-			MockReturn: mockReturn{
-				BoardByID:                    entity.Board{BoardID: entity.BoardID(1)},
-				ErrBoardByID:                 errs.ErrDBInternal,
-				ErrGetBoardAuthors:           errs.ErrDBInternal,
-				ErrCheckBoardAuthorExistence: errs.ErrDBInternal,
+			expectedReturn: ExpectedReturn{
+				ErrorInfo: errs.ErrorInfo{GeneralErr: errs.ErrDBInternal, LocalErr: errs.ErrDBInternal},
 			},
-			FuncArgs: funcArgs{
-				Ctx:     context.Background(),
-				BoardId: entity.BoardID(1),
-				UserId:  entity.UserID(1),
-				Limit:   10,
-				Offset:  10,
+			expectedMockArgs: ExpectedMockArgs{
+				BoardId: 100,
+				UserId:  1,
 			},
-			ExpectedFuncReturn: funcReturn{
-				Board: entity.FullBoard{},
-				Err: errs.ErrorInfo{
-					GeneralErr: errs.ErrDBInternal,
-					LocalErr:   errs.ErrDBInternal,
-				},
+			expectedMockReturn: ExpectedMockReturn{
+				Board:  entity.Board{BoardID: 100},
+				Error3: errs.ErrDBInternal,
+			},
+		},
+		{
+			name: "Error test case 5",
+			args: Args{
+				BoardId: 100,
+				UserId:  1,
+			},
+			expectedReturn: ExpectedReturn{
+				ErrorInfo: errs.ErrorInfo{GeneralErr: errs.ErrDBInternal, LocalErr: errs.ErrDBInternal},
+			},
+			expectedMockArgs: ExpectedMockArgs{
+				BoardId: 100,
+				UserId:  1,
+			},
+			expectedMockReturn: ExpectedMockReturn{
+				Board:  entity.Board{BoardID: 100},
+				Error3: errs.ErrDBInternal,
 			},
 		},
 	}
-	ctrl := gomock.NewController(t)
-	repo := mock_repository.NewMockIRepository(ctrl)
-	for _, test := range tests {
-		repo.EXPECT().GetBoardById(test.MockArgs.Ctx, test.MockArgs.BoardId).Return(
-			test.MockReturn.BoardByID, test.MockReturn.ErrBoardByID)
-		if test.MockReturn.ErrBoardByID == nil {
-			repo.EXPECT().CheckBoardAuthorExistence(test.MockArgs.Ctx, test.MockArgs.UserId, test.MockArgs.BoardId).Return(
-				test.MockReturn.CheckBoardAuthorExistence, test.MockReturn.ErrCheckBoardAuthorExistence)
-		}
-		if test.MockReturn.ErrCheckBoardAuthorExistence == nil {
-			repo.EXPECT().GetBoardAuthors(test.MockArgs.Ctx, test.MockArgs.BoardId).Return(
-				test.MockReturn.GetBoardAuthors, test.MockReturn.ErrGetBoardAuthors)
-		}
-		if test.MockReturn.ErrGetBoardAuthors == nil {
-			repo.EXPECT().GetBoardPins(test.MockArgs.Ctx, test.MockArgs.BoardId, test.MockArgs.Limit, test.MockArgs.Offset).Return(
-				test.MockReturn.GetBoardPins, test.MockReturn.ErrGetBoardPins)
-		}
-
-		service := service.NewService(repo)
-		board, err := service.GetBoardById(test.FuncArgs.Ctx, test.FuncArgs.BoardId, test.FuncArgs.UserId,
-			test.FuncArgs.Limit, test.FuncArgs.Offset)
-		assert.Equal(t, test.ExpectedFuncReturn.Board, board)
-		assert.Equal(t, test.ExpectedFuncReturn.Err, err)
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			repo := mock_repository.NewMockIRepository(ctrl)
+			likeClient := mock_proto.NewMockLikeClient(ctrl)
+			mockBehaviour(repo, context.Background(), testCase.expectedMockArgs, testCase.expectedMockReturn)
+			s := service.NewService(repo, likeClient)
+			fullBoard, errInfo := s.GetBoardById(context.Background(), testCase.args.BoardId, testCase.args.UserId, Limit, Offset)
+			assert.Equal(t, testCase.expectedReturn.FullBoard, fullBoard)
+			assert.Equal(t, testCase.expectedReturn.ErrorInfo, errInfo)
+		})
 	}
 }
 
-func TestUpdateBoard(t *testing.T) {
+func TestService_UpdateBoard(t *testing.T) {
 	type mockArgs struct {
 		Ctx     context.Context
 		BoardId entity.BoardID
@@ -562,9 +501,9 @@ func TestUpdateBoard(t *testing.T) {
 			repo.EXPECT().GetBoardPins(test.MockArgs.Ctx, test.MockArgs.BoardId, test.MockArgs.Limit, test.MockArgs.Offset).Return(
 				test.MockReturn.GetBoardPins, test.MockReturn.ErrGetBoardPins)
 		}
-
-		service := service.NewService(repo)
-		board, err := service.UpdateBoard(test.FuncArgs.Ctx, test.FuncArgs.Board, test.FuncArgs.UserId)
+		likeClient := mock_proto.NewMockLikeClient(ctrl)
+		s := service.NewService(repo, likeClient)
+		board, err := s.UpdateBoard(test.FuncArgs.Ctx, test.FuncArgs.Board, test.FuncArgs.UserId)
 		assert.Equal(t, test.ExpectedFuncReturn.Board, board)
 		assert.Equal(t, test.ExpectedFuncReturn.Err, err)
 	}
@@ -620,7 +559,7 @@ func TestGetUserBoards(t *testing.T) {
 				GetUserByNickname:    entity.User{UserID: entity.UserID(1)},
 				ErrGetUserByNickname: nil,
 				GetUserBoards: entity.UserBoards{
-					Boards: []entity.Board{
+					Boards: []entity.UserBoard{
 						{
 							BoardID:        entity.BoardID(1),
 							VisibilityType: "private",
@@ -642,7 +581,7 @@ func TestGetUserBoards(t *testing.T) {
 			},
 			ExpectedFuncReturn: funcReturn{
 				Boards: entity.UserBoards{
-					Boards: []entity.Board{
+					Boards: []entity.UserBoard{
 						{
 							BoardID:        entity.BoardID(1),
 							VisibilityType: "private",
@@ -784,11 +723,12 @@ func TestGetUserBoards(t *testing.T) {
 		repo.EXPECT().GetUserByNickname(test.MockArgs.Ctx, test.MockArgs.Nickname).Return(
 			test.MockReturn.GetUserByNickname, test.MockReturn.ErrGetUserByNickname)
 		if test.WaitGetUserBoardsCall {
-			repo.EXPECT().GetUserBoards(test.MockArgs.Ctx, test.MockArgs.UserId, test.MockArgs.Limit, test.MockArgs.Offset).Return(
+			repo.EXPECT().GetUserBoards(test.MockArgs.Ctx, gomock.Any(), gomock.Any(), test.MockArgs.Limit, test.MockArgs.Offset).Return(
 				test.MockReturn.GetUserBoards, test.MockReturn.ErrGetUserBoards)
 		}
-		service := service.NewService(repo)
-		boards, err := service.GetUserBoards(test.FuncArgs.Ctx, test.FuncArgs.Nickname, test.FuncArgs.AuthorId,
+		likeClient := mock_proto.NewMockLikeClient(ctrl)
+		s := service.NewService(repo, likeClient)
+		boards, err := s.GetUserBoards(test.FuncArgs.Ctx, test.FuncArgs.Nickname, test.FuncArgs.AuthorId,
 			test.FuncArgs.Limit, test.FuncArgs.Offset)
 		assert.Equal(t, test.ExpectedFuncReturn.Boards, boards)
 		assert.Equal(t, test.ExpectedFuncReturn.Err, err)
@@ -929,8 +869,9 @@ func TestDeleteBoard(t *testing.T) {
 			repo.EXPECT().DeleteBoard(test.MockArgs.Ctx, test.MockArgs.BoardId).Return(
 				test.MockReturn.ErrDelete)
 		}
-		service := service.NewService(repo)
-		err := service.DeleteBoard(test.FuncArgs.Ctx, test.FuncArgs.BoardId, test.FuncArgs.UserId)
+		likeClient := mock_proto.NewMockLikeClient(ctrl)
+		s := service.NewService(repo, likeClient)
+		err := s.DeleteBoard(test.FuncArgs.Ctx, test.FuncArgs.BoardId, test.FuncArgs.UserId)
 		assert.Equal(t, test.ExpectedFuncReturn.Err, err)
 	}
 }
@@ -1156,9 +1097,9 @@ func TestAddPinToBoard(t *testing.T) {
 			repo.EXPECT().AddPinToBoard(test.MockArgs.Ctx, test.MockArgs.BoardId, test.MockArgs.PinId).Return(
 				test.MockReturn.ErrAdding)
 		}
-
-		service := service.NewService(repo)
-		err := service.AddPinToBoard(test.FuncArgs.Ctx, test.FuncArgs.BoardId, test.FuncArgs.PinId, test.MockArgs.UserId)
+		likeClient := mock_proto.NewMockLikeClient(ctrl)
+		s := service.NewService(repo, likeClient)
+		err := s.AddPinToBoard(test.FuncArgs.Ctx, test.FuncArgs.BoardId, test.FuncArgs.PinId, test.MockArgs.UserId)
 		assert.Equal(t, test.ExpectedFuncReturn.Err, err)
 	}
 }
@@ -1385,26 +1326,25 @@ func TestDeletePinFromBoard(t *testing.T) {
 			repo.EXPECT().DeletePinFromBoard(test.MockArgs.Ctx, test.MockArgs.BoardId, test.MockArgs.PinId).Return(
 				test.MockReturn.ErrDeleting)
 		}
-
-		service := service.NewService(repo)
-		err := service.DeletePinFromBoard(test.FuncArgs.Ctx, test.FuncArgs.BoardId, test.FuncArgs.PinId, test.MockArgs.UserId)
+		likeClient := mock_proto.NewMockLikeClient(ctrl)
+		s := service.NewService(repo, likeClient)
+		err := s.DeletePinFromBoard(test.FuncArgs.Ctx, test.FuncArgs.BoardId, test.FuncArgs.PinId, test.MockArgs.UserId)
 		assert.Equal(t, test.ExpectedFuncReturn.Err, err)
 	}
 }
 
-func TestAuthorContains(t *testing.T) {
-	authors := []entity.BoardAuthor{
-		{UserId: entity.UserID(1)},
-		{UserId: entity.UserID(2)},
-		{UserId: entity.UserID(3)},
-		{UserId: entity.UserID(4)},
-		{UserId: entity.UserID(6)},
-	}
-	userIdVals := []entity.UserID{entity.UserID(3), entity.UserID(5)}
-	reses := []bool{true, false}
-
-	for testNumber, target := range userIdVals {
-		assert.Equal(t, reses[testNumber], service.AuthorContains(authors, target))
-	}
-}
-*/
+//func TestAuthorContains(t *testing.T) {
+//	authors := []entity.BoardAuthor{
+//		{UserId: entity.UserID(1)},
+//		{UserId: entity.UserID(2)},
+//		{UserId: entity.UserID(3)},
+//		{UserId: entity.UserID(4)},
+//		{UserId: entity.UserID(6)},
+//	}
+//	userIdVals := []entity.UserID{entity.UserID(3), entity.UserID(5)}
+//	reses := []bool{true, false}
+//
+//	for testNumber, target := range userIdVals {
+//		assert.Equal(t, reses[testNumber], service.AuthorContains(authors, target))
+//	}
+//}

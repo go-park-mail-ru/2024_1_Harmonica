@@ -135,3 +135,7 @@ func (s AuthorizationServer) Logout(ctx context.Context, in *auth.LogoutRequest)
 	Sessions.Delete(in.SessionToken)
 	return nil, nil
 }
+
+func NewAuthorizationServerForTests(s service.IService) AuthorizationServer {
+	return AuthorizationServer{service: s}
+}

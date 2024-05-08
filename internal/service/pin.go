@@ -113,7 +113,7 @@ func (s *RepositoryService) UpdatePin(ctx context.Context, pin entity.Pin) (enti
 	res, errFind := s.repo.GetPinById(ctx, pin.PinId)
 	if errFind != nil {
 		return entity.PinPageResponse{}, errs.ErrorInfo{
-			GeneralErr: err,
+			GeneralErr: errFind,
 			LocalErr:   errs.ErrDBInternal,
 		}
 	}

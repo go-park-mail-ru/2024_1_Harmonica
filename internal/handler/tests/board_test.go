@@ -1,14 +1,10 @@
 package tests
 
-/*
 import (
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"harmonica/internal/handler"
@@ -16,6 +12,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 var boards = []entity.Board{
@@ -169,7 +169,7 @@ func TestCreateBoard(t *testing.T) {
 	}
 	ctrl := gomock.NewController(t)
 	serviceMock := mock_service.NewMockIService(ctrl)
-	h := handler.NewAPIHandler(serviceMock, zap.L())
+	h := handler.NewAPIHandler(serviceMock, zap.L(), nil, nil, nil, nil)
 	for _, curTest := range tests {
 		r := httptest.NewRequest(http.MethodPost, "/api/v1/boards", bytes.NewBuffer(curTest.Request))
 		w := httptest.NewRecorder()
@@ -268,7 +268,7 @@ func TestGetBoard(t *testing.T) {
 	}
 	ctrl := gomock.NewController(t)
 	serviceMock := mock_service.NewMockIService(ctrl)
-	h := handler.NewAPIHandler(serviceMock, zap.L())
+	h := handler.NewAPIHandler(serviceMock, zap.L(), nil, nil, nil, nil)
 	for _, curTest := range tests {
 		r := httptest.NewRequest(http.MethodGet, "/api/v1/boards/{board_id}", nil)
 		w := httptest.NewRecorder()
@@ -381,7 +381,7 @@ func TestAddPinToBoard(t *testing.T) {
 	}
 	ctrl := gomock.NewController(t)
 	serviceMock := mock_service.NewMockIService(ctrl)
-	h := handler.NewAPIHandler(serviceMock, zap.L())
+	h := handler.NewAPIHandler(serviceMock, zap.L(), nil, nil, nil, nil)
 	for _, curTest := range tests {
 		r := httptest.NewRequest(http.MethodPost, "/api/v1/boards/{board_id}/pins/{pin_id}", nil)
 		w := httptest.NewRecorder()
@@ -490,7 +490,7 @@ func TestDeletePinFromBoard(t *testing.T) {
 	}
 	ctrl := gomock.NewController(t)
 	serviceMock := mock_service.NewMockIService(ctrl)
-	h := handler.NewAPIHandler(serviceMock, zap.L())
+	h := handler.NewAPIHandler(serviceMock, zap.L(), nil, nil, nil, nil)
 	for _, curTest := range tests {
 		r := httptest.NewRequest(http.MethodPost, "/api/v1/boards/{board_id}/pins/{pin_id}", nil)
 		w := httptest.NewRecorder()
@@ -577,7 +577,7 @@ func TestDeleteBoard(t *testing.T) {
 	}
 	ctrl := gomock.NewController(t)
 	serviceMock := mock_service.NewMockIService(ctrl)
-	h := handler.NewAPIHandler(serviceMock, zap.L())
+	h := handler.NewAPIHandler(serviceMock, zap.L(), nil, nil, nil, nil)
 	for _, curTest := range tests {
 		r := httptest.NewRequest(http.MethodDelete, "/api/v1/boards/", nil)
 		w := httptest.NewRecorder()
@@ -591,4 +591,3 @@ func TestDeleteBoard(t *testing.T) {
 		assert.Equal(t, w.Body.String(), curTest.ExpectedResponse.Body)
 	}
 }
-*/

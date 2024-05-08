@@ -152,7 +152,7 @@ func FromGRPCResponseToUsersList(protoRes *proto.GetUsersLikedResponse) entity.U
 //	@Param			Cookie	header	string	true	"session-token"	default(session-token=)
 //	@Produce		json
 //	@Success		200	{object}	entity.FeedPins
-//	@Router			/favorites [get]
+//	@Router			api/v1/favorites [get]
 func (h *APIHandler) GetFavorites(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	requestId := ctx.Value("request_id").(string)

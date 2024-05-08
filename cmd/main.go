@@ -14,17 +14,14 @@ import (
 	"net/http"
 
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
-	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/joho/godotenv"
 	v3 "github.com/swaggest/swgui/v3"
 )
 
 func runServer(addr string) {
-	//logger := zap.Must(zap.NewProduction())
-	logger := configureZapLogger()
+	logger := config.ConfigureZapLogger("monolit")
 	defer logger.Sync()
 
 	authCli, imageCli, likeCli := makeMicroservicesClients()
@@ -95,20 +92,6 @@ func makeMicroservicesClients() (auth.AuthorizationClient, image.ImageClient, li
 	imageCli := image.NewImageClient(imageConn)
 	likeCli := like.NewLikeClient(likeConn)
 	return authCli, imageCli, likeCli
-}
-
-func configureZapLogger() *zap.Logger {
-	ws := zapcore.AddSync(&lumberjack.Logger{
-		Filename:   "logs/harmonium.log",
-		MaxSize:    1024, // MB
-		MaxBackups: 10,
-		MaxAge:     60, // days
-		Compress:   true,
-	})
-	encoderConfig := zap.NewProductionEncoderConfig()
-	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	core := zapcore.NewCore(zapcore.NewJSONEncoder(encoderConfig), ws, zap.NewAtomicLevelAt(zap.InfoLevel))
-	return zap.New(core, zap.AddCaller(), zap.AddStacktrace(zap.ErrorLevel))
 }
 
 func configureUserRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.ServeMux) {

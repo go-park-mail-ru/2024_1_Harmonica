@@ -147,3 +147,7 @@ func (s LikeServer) GetFavorites(ctx context.Context, req *like.GetFavoritesRequ
 	}
 	return MakeGetFavoritesResponseByUsers(res), nil
 }
+
+func NewLikeServerForTests(s service.IService, l *zap.Logger) LikeServer {
+	return LikeServer{service: s, logger: l}
+}

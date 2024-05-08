@@ -7,11 +7,9 @@ package mock_repository
 import (
 	context "context"
 	entity "harmonica/internal/entity"
-	multipart "mime/multipart"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	minio "github.com/minio/minio-go/v7"
 )
 
 // MockIRepository is a mock of IRepository interface.
@@ -51,6 +49,20 @@ func (mr *MockIRepositoryMockRecorder) AddPinToBoard(ctx, boardId, pinId interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddPinToBoard", reflect.TypeOf((*MockIRepository)(nil).AddPinToBoard), ctx, boardId, pinId)
 }
 
+// AddSubscriptionToUser mocks base method.
+func (m *MockIRepository) AddSubscriptionToUser(ctx context.Context, userId, subscribeUserId entity.UserID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddSubscriptionToUser", ctx, userId, subscribeUserId)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddSubscriptionToUser indicates an expected call of AddSubscriptionToUser.
+func (mr *MockIRepositoryMockRecorder) AddSubscriptionToUser(ctx, userId, subscribeUserId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddSubscriptionToUser", reflect.TypeOf((*MockIRepository)(nil).AddSubscriptionToUser), ctx, userId, subscribeUserId)
+}
+
 // CheckBoardAuthorExistence mocks base method.
 func (m *MockIRepository) CheckBoardAuthorExistence(ctx context.Context, userId entity.UserID, boardId entity.BoardID) (bool, error) {
 	m.ctrl.T.Helper()
@@ -64,21 +76,6 @@ func (m *MockIRepository) CheckBoardAuthorExistence(ctx context.Context, userId 
 func (mr *MockIRepositoryMockRecorder) CheckBoardAuthorExistence(ctx, userId, boardId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckBoardAuthorExistence", reflect.TypeOf((*MockIRepository)(nil).CheckBoardAuthorExistence), ctx, userId, boardId)
-}
-
-// CheckIsLiked mocks base method.
-func (m *MockIRepository) CheckIsLiked(ctx context.Context, pinId entity.PinID, userId entity.UserID) (bool, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CheckIsLiked", ctx, pinId, userId)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CheckIsLiked indicates an expected call of CheckIsLiked.
-func (mr *MockIRepositoryMockRecorder) CheckIsLiked(ctx, pinId, userId interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckIsLiked", reflect.TypeOf((*MockIRepository)(nil).CheckIsLiked), ctx, pinId, userId)
 }
 
 // CheckPinExistence mocks base method.
@@ -96,20 +93,6 @@ func (mr *MockIRepositoryMockRecorder) CheckPinExistence(ctx, id interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckPinExistence", reflect.TypeOf((*MockIRepository)(nil).CheckPinExistence), ctx, id)
 }
 
-// ClearLike mocks base method.
-func (m *MockIRepository) ClearLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ClearLike", ctx, pinId, userId)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ClearLike indicates an expected call of ClearLike.
-func (mr *MockIRepositoryMockRecorder) ClearLike(ctx, pinId, userId interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClearLike", reflect.TypeOf((*MockIRepository)(nil).ClearLike), ctx, pinId, userId)
-}
-
 // CreateBoard mocks base method.
 func (m *MockIRepository) CreateBoard(ctx context.Context, board entity.Board, userId entity.UserID) (entity.Board, error) {
 	m.ctrl.T.Helper()
@@ -123,6 +106,20 @@ func (m *MockIRepository) CreateBoard(ctx context.Context, board entity.Board, u
 func (mr *MockIRepositoryMockRecorder) CreateBoard(ctx, board, userId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateBoard", reflect.TypeOf((*MockIRepository)(nil).CreateBoard), ctx, board, userId)
+}
+
+// CreateMessage mocks base method.
+func (m *MockIRepository) CreateMessage(ctx context.Context, message entity.Message) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateMessage", ctx, message)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateMessage indicates an expected call of CreateMessage.
+func (mr *MockIRepositoryMockRecorder) CreateMessage(ctx, message interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateMessage", reflect.TypeOf((*MockIRepository)(nil).CreateMessage), ctx, message)
 }
 
 // CreatePin mocks base method.
@@ -180,6 +177,20 @@ func (m *MockIRepository) DeletePinFromBoard(ctx context.Context, boardId entity
 func (mr *MockIRepositoryMockRecorder) DeletePinFromBoard(ctx, boardId, pinId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePinFromBoard", reflect.TypeOf((*MockIRepository)(nil).DeletePinFromBoard), ctx, boardId, pinId)
+}
+
+// DeleteSubscriptionToUser mocks base method.
+func (m *MockIRepository) DeleteSubscriptionToUser(ctx context.Context, userId, unsubscribeUserId entity.UserID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteSubscriptionToUser", ctx, userId, unsubscribeUserId)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteSubscriptionToUser indicates an expected call of DeleteSubscriptionToUser.
+func (mr *MockIRepositoryMockRecorder) DeleteSubscriptionToUser(ctx, userId, unsubscribeUserId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSubscriptionToUser", reflect.TypeOf((*MockIRepository)(nil).DeleteSubscriptionToUser), ctx, userId, unsubscribeUserId)
 }
 
 // GetBoardAuthors mocks base method.
@@ -242,19 +253,19 @@ func (mr *MockIRepositoryMockRecorder) GetFeedPins(ctx, limit, offset interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeedPins", reflect.TypeOf((*MockIRepository)(nil).GetFeedPins), ctx, limit, offset)
 }
 
-// GetImage mocks base method.
-func (m *MockIRepository) GetImage(ctx context.Context, name string) (*minio.Object, error) {
+// GetMessages mocks base method.
+func (m *MockIRepository) GetMessages(ctx context.Context, firstUserId, secondUserId entity.UserID) (entity.Messages, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetImage", ctx, name)
-	ret0, _ := ret[0].(*minio.Object)
+	ret := m.ctrl.Call(m, "GetMessages", ctx, firstUserId, secondUserId)
+	ret0, _ := ret[0].(entity.Messages)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetImage indicates an expected call of GetImage.
-func (mr *MockIRepositoryMockRecorder) GetImage(ctx, name interface{}) *gomock.Call {
+// GetMessages indicates an expected call of GetMessages.
+func (mr *MockIRepositoryMockRecorder) GetMessages(ctx, firstUserId, secondUserId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetImage", reflect.TypeOf((*MockIRepository)(nil).GetImage), ctx, name)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessages", reflect.TypeOf((*MockIRepository)(nil).GetMessages), ctx, firstUserId, secondUserId)
 }
 
 // GetPinById mocks base method.
@@ -272,19 +283,49 @@ func (mr *MockIRepositoryMockRecorder) GetPinById(ctx, PinId interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPinById", reflect.TypeOf((*MockIRepository)(nil).GetPinById), ctx, PinId)
 }
 
-// GetUserBoards mocks base method.
-func (m *MockIRepository) GetUserBoards(ctx context.Context, authorId entity.UserID, limit, offset int) (entity.UserBoards, error) {
+// GetSubscriptionsFeedPins mocks base method.
+func (m *MockIRepository) GetSubscriptionsFeedPins(ctx context.Context, userId entity.UserID, limit, offset int) (entity.FeedPins, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserBoards", ctx, authorId, limit, offset)
+	ret := m.ctrl.Call(m, "GetSubscriptionsFeedPins", ctx, userId, limit, offset)
+	ret0, _ := ret[0].(entity.FeedPins)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSubscriptionsFeedPins indicates an expected call of GetSubscriptionsFeedPins.
+func (mr *MockIRepositoryMockRecorder) GetSubscriptionsFeedPins(ctx, userId, limit, offset interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubscriptionsFeedPins", reflect.TypeOf((*MockIRepository)(nil).GetSubscriptionsFeedPins), ctx, userId, limit, offset)
+}
+
+// GetSubscriptionsInfo mocks base method.
+func (m *MockIRepository) GetSubscriptionsInfo(ctx context.Context, userToGetInfoId, userId entity.UserID) (entity.UserProfileResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSubscriptionsInfo", ctx, userToGetInfoId, userId)
+	ret0, _ := ret[0].(entity.UserProfileResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSubscriptionsInfo indicates an expected call of GetSubscriptionsInfo.
+func (mr *MockIRepositoryMockRecorder) GetSubscriptionsInfo(ctx, userToGetInfoId, userId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubscriptionsInfo", reflect.TypeOf((*MockIRepository)(nil).GetSubscriptionsInfo), ctx, userToGetInfoId, userId)
+}
+
+// GetUserBoards mocks base method.
+func (m *MockIRepository) GetUserBoards(ctx context.Context, authorId, userId entity.UserID, limit, offset int) (entity.UserBoards, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserBoards", ctx, authorId, userId, limit, offset)
 	ret0, _ := ret[0].(entity.UserBoards)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetUserBoards indicates an expected call of GetUserBoards.
-func (mr *MockIRepositoryMockRecorder) GetUserBoards(ctx, authorId, limit, offset interface{}) *gomock.Call {
+func (mr *MockIRepositoryMockRecorder) GetUserBoards(ctx, authorId, userId, limit, offset interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserBoards", reflect.TypeOf((*MockIRepository)(nil).GetUserBoards), ctx, authorId, limit, offset)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserBoards", reflect.TypeOf((*MockIRepository)(nil).GetUserBoards), ctx, authorId, userId, limit, offset)
 }
 
 // GetUserByEmail mocks base method.
@@ -332,6 +373,21 @@ func (mr *MockIRepositoryMockRecorder) GetUserByNickname(ctx, nickname interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByNickname", reflect.TypeOf((*MockIRepository)(nil).GetUserByNickname), ctx, nickname)
 }
 
+// GetUserChats mocks base method.
+func (m *MockIRepository) GetUserChats(ctx context.Context, userId entity.UserID) (entity.UserChats, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserChats", ctx, userId)
+	ret0, _ := ret[0].(entity.UserChats)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserChats indicates an expected call of GetUserChats.
+func (mr *MockIRepositoryMockRecorder) GetUserChats(ctx, userId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserChats", reflect.TypeOf((*MockIRepository)(nil).GetUserChats), ctx, userId)
+}
+
 // GetUserPins mocks base method.
 func (m *MockIRepository) GetUserPins(ctx context.Context, authorId entity.UserID, limit, offset int) (entity.UserPins, error) {
 	m.ctrl.T.Helper()
@@ -347,19 +403,34 @@ func (mr *MockIRepositoryMockRecorder) GetUserPins(ctx, authorId, limit, offset 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserPins", reflect.TypeOf((*MockIRepository)(nil).GetUserPins), ctx, authorId, limit, offset)
 }
 
-// GetUsersLiked mocks base method.
-func (m *MockIRepository) GetUsersLiked(ctx context.Context, pinId entity.PinID, limit int) (entity.UserList, error) {
+// GetUserSubscribers mocks base method.
+func (m *MockIRepository) GetUserSubscribers(ctx context.Context, userId entity.UserID) (entity.UserSubscribers, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUsersLiked", ctx, pinId, limit)
-	ret0, _ := ret[0].(entity.UserList)
+	ret := m.ctrl.Call(m, "GetUserSubscribers", ctx, userId)
+	ret0, _ := ret[0].(entity.UserSubscribers)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetUsersLiked indicates an expected call of GetUsersLiked.
-func (mr *MockIRepositoryMockRecorder) GetUsersLiked(ctx, pinId, limit interface{}) *gomock.Call {
+// GetUserSubscribers indicates an expected call of GetUserSubscribers.
+func (mr *MockIRepositoryMockRecorder) GetUserSubscribers(ctx, userId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUsersLiked", reflect.TypeOf((*MockIRepository)(nil).GetUsersLiked), ctx, pinId, limit)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserSubscribers", reflect.TypeOf((*MockIRepository)(nil).GetUserSubscribers), ctx, userId)
+}
+
+// GetUserSubscriptions mocks base method.
+func (m *MockIRepository) GetUserSubscriptions(ctx context.Context, userId entity.UserID) (entity.UserSubscriptions, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserSubscriptions", ctx, userId)
+	ret0, _ := ret[0].(entity.UserSubscriptions)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserSubscriptions indicates an expected call of GetUserSubscriptions.
+func (mr *MockIRepositoryMockRecorder) GetUserSubscriptions(ctx, userId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserSubscriptions", reflect.TypeOf((*MockIRepository)(nil).GetUserSubscriptions), ctx, userId)
 }
 
 // RegisterUser mocks base method.
@@ -376,18 +447,49 @@ func (mr *MockIRepositoryMockRecorder) RegisterUser(ctx, user interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterUser", reflect.TypeOf((*MockIRepository)(nil).RegisterUser), ctx, user)
 }
 
-// SetLike mocks base method.
-func (m *MockIRepository) SetLike(ctx context.Context, pinId entity.PinID, userId entity.UserID) error {
+// SearchForBoards mocks base method.
+func (m *MockIRepository) SearchForBoards(ctx context.Context, query string) ([]entity.SearchBoard, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetLike", ctx, pinId, userId)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "SearchForBoards", ctx, query)
+	ret0, _ := ret[0].([]entity.SearchBoard)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// SetLike indicates an expected call of SetLike.
-func (mr *MockIRepositoryMockRecorder) SetLike(ctx, pinId, userId interface{}) *gomock.Call {
+// SearchForBoards indicates an expected call of SearchForBoards.
+func (mr *MockIRepositoryMockRecorder) SearchForBoards(ctx, query interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetLike", reflect.TypeOf((*MockIRepository)(nil).SetLike), ctx, pinId, userId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchForBoards", reflect.TypeOf((*MockIRepository)(nil).SearchForBoards), ctx, query)
+}
+
+// SearchForPins mocks base method.
+func (m *MockIRepository) SearchForPins(ctx context.Context, query string) ([]entity.SearchPin, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SearchForPins", ctx, query)
+	ret0, _ := ret[0].([]entity.SearchPin)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SearchForPins indicates an expected call of SearchForPins.
+func (mr *MockIRepositoryMockRecorder) SearchForPins(ctx, query interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchForPins", reflect.TypeOf((*MockIRepository)(nil).SearchForPins), ctx, query)
+}
+
+// SearchForUsers mocks base method.
+func (m *MockIRepository) SearchForUsers(ctx context.Context, query string) ([]entity.SearchUser, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SearchForUsers", ctx, query)
+	ret0, _ := ret[0].([]entity.SearchUser)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SearchForUsers indicates an expected call of SearchForUsers.
+func (mr *MockIRepositoryMockRecorder) SearchForUsers(ctx, query interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchForUsers", reflect.TypeOf((*MockIRepository)(nil).SearchForUsers), ctx, query)
 }
 
 // UpdateBoard mocks base method.
@@ -431,19 +533,4 @@ func (m *MockIRepository) UpdateUser(ctx context.Context, user entity.User) erro
 func (mr *MockIRepositoryMockRecorder) UpdateUser(ctx, user interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUser", reflect.TypeOf((*MockIRepository)(nil).UpdateUser), ctx, user)
-}
-
-// UploadImage mocks base method.
-func (m *MockIRepository) UploadImage(ctx context.Context, file multipart.File, fileHeader *multipart.FileHeader) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UploadImage", ctx, file, fileHeader)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UploadImage indicates an expected call of UploadImage.
-func (mr *MockIRepositoryMockRecorder) UploadImage(ctx, file, fileHeader interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadImage", reflect.TypeOf((*MockIRepository)(nil).UploadImage), ctx, file, fileHeader)
 }
