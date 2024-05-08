@@ -63,10 +63,17 @@ func (u *UserProfileResponse) Sanitize() {
 	u.User.Sanitize()
 }
 
+type UserSubscriptionInfo struct {
+	UserId           UserID `json:"user_id"`
+	Nickname         string `json:"nickname"`
+	AvatarURL        string `json:"avatar_url"`
+	SubscribersCount uint64 `db:"subscribers_count" json:"subscribers_count"`
+}
+
 type UserSubscribers struct {
-	Subscribers []UserResponse `json:"subscribers"`
+	Subscribers []UserSubscriptionInfo `json:"subscribers"`
 }
 
 type UserSubscriptions struct {
-	Subscriptions []UserResponse `json:"subscriptions"`
+	Subscriptions []UserSubscriptionInfo `json:"subscriptions"`
 }
