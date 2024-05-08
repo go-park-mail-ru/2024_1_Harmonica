@@ -176,7 +176,7 @@ func TestRepository_GetUserSubscribers(t *testing.T) {
 						AddRow(1, "user", "url"))
 			},
 			expectedSubscribers: entity.UserSubscribers{
-				Subscribers: []entity.UserResponse{
+				Subscribers: []entity.UserSubscriptionInfo{
 					{UserId: 1, Nickname: "user", AvatarURL: "url"},
 				},
 			},
@@ -227,7 +227,7 @@ func TestRepository_GetUserSubscriptions(t *testing.T) {
 						AddRow(1, "user", "url"))
 			},
 			expectedSubscriptions: entity.UserSubscriptions{
-				Subscriptions: []entity.UserResponse{
+				Subscriptions: []entity.UserSubscriptionInfo{
 					{UserId: 1, Nickname: "user", AvatarURL: "url"},
 				},
 			},

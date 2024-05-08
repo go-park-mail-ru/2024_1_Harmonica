@@ -183,12 +183,12 @@ func TestService_GetUserSubscribers(t *testing.T) {
 			name: "OK test case 1",
 			args: Args{UserId: 1},
 			expectedReturn: ExpectedReturn{
-				Subscribers: entity.UserSubscribers{Subscribers: []entity.UserResponse{{UserId: 2, Email: "example@mail.com", Nickname: "nickname"}}},
+				Subscribers: entity.UserSubscribers{Subscribers: []entity.UserSubscriptionInfo{{UserId: 2, Nickname: "nickname"}}},
 				ErrorInfo:   errs.ErrorInfo{},
 			},
 			expectedMockArgs: ExpectedMockArgs{UserId: 1},
 			expectedMockReturn: ExpectedMockReturn{
-				Subscribers: entity.UserSubscribers{Subscribers: []entity.UserResponse{{UserId: 2, Email: "example@mail.com", Nickname: "nickname"}}},
+				Subscribers: entity.UserSubscribers{Subscribers: []entity.UserSubscriptionInfo{{UserId: 2, Nickname: "nickname"}}},
 				Error:       nil,
 			},
 		},
@@ -253,8 +253,8 @@ func TestService_GetUserSubscriptions(t *testing.T) {
 			args: Args{UserId: 1},
 			expectedReturn: ExpectedReturn{
 				Subscriptions: entity.UserSubscriptions{
-					Subscriptions: []entity.UserResponse{
-						{UserId: 2, Email: "example@mail.com", Nickname: "nickname", AvatarURL: "url", AvatarDX: 100, AvatarDY: 100},
+					Subscriptions: []entity.UserSubscriptionInfo{
+						{UserId: 2, Nickname: "nickname", AvatarURL: "url"},
 					},
 				},
 				ErrorInfo: errs.ErrorInfo{},
@@ -262,8 +262,8 @@ func TestService_GetUserSubscriptions(t *testing.T) {
 			expectedMockArgs: ExpectedMockArgs{UserId: 1},
 			expectedMockReturn: ExpectedMockReturn{
 				Subscriptions: entity.UserSubscriptions{
-					Subscriptions: []entity.UserResponse{
-						{UserId: 2, Email: "example@mail.com", Nickname: "nickname", AvatarURL: "url", AvatarDX: 100, AvatarDY: 100},
+					Subscriptions: []entity.UserSubscriptionInfo{
+						{UserId: 2, Nickname: "nickname", AvatarURL: "url"},
 					},
 				},
 				Error: nil,
