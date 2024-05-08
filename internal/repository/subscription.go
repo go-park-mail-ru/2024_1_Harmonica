@@ -17,10 +17,12 @@ const (
     CASE WHEN EXISTS (SELECT 1 FROM public.subscribe_on_person WHERE user_id = $2 AND followed_user_id = $1) 
     THEN true ELSE false END AS is_subscribed;`
 
-	QueryGetUserSubscribers = `SELECT u.user_id, u.email, u.nickname, u.avatar_url FROM public.user u
+	QueryGetUserSubscribers = `SELECT u.user_id, u.nickname, u.avatar_url, (SELECT COUNT(*) FROM 
+    public.subscribe_on_person s WHERE s.followed_user_id = u.user_id) AS subscribers_count FROM public.user u
 	JOIN public.subscribe_on_person s ON u.user_id = s.user_id WHERE s.followed_user_id = $1 ORDER BY u.user_id DESC;`
 
-	QueryGetUserSubscriptions = `SELECT u.user_id, u.email, u.nickname, u.avatar_url FROM public.user u
+	QueryGetUserSubscriptions = `SELECT u.user_id, u.nickname, u.avatar_url, (SELECT COUNT(*) FROM 
+    public.subscribe_on_person s WHERE s.followed_user_id = u.user_id) AS subscribers_count FROM public.user u
 	JOIN public.subscribe_on_person s ON u.user_id = s.followed_user_id WHERE s.user_id = $1 ORDER BY u.user_id DESC;`
 )
 
