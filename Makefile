@@ -1,5 +1,8 @@
 run:
-	go run ./cmd
+	go run ./cmd/image/main.go & \
+	go run ./cmd/like/main.go & \
+	go run ./cmd/auth/main.go & \
+	go run ./cmd/main.go 
 
 test:
 	go test -v -coverpkg ./... ./... -coverprofile cover.out.tmp && \
