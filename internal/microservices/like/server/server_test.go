@@ -14,32 +14,11 @@ import (
 )
 
 func TestSetLike(t *testing.T) {
-	type Args struct {
-		PinID  entity.PinID
-		UserID entity.UserID
-	}
-	type ExpectedReturn struct {
-		Response *like.MakeLikeResponse
-		Error    error
-	}
-	type ExpectedMockArgs struct {
-		PinID  entity.PinID
-		UserID entity.UserID
-	}
-	type ExpectedMockReturn struct {
-		ErrorInfo errs.ErrorInfo
-	}
 	mockBehaviour := func(service *mock_service.MockIService, ctx context.Context,
 		mockArgs ExpectedMockArgs, mockReturn ExpectedMockReturn) {
 		service.EXPECT().SetLike(ctx, mockArgs.PinID, mockArgs.UserID).Return(mockReturn.ErrorInfo)
 	}
-	testTable := []struct {
-		name               string
-		args               Args
-		expectedReturn     ExpectedReturn
-		expectedMockArgs   ExpectedMockArgs
-		expectedMockReturn ExpectedMockReturn
-	}{
+	testTable := []testStruct{
 		{
 			name: "Good test",
 			args: Args{
@@ -75,10 +54,7 @@ func TestSetLike(t *testing.T) {
 	}
 	for _, testCase := range testTable {
 		t.Run(testCase.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-			service := mock_service.NewMockIService(ctrl)
-			server := NewLikeServerForTests(service, zap.NewNop())
+			service, server := configureMock(t)
 			mockBehaviour(service, context.Background(), testCase.expectedMockArgs, testCase.expectedMockReturn)
 			response, err := server.SetLike(context.Background(), &like.MakeLikeRequest{
 				PinId:  int64(testCase.args.PinID),
@@ -91,71 +67,14 @@ func TestSetLike(t *testing.T) {
 }
 
 func TestClearLike(t *testing.T) {
-	type Args struct {
-		PinID  entity.PinID
-		UserID entity.UserID
-	}
-	type ExpectedReturn struct {
-		Response *like.MakeLikeResponse
-		Error    error
-	}
-	type ExpectedMockArgs struct {
-		PinID  entity.PinID
-		UserID entity.UserID
-	}
-	type ExpectedMockReturn struct {
-		ErrorInfo errs.ErrorInfo
-	}
 	mockBehaviour := func(service *mock_service.MockIService, ctx context.Context,
 		mockArgs ExpectedMockArgs, mockReturn ExpectedMockReturn) {
 		service.EXPECT().ClearLike(ctx, mockArgs.PinID, mockArgs.UserID).Return(mockReturn.ErrorInfo)
 	}
-	testTable := []struct {
-		name               string
-		args               Args
-		expectedReturn     ExpectedReturn
-		expectedMockArgs   ExpectedMockArgs
-		expectedMockReturn ExpectedMockReturn
-	}{
-		{
-			name: "Good test",
-			args: Args{
-				PinID:  1,
-				UserID: 1,
-			},
-			expectedReturn: ExpectedReturn{
-				Response: &like.MakeLikeResponse{Valid: true},
-			},
-			expectedMockArgs: ExpectedMockArgs{
-				PinID:  1,
-				UserID: 1,
-			},
-			expectedMockReturn: ExpectedMockReturn{},
-		},
-		{
-			name: "Error test",
-			args: Args{
-				PinID:  1,
-				UserID: 1,
-			},
-			expectedReturn: ExpectedReturn{
-				Response: &like.MakeLikeResponse{Valid: false},
-			},
-			expectedMockArgs: ExpectedMockArgs{
-				PinID:  1,
-				UserID: 1,
-			},
-			expectedMockReturn: ExpectedMockReturn{
-				ErrorInfo: errs.ErrorInfo{GeneralErr: errors.New("some error")},
-			},
-		},
-	}
+	testTable := configureTests()
 	for _, testCase := range testTable {
 		t.Run(testCase.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-			service := mock_service.NewMockIService(ctrl)
-			server := NewLikeServerForTests(service, zap.NewNop())
+			service, server := configureMock(t)
 			mockBehaviour(service, context.Background(), testCase.expectedMockArgs, testCase.expectedMockReturn)
 			response, err := server.ClearLike(context.Background(), &like.MakeLikeRequest{
 				PinId:  int64(testCase.args.PinID),
@@ -413,4 +332,74 @@ func TestGetFavorites(t *testing.T) {
 			assert.Equal(t, testCase.expectedReturn.Error, err)
 		})
 	}
+}
+
+// зачем это? - линтер.............
+type Args struct {
+	PinID  entity.PinID
+	UserID entity.UserID
+}
+type ExpectedReturn struct {
+	Response *like.MakeLikeResponse
+	Error    error
+}
+type ExpectedMockArgs struct {
+	PinID  entity.PinID
+	UserID entity.UserID
+}
+type ExpectedMockReturn struct {
+	ErrorInfo errs.ErrorInfo
+}
+type testStruct struct {
+	name               string
+	args               Args
+	expectedReturn     ExpectedReturn
+	expectedMockArgs   ExpectedMockArgs
+	expectedMockReturn ExpectedMockReturn
+}
+
+func configureTests() []testStruct {
+	tests := []testStruct{
+		{
+			name: "Good test",
+			args: Args{
+				PinID:  1,
+				UserID: 1,
+			},
+			expectedReturn: ExpectedReturn{
+				Response: &like.MakeLikeResponse{Valid: true},
+			},
+			expectedMockArgs: ExpectedMockArgs{
+				PinID:  1,
+				UserID: 1,
+			},
+			expectedMockReturn: ExpectedMockReturn{},
+		},
+		{
+			name: "Error test",
+			args: Args{
+				PinID:  1,
+				UserID: 1,
+			},
+			expectedReturn: ExpectedReturn{
+				Response: &like.MakeLikeResponse{Valid: false},
+			},
+			expectedMockArgs: ExpectedMockArgs{
+				PinID:  1,
+				UserID: 1,
+			},
+			expectedMockReturn: ExpectedMockReturn{
+				ErrorInfo: errs.ErrorInfo{GeneralErr: errors.New("some error")},
+			},
+		},
+	}
+	return tests
+}
+
+func configureMock(t *testing.T) (*mock_service.MockIService, LikeServer) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	service := mock_service.NewMockIService(ctrl)
+	server := NewLikeServerForTests(service, zap.NewNop())
+	return service, server
 }

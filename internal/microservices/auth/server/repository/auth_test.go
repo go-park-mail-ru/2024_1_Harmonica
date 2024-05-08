@@ -68,12 +68,36 @@ func TestRepository_GetUserById(t *testing.T) {
 	db, mock, repo := SetupDBMock(t)
 	defer db.Close()
 
-	tests := []struct {
-		name         string
-		setupMocks   func()
-		expectedUser entity.User
-		expectedErr  error
-	}{
+	tests := configureTests(mock)
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
+			res, err := repo.GetUserById(CtxWithRequestId, 1)
+			assert.Equal(t, tc.expectedUser, res)
+			assert.Equal(t, tc.expectedErr, err)
+		})
+	}
+}
+
+func SetupDBMock(t *testing.T) (*sql.DB, sqlmock.Sqlmock, *DBRepository) {
+	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	repo := NewDBRepository(sqlx.NewDb(db, "postgres"), zap.L())
+	return db, mock, repo
+}
+
+type testStruct struct {
+	name         string
+	setupMocks   func()
+	expectedUser entity.User
+	expectedErr  error
+}
+
+func configureTests(mock sqlmock.Sqlmock) []testStruct {
+	tests := []testStruct{
 		{
 			name: "Good test",
 			setupMocks: func() {
@@ -102,22 +126,5 @@ func TestRepository_GetUserById(t *testing.T) {
 			expectedErr:  errors.New("missing destination name err in *entity.User"),
 		},
 	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			tc.setupMocks()
-			res, err := repo.GetUserById(CtxWithRequestId, 1)
-			assert.Equal(t, tc.expectedUser, res)
-			assert.Equal(t, tc.expectedErr, err)
-		})
-	}
-}
-
-func SetupDBMock(t *testing.T) (*sql.DB, sqlmock.Sqlmock, *DBRepository) {
-	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	repo := NewDBRepository(sqlx.NewDb(db, "postgres"), zap.L())
-	return db, mock, repo
+	return tests
 }

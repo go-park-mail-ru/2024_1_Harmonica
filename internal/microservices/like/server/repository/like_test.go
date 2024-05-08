@@ -24,15 +24,13 @@ func TestRepository_SetLike(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			name:        "OK test",
+			name:        "OK test set",
 			pinID:       1,
 			userID:      1,
 			expectedErr: nil,
 		},
 		{
-			name:        "Error test",
-			pinID:       2,
-			userID:      2,
+			name:        "Error test set",
 			expectedErr: errors.New("database error"),
 		},
 	}
@@ -60,13 +58,13 @@ func TestRepository_ClearLike(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			name:        "OK test",
+			name:        "OK test clear",
 			pinID:       1,
 			userID:      1,
 			expectedErr: nil,
 		},
 		{
-			name:        "Error test",
+			name:        "Error test clear",
 			pinID:       2,
 			userID:      2,
 			expectedErr: errors.New("database error"),
