@@ -92,3 +92,7 @@ func (s ImageServer) GetImageBounds(ctx context.Context, req *image.GetImageBoun
 	}
 	return &image.GetImageBoundsResponse{Dx: dx, Dy: dy}, nil
 }
+
+func NewImageServerForTests(service service.IService, logger *zap.Logger) ImageServer {
+	return ImageServer{service: service, logger: logger}
+}

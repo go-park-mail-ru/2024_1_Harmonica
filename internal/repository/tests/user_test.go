@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetUserByEmail(t *testing.T) {
+func TestRepository_GetUserByEmail(t *testing.T) {
 	db, mock, ctrl, imageClient, repo := SetupDBMock(t)
 	defer ctrl.Finish()
 	defer db.Close()
@@ -77,7 +77,7 @@ func TestGetUserByEmail(t *testing.T) {
 	}
 }
 
-func TestGetUserByNickname(t *testing.T) {
+func TestRepository_GetUserByNickname(t *testing.T) {
 	db, mock, ctrl, imageClient, repo := SetupDBMock(t)
 	defer ctrl.Finish()
 	defer db.Close()
@@ -141,7 +141,7 @@ func TestGetUserByNickname(t *testing.T) {
 	}
 }
 
-func TestGetUserById(t *testing.T) {
+func TestRepository_GetUserById(t *testing.T) {
 	db, mock, ctrl, imageClient, repo := SetupDBMock(t)
 	defer ctrl.Finish()
 	defer db.Close()
@@ -205,7 +205,7 @@ func TestGetUserById(t *testing.T) {
 	}
 }
 
-func TestRegisterUser(t *testing.T) {
+func TestRepository_RegisterUser(t *testing.T) {
 	db, mock, ctrl, _, repo := SetupDBMock(t)
 	defer ctrl.Finish()
 	defer db.Close()
@@ -249,7 +249,7 @@ func TestRegisterUser(t *testing.T) {
 	}
 }
 
-func TestUpdateUser(t *testing.T) {
+func TestRepository_UpdateUser(t *testing.T) {
 	db, mock, ctrl, _, repo := SetupDBMock(t)
 	defer ctrl.Finish()
 	defer db.Close()

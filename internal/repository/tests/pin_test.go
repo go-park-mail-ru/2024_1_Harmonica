@@ -17,7 +17,7 @@ const (
 	Offset = 10
 )
 
-func TestGetFeedPins(t *testing.T) {
+func TestRepository_GetFeedPins(t *testing.T) {
 	db, mock, ctrl, imageClient, repo := SetupDBMock(t)
 	defer ctrl.Finish()
 	defer db.Close()
@@ -84,7 +84,7 @@ func TestGetFeedPins(t *testing.T) {
 	}
 }
 
-func TestGetSubscriptionsFeedPins(t *testing.T) {
+func TestRepository_GetSubscriptionsFeedPins(t *testing.T) {
 	db, mock, ctrl, imageClient, repo := SetupDBMock(t)
 	defer ctrl.Finish()
 	defer db.Close()
@@ -140,7 +140,7 @@ func TestGetSubscriptionsFeedPins(t *testing.T) {
 	}
 }
 
-func TestGetUserPins(t *testing.T) {
+func TestRepository_GetUserPins(t *testing.T) {
 	db, mock, ctrl, imageClient, repo := SetupDBMock(t)
 	defer ctrl.Finish()
 	defer db.Close()
@@ -202,7 +202,7 @@ func TestGetUserPins(t *testing.T) {
 	}
 }
 
-func TestGetPinById(t *testing.T) {
+func TestRepository_GetPinById(t *testing.T) {
 	db, mock, ctrl, imageClient, repo := SetupDBMock(t)
 	defer ctrl.Finish()
 	defer db.Close()
@@ -281,7 +281,7 @@ func TestGetPinById(t *testing.T) {
 	}
 }
 
-func TestCreatePin(t *testing.T) {
+func TestRepository_CreatePin(t *testing.T) {
 	db, mock, ctrl, _, repo := SetupDBMock(t)
 	defer ctrl.Finish()
 	defer db.Close()
@@ -325,7 +325,7 @@ func TestCreatePin(t *testing.T) {
 	}
 }
 
-func TestUpdatePin(t *testing.T) {
+func TestRepository_UpdatePin(t *testing.T) {
 	db, mock, ctrl, _, repo := SetupDBMock(t)
 	defer ctrl.Finish()
 	defer db.Close()
@@ -362,7 +362,7 @@ func TestUpdatePin(t *testing.T) {
 	}
 }
 
-func TestDeletePin(t *testing.T) {
+func TestRepository_DeletePin(t *testing.T) {
 	db, mock, ctrl, _, repo := SetupDBMock(t)
 	defer ctrl.Finish()
 	defer db.Close()
@@ -399,7 +399,7 @@ func TestDeletePin(t *testing.T) {
 	}
 }
 
-func TestCheckPinExistence(t *testing.T) {
+func TestRepository_CheckPinExistence(t *testing.T) {
 	db, mock, ctrl, _, repo := SetupDBMock(t)
 	defer ctrl.Finish()
 	defer db.Close()

@@ -484,7 +484,7 @@ func TestRepository_GetUserBoards(t *testing.T) {
 	}
 }
 
-func TestCheckBoardAuthorExistence(t *testing.T) {
+func TestRepository_CheckBoardAuthorExistence(t *testing.T) {
 	db, mock, ctrl, _, repo := SetupDBMock(t)
 	defer ctrl.Finish()
 	defer db.Close()
