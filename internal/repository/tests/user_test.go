@@ -1,172 +1,328 @@
 package test_repository
 
-/*
 import (
 	"database/sql/driver"
+	"errors"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
+	"harmonica/internal/microservices/image/proto"
 	"harmonica/internal/repository"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestGetUserByEmail(t *testing.T) {
-	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	db, mock, ctrl, imageClient, repo := SetupDBMock(t)
+	defer ctrl.Finish()
+	defer db.Close()
+
+	tests := []struct {
+		name         string
+		setupMocks   func()
+		expectedUser entity.User
+		expectedErr  error
+	}{
+		{
+			name: "Good test",
+			setupMocks: func() {
+				mock.ExpectQuery(repository.QueryGetUserByEmail).
+					WillReturnRows(sqlmock.NewRows([]string{"nickname", "avatar_url"}).
+						AddRow("nickname", "url"))
+				imageClient.EXPECT().GetImageBounds(CtxWithRequestId, &proto.GetImageBoundsRequest{Url: "url"}).
+					Return(&proto.GetImageBoundsResponse{Dx: 1}, nil).MaxTimes(1)
+			},
+			expectedUser: entity.User{Nickname: "nickname", AvatarURL: "url", AvatarDX: 1},
+			expectedErr:  nil,
+		},
+		{
+			name: "Error test 1",
+			setupMocks: func() {
+				mock.ExpectQuery(repository.QueryGetUserByEmail).WillReturnError(errs.ErrDBInternal)
+			},
+			expectedUser: entity.User{},
+			expectedErr:  errs.ErrDBInternal,
+		},
+		{
+			name: "Error test 2",
+			setupMocks: func() {
+				mock.ExpectQuery(repository.QueryGetUserByEmail).
+					WillReturnRows(sqlmock.NewRows([]string{"err"}).AddRow("err"))
+			},
+			expectedUser: entity.User{},
+			expectedErr:  errors.New("missing destination name err in *entity.User"),
+		},
+		{
+			name: "Error test 3",
+			setupMocks: func() {
+				mock.ExpectQuery(repository.QueryGetUserByEmail).
+					WillReturnRows(sqlmock.NewRows([]string{"nickname", "avatar_url"}).
+						AddRow("nickname", "url"))
+				imageClient.EXPECT().GetImageBounds(CtxWithRequestId, &proto.GetImageBoundsRequest{Url: "url"}).
+					Return(&proto.GetImageBoundsResponse{Dx: 1}, errs.ErrDBInternal).MaxTimes(1)
+			},
+			expectedUser: entity.User{},
+			expectedErr:  errs.ErrDBInternal,
+		},
 	}
-	r := repository.NewDBRepository(sqlx.NewDb(db, "postgres"), nil, zap.L())
-	email := "emaiiil@godot.com"
-	// Good test
-	mock.ExpectQuery(repository.QueryGetUserByEmail).WillReturnRows(sqlmock.NewRows([]string{"nickname"}).AddRow("Nikoin"))
-	res, err := r.GetUserByEmail(CtxWithRequestId, email)
-	assert.Equal(t, entity.User{Nickname: "Nikoin"}, res)
-	assert.Equal(t, nil, err)
-	// Error test 1
-	mock.ExpectQuery(repository.QueryGetUserByEmail).WillReturnError(errs.ErrDBInternal)
-	res, err = r.GetUserByEmail(CtxWithRequestId, email)
-	assert.Equal(t, entity.User{}, res)
-	assert.Equal(t, errs.ErrDBInternal, err)
-	// Error test 2
-	mock.ExpectQuery(repository.QueryGetUserByEmail).WillReturnRows(sqlmock.NewRows([]string{"err"}).AddRow("err"))
-	res, err = r.GetUserByEmail(CtxWithRequestId, email)
-	assert.Equal(t, entity.User{}, res)
-	assert.Error(t, err)
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
+			res, err := repo.GetUserByEmail(CtxWithRequestId, "emaiiil@godot.com")
+			assert.Equal(t, tc.expectedUser, res)
+			assert.Equal(t, tc.expectedErr, err)
+		})
+	}
 }
 
 func TestGetUserByNickname(t *testing.T) {
-	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
-	CtxWithRequestId := context.Background()
-	CtxWithRequestId = context.WithValue(CtxWithRequestId, "request_id", "1935")
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	db, mock, ctrl, imageClient, repo := SetupDBMock(t)
+	defer ctrl.Finish()
+	defer db.Close()
+
+	tests := []struct {
+		name         string
+		setupMocks   func()
+		expectedUser entity.User
+		expectedErr  error
+	}{
+		{
+			name: "Good test",
+			setupMocks: func() {
+				mock.ExpectQuery(repository.QueryGetUserByNickname).
+					WillReturnRows(sqlmock.NewRows([]string{"nickname", "avatar_url"}).
+						AddRow("nickname", "url"))
+				imageClient.EXPECT().GetImageBounds(CtxWithRequestId, &proto.GetImageBoundsRequest{Url: "url"}).
+					Return(&proto.GetImageBoundsResponse{Dx: 1, Dy: 2}, nil).MaxTimes(1)
+			},
+			expectedUser: entity.User{Nickname: "nickname", AvatarURL: "url", AvatarDX: 1, AvatarDY: 2},
+			expectedErr:  nil,
+		},
+		{
+			name: "Error test 1",
+			setupMocks: func() {
+				mock.ExpectQuery(repository.QueryGetUserByNickname).WillReturnError(errs.ErrDBInternal)
+			},
+			expectedUser: entity.User{},
+			expectedErr:  errs.ErrDBInternal,
+		},
+		{
+			name: "Error test 2",
+			setupMocks: func() {
+				mock.ExpectQuery(repository.QueryGetUserByNickname).
+					WillReturnRows(sqlmock.NewRows([]string{"err"}).AddRow("err"))
+			},
+			expectedUser: entity.User{},
+			expectedErr:  errors.New("missing destination name err in *entity.User"),
+		},
+		{
+			name: "Error test 3",
+			setupMocks: func() {
+				mock.ExpectQuery(repository.QueryGetUserByNickname).
+					WillReturnRows(sqlmock.NewRows([]string{"nickname", "avatar_url"}).
+						AddRow("nickname", "url"))
+				imageClient.EXPECT().GetImageBounds(CtxWithRequestId, &proto.GetImageBoundsRequest{Url: "url"}).
+					Return(&proto.GetImageBoundsResponse{}, errs.ErrDBInternal).MaxTimes(1)
+			},
+			expectedUser: entity.User{},
+			expectedErr:  errs.ErrDBInternal,
+		},
 	}
-	r := repository.NewDBRepository(sqlx.NewDb(db, "postgres"), nil, zap.L())
-	nickname := "Nikoin"
-	// Good test
-	mock.ExpectQuery(repository.QueryGetUserByNickname).WillReturnRows(sqlmock.NewRows([]string{"email"}).AddRow("emaiiil@godot.com"))
-	res, err := r.GetUserByNickname(CtxWithRequestId, nickname)
-	assert.Equal(t, entity.User{Email: "emaiiil@godot.com"}, res)
-	assert.Equal(t, nil, err)
-	// Error test 1
-	mock.ExpectQuery(repository.QueryGetUserByNickname).WillReturnError(errs.ErrDBInternal)
-	res, err = r.GetUserByNickname(CtxWithRequestId, nickname)
-	assert.Equal(t, entity.User{}, res)
-	assert.Equal(t, errs.ErrDBInternal, err)
-	// Error test 2
-	mock.ExpectQuery(repository.QueryGetUserByNickname).WillReturnRows(sqlmock.NewRows([]string{"err"}).AddRow("err"))
-	res, err = r.GetUserByNickname(CtxWithRequestId, nickname)
-	assert.Equal(t, entity.User{}, res)
-	assert.Error(t, err)
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
+			res, err := repo.GetUserByNickname(CtxWithRequestId, "nickname")
+			assert.Equal(t, tc.expectedUser, res)
+			assert.Equal(t, tc.expectedErr, err)
+		})
+	}
 }
 
 func TestGetUserById(t *testing.T) {
-	CtxWithRequestId := context.Background()
-	CtxWithRequestId = context.WithValue(CtxWithRequestId, "request_id", "1935")
-	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	db, mock, ctrl, imageClient, repo := SetupDBMock(t)
+	defer ctrl.Finish()
+	defer db.Close()
+
+	tests := []struct {
+		name         string
+		setupMocks   func()
+		expectedUser entity.User
+		expectedErr  error
+	}{
+		{
+			name: "Good test",
+			setupMocks: func() {
+				mock.ExpectQuery(repository.QueryGetUserById).
+					WillReturnRows(sqlmock.NewRows([]string{"user_id", "avatar_url"}).
+						AddRow(1, "url"))
+				imageClient.EXPECT().GetImageBounds(CtxWithRequestId, &proto.GetImageBoundsRequest{Url: "url"}).
+					Return(&proto.GetImageBoundsResponse{Dx: 1, Dy: 2}, nil).MaxTimes(1)
+			},
+			expectedUser: entity.User{UserID: 1, AvatarURL: "url", AvatarDX: 1, AvatarDY: 2},
+			expectedErr:  nil,
+		},
+		{
+			name: "Error test 1",
+			setupMocks: func() {
+				mock.ExpectQuery(repository.QueryGetUserById).WillReturnError(errs.ErrDBInternal)
+			},
+			expectedUser: entity.User{},
+			expectedErr:  errs.ErrDBInternal,
+		},
+		{
+			name: "Error test 2",
+			setupMocks: func() {
+				mock.ExpectQuery(repository.QueryGetUserById).
+					WillReturnRows(sqlmock.NewRows([]string{"err"}).AddRow("err"))
+			},
+			expectedUser: entity.User{},
+			expectedErr:  errors.New("missing destination name err in *entity.User"),
+		},
+		{
+			name: "Error test 3",
+			setupMocks: func() {
+				mock.ExpectQuery(repository.QueryGetUserById).
+					WillReturnRows(sqlmock.NewRows([]string{"user_id", "avatar_url"}).
+						AddRow(1, "url"))
+				imageClient.EXPECT().GetImageBounds(CtxWithRequestId, &proto.GetImageBoundsRequest{Url: "url"}).
+					Return(&proto.GetImageBoundsResponse{}, errs.ErrDBInternal).MaxTimes(1)
+			},
+			expectedUser: entity.User{},
+			expectedErr:  errs.ErrDBInternal,
+		},
 	}
-	r := repository.NewDBRepository(sqlx.NewDb(db, "postgres"), nil, zap.L())
-	id := entity.UserID(1)
-	// Good test
-	mock.ExpectQuery(repository.QueryGetUserById).WillReturnRows(sqlmock.NewRows([]string{"email"}).AddRow("emaiiil@godot.com"))
-	res, err := r.GetUserById(CtxWithRequestId, id)
-	assert.Equal(t, entity.User{Email: "emaiiil@godot.com"}, res)
-	assert.Equal(t, nil, err)
-	// Error test 1
-	mock.ExpectQuery(repository.QueryGetUserById).WillReturnError(errs.ErrDBInternal)
-	res, err = r.GetUserById(CtxWithRequestId, id)
-	assert.Equal(t, entity.User{}, res)
-	assert.Equal(t, errs.ErrDBInternal, err)
-	// Error test 2
-	mock.ExpectQuery(repository.QueryGetUserById).WillReturnRows(sqlmock.NewRows([]string{"err"}).AddRow("err"))
-	res, err = r.GetUserById(CtxWithRequestId, id)
-	assert.Equal(t, entity.User{}, res)
-	assert.Error(t, err)
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
+			res, err := repo.GetUserById(CtxWithRequestId, 1)
+			assert.Equal(t, tc.expectedUser, res)
+			assert.Equal(t, tc.expectedErr, err)
+		})
+	}
 }
 
 func TestRegisterUser(t *testing.T) {
-	CtxWithRequestId := context.Background()
-	CtxWithRequestId = context.WithValue(CtxWithRequestId, "request_id", "1935")
-	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	r := repository.NewDBRepository(sqlx.NewDb(db, "postgres"), nil, zap.L())
-	user := entity.User{
-		Nickname:  "nickname",
-		Password:  "hashstring",
-		AvatarURL: "htttp10://img.png",
-		Email:     "email@com",
+	db, mock, ctrl, _, repo := SetupDBMock(t)
+	defer ctrl.Finish()
+	defer db.Close()
+
+	tests := []struct {
+		name        string
+		setupMocks  func()
+		expectedErr error
+	}{
+		{
+			name: "Good test",
+			setupMocks: func() {
+				mock.ExpectExec(repository.QueryRegisterUser).
+					WithArgs("email@com", "nickname", "hashPassword").
+					WillReturnResult(driver.ResultNoRows)
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "Error test 1",
+			setupMocks: func() {
+				mock.ExpectExec(repository.QueryRegisterUser).
+					WithArgs("email@com", "nickname", "hashPassword").
+					WillReturnError(errs.ErrDBInternal)
+			},
+			expectedErr: errs.ErrDBInternal,
+		},
 	}
 
-	// Good test
-	mock.ExpectExec(repository.QueryRegisterUser).WithArgs(user.Email, user.Nickname, user.Password).
-		WillReturnResult(driver.ResultNoRows)
-	err = r.RegisterUser(CtxWithRequestId, user)
-	assert.Equal(t, nil, err)
-	// Error test
-	mock.ExpectExec(repository.QueryRegisterUser).WithArgs(user.Email, user.Nickname, user.Password).
-		WillReturnError(errs.ErrDBInternal)
-	err = r.RegisterUser(CtxWithRequestId, user)
-	assert.Equal(t, errs.ErrDBInternal, err)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
+			err := repo.RegisterUser(CtxWithRequestId, entity.User{
+				Nickname:  "nickname",
+				Password:  "hashPassword",
+				AvatarURL: "h://img.png",
+				Email:     "email@com",
+			})
+			assert.Equal(t, tc.expectedErr, err)
+		})
+	}
 }
 
 func TestUpdateUser(t *testing.T) {
-	CtxWithRequestId := context.Background()
-	CtxWithRequestId = context.WithValue(CtxWithRequestId, "request_id", "1935")
-	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	db, mock, ctrl, _, repo := SetupDBMock(t)
+	defer ctrl.Finish()
+	defer db.Close()
+
+	tests := []struct {
+		name        string
+		setupMocks  func()
+		expectedErr error
+	}{
+		{
+			name: "Good test",
+			setupMocks: func() {
+				mock.ExpectExec(repository.QueryUpdateUserNickname).
+					WithArgs(entity.UserID(1), "nickname").
+					WillReturnResult(driver.ResultNoRows)
+				mock.ExpectExec(repository.QueryUpdateUserPassword).
+					WithArgs(entity.UserID(1), "hashPassword").
+					WillReturnResult(driver.ResultNoRows)
+				mock.ExpectExec(repository.QueryUpdateUserAvatar).
+					WithArgs(entity.UserID(1), "h://img.png").
+					WillReturnResult(driver.ResultNoRows)
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "Error test 1",
+			setupMocks: func() {
+				mock.ExpectExec(repository.QueryUpdateUserNickname).
+					WithArgs(entity.UserID(1), "nickname").
+					WillReturnResult(driver.ResultNoRows)
+				mock.ExpectExec(repository.QueryUpdateUserPassword).
+					WithArgs(entity.UserID(1), "hashPassword").
+					WillReturnResult(driver.ResultNoRows)
+				mock.ExpectExec(repository.QueryUpdateUserAvatar).
+					WithArgs(entity.UserID(1), "h://img.png").
+					WillReturnError(errs.ErrDBInternal)
+			},
+			expectedErr: errs.ErrDBInternal,
+		},
+		{
+			name: "Error test 2",
+			setupMocks: func() {
+				mock.ExpectExec(repository.QueryUpdateUserNickname).
+					WithArgs(entity.UserID(1), "nickname").
+					WillReturnResult(driver.ResultNoRows)
+				mock.ExpectExec(repository.QueryUpdateUserPassword).
+					WithArgs(entity.UserID(1), "hashPassword").
+					WillReturnError(errs.ErrDBInternal)
+			},
+			expectedErr: errs.ErrDBInternal,
+		},
+		{
+			name: "Error test 3",
+			setupMocks: func() {
+				mock.ExpectExec(repository.QueryUpdateUserNickname).
+					WithArgs(entity.UserID(1), "nickname").
+					WillReturnError(errs.ErrDBInternal)
+			},
+			expectedErr: errs.ErrDBInternal,
+		},
 	}
-	r := repository.NewDBRepository(sqlx.NewDb(db, "postgres"), nil, zap.L())
-	user := entity.User{
-		Nickname:  "nickname",
-		Password:  "hashstring",
-		AvatarURL: "htttp10://img.png",
-		Email:     "email@com",
-		UserID:    entity.UserID(1),
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
+			err := repo.UpdateUser(CtxWithRequestId, entity.User{
+				Nickname:  "nickname",
+				Password:  "hashPassword",
+				AvatarURL: "h://img.png",
+				Email:     "email@com",
+				UserID:    entity.UserID(1),
+			})
+			assert.Equal(t, tc.expectedErr, err)
+		})
 	}
-
-	// Good test
-	mock.ExpectExec(repository.QueryUpdateUserNickname).WithArgs(user.UserID, user.Nickname).
-		WillReturnResult(driver.ResultNoRows)
-	mock.ExpectExec(repository.QueryUpdateUserPassword).WithArgs(user.UserID, user.Password).
-		WillReturnResult(driver.ResultNoRows)
-	mock.ExpectExec(repository.QueryUpdateUserAvatar).WithArgs(user.UserID, user.AvatarURL).
-		WillReturnResult(driver.ResultNoRows)
-
-	err = r.UpdateUser(CtxWithRequestId, user)
-	assert.Equal(t, nil, err)
-	// Error test 1
-	mock.ExpectExec(repository.QueryUpdateUserNickname).WithArgs(user.UserID, user.Nickname).
-		WillReturnResult(driver.ResultNoRows)
-	mock.ExpectExec(repository.QueryUpdateUserPassword).WithArgs(user.UserID, user.Password).
-		WillReturnResult(driver.ResultNoRows)
-	mock.ExpectExec(repository.QueryUpdateUserAvatar).WithArgs(user.UserID, user.AvatarURL).
-		WillReturnError(errs.ErrDBInternal)
-
-	err = r.UpdateUser(CtxWithRequestId, user)
-	assert.Equal(t, errs.ErrDBInternal, err)
-
-	// Error test 2
-	mock.ExpectExec(repository.QueryUpdateUserNickname).WithArgs(user.UserID, user.Nickname).
-		WillReturnResult(driver.ResultNoRows)
-	mock.ExpectExec(repository.QueryUpdateUserPassword).WithArgs(user.UserID, user.Password).
-		WillReturnError(errs.ErrDBInternal)
-
-	err = r.UpdateUser(CtxWithRequestId, user)
-	assert.Equal(t, errs.ErrDBInternal, err)
-
-	// Error test 3
-	mock.ExpectExec(repository.QueryUpdateUserNickname).WithArgs(user.UserID, user.Nickname).
-		WillReturnError(errs.ErrDBInternal)
-
-	err = r.UpdateUser(CtxWithRequestId, user)
-	assert.Equal(t, errs.ErrDBInternal, err)
 }
-*/
