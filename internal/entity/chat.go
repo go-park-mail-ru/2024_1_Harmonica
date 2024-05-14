@@ -33,15 +33,11 @@ func (m *Message) Sanitize() {
 }
 
 type MessageResponse struct {
-	SenderId   UserID        `db:"sender_id" json:"sender_id"`
-	ReceiverId UserID        `db:"receiver_id" json:"receiver_id"`
-	Text       string        `db:"text" json:"text"`
-	Status     MessageStatus `db:"status" json:"status"`
-	SentAt     time.Time     `db:"sent_at" json:"sent_at"`
-}
-
-type Messages struct {
-	Messages []MessageResponse `json:"messages"`
+	SenderId UserID `db:"sender_id" json:"sender_id"`
+	Text     string `db:"text" json:"text"`
+	//Status   MessageStatus `db:"status" json:"status"`
+	IsRead bool      `db:"message_read" json:"message_read"`
+	SentAt time.Time `db:"sent_at" json:"sent_at"`
 }
 
 type Action string
@@ -61,14 +57,22 @@ type ChatMessage struct {
 	} `json:"payload"`
 }
 
+type UserFromChat struct {
+	UserID    UserID `db:"user_id" json:"user_id" swaggerignore:"true"`
+	Nickname  string `db:"nickname" json:"nickname"`
+	AvatarURL string `db:"avatar_url" json:"avatar_url" swaggerignore:"true"`
+}
+
+type Messages struct {
+	User     UserFromChat      `db:"user" json:"user"`
+	Messages []MessageResponse `db:"messages" json:"messages"`
+}
+
 type UserChat struct {
-	UserID        UserID `db:"user_id" json:"user_id" swaggerignore:"true"`
-	Nickname      string `db:"nickname" json:"nickname"`
-	AvatarURL     string `db:"avatar_url" json:"avatar_url" swaggerignore:"true"`
-	RecentMessage string `db:"recent_message" json:"recent_message"`
+	User        UserFromChat    `db:"user" json:"user"`
+	LastMessage MessageResponse `db:"chat_last_message" json:"chat_last_message"`
 }
 
 type UserChats struct {
-	SubscriptionsUserChats []UserChat `json:"subscriptions_users"`
-	OtherUserChats         []UserChat `json:"other_users"`
+	Chats []UserChat `json:"chats"`
 }

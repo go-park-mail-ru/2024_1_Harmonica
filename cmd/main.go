@@ -176,6 +176,15 @@ func configureChatRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.Se
 	for pattern, f := range authRoutes {
 		mux.HandleFunc(pattern, middleware.AuthRequired(logger, h.AuthService, f))
 	}
+
+	//publicRoutes := map[string]http.HandlerFunc{
+	//	"GET /api/v1/chats":              h.GetUserChats,
+	//	"GET /api/v1/messages/{user_id}": h.ReadMessages,
+	//}
+	//for pattern, f := range publicRoutes {
+	//	mux.HandleFunc(pattern, f)
+	//}
+
 }
 
 func configureSearchRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.ServeMux) {
