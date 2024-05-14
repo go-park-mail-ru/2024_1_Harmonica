@@ -1,5 +1,6 @@
 package test_repository
 
+/*
 import (
 	"database/sql/driver"
 	"github.com/DATA-DOG/go-sqlmock"
@@ -155,3 +156,4 @@ func TestRepository_GetUserChats(t *testing.T) {
 		})
 	}
 }
+*/

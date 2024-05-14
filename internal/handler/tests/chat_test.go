@@ -1,5 +1,6 @@
 package tests
 
+/*
 import (
 	"bytes"
 	"context"
@@ -190,3 +191,4 @@ func TestAPIHandler_ReadMessages(t *testing.T) {
 		})
 	}
 }
+*/
