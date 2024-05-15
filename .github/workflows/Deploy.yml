@@ -1,4 +1,4 @@
-name: Deploy
+name: Deploy apple
 on:
   push:
     branches: [ "main" ]
@@ -9,13 +9,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Deploy to server
-        uses: easingthemes/ssh-deploy@main
+        uses: appleboy/ssh-action@v1.0.3
         with:
-          SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_CERT }}
-          SSH_CMD_ARGS: "-o StrictHostKeyChecking=no -o ConnectTimeout=30"
-          ARGS: "-v -i"
-          REMOTE_HOST: 85.192.35.36
-          REMOTE_USER: ubuntu
-          SCRIPT_BEFORE: cd /home/ubuntu/project/2024_1_Harmonica_BACK ; sudo nohup make deploy 
-          SCRIPT_AFTER: echo "Deployed successfully."
-      
+          host: 85.192.35.36
+          username: ubuntu
+          key: ${{ secrets.PEM_DEPLOY }}
+          script: cd /home/ubuntu/project/2024_1_Harmonica_BACK ; sudo nohup make deploy < /dev/null > /tmp/deploy.log 2>&1 &
