@@ -1,4 +1,4 @@
-name: Deploy apple
+name: Deploy
 on:
   push:
     branches: [ "main" ]
