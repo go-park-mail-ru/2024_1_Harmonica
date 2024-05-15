@@ -13,5 +13,5 @@ jobs:
         with:
           host: 85.192.35.36
           username: ubuntu
-          key: ${{ secrets.PEM_DEPLOY }}
+          key: ${{ secrets.DEPLOY_CERT }}
           script: cd /home/ubuntu/project/2024_1_Harmonica_BACK ; sudo nohup make deploy < /dev/null > /tmp/deploy.log 2>&1 &
