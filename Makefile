@@ -2,7 +2,25 @@ run:
 	go run ./cmd/image/main.go & \
 	go run ./cmd/like/main.go & \
 	go run ./cmd/auth/main.go & \
-	go run ./cmd/main.go 
+	go run ./cmd/main.go &
+
+stop:
+	for port in ':8002', ':8003', ':8004', ':8080' ; do \
+    	for pid in `lsof -i $$port | awk '{print $$2}'`; do \
+    		if [ "$$pid" = "PID" ] ; then \
+    			continue ; \
+    		fi ; \
+    		echo $$pid ; \
+    		`kill $$pid` ; \
+    	done ; \
+    done
+
+deploy:
+	make stop ; \
+	git stash; \
+	git checkout main; \
+	git pull; \
+	nohup make run 
 
 test:
 	go test -v -coverpkg ./... ./... -coverprofile cover.out.tmp && \
