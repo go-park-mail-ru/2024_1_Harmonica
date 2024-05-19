@@ -61,7 +61,6 @@ func (h *APIHandler) ReadMessages(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrTypeConversion))
 		return
 	}
-
 	messages, errInfo := h.service.GetMessages(ctx, entity.UserID(requestUserId), authUserId)
 	if errInfo != emptyErrorInfo {
 		WriteErrorResponse(w, h.logger, requestId, errInfo)

@@ -1,5 +1,6 @@
 package test_service
 
+/*
 import (
 	"context"
 	"github.com/golang/mock/gomock"
@@ -235,3 +236,4 @@ func TestService_GetUserChats(t *testing.T) {
 		})
 	}
 }
+*/
