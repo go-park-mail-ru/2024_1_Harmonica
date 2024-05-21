@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
-	mock_repository "harmonica/mocks/microservices/like/repository"
+	mock_repository "harmonica/mocks/microservices/like/server/repository"
 	"testing"
 )
 

@@ -21,6 +21,9 @@ func WriteErrorResponse(w http.ResponseWriter, logger *zap.Logger, requestId str
 	if errInfo.GeneralErr != nil {
 		generalErrMessage = errInfo.GeneralErr.Error()
 	}
+	if errInfo.LocalErr == nil {
+		errInfo.LocalErr = errs.ErrUndefined
+	}
 
 	logger.Error(
 		errInfo.LocalErr.Error(),

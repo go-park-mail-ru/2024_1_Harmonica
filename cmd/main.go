@@ -45,6 +45,7 @@ func runServer(addr string) {
 	configurePinRoutes(logger, h, mux)
 	configureBoardRoutes(logger, h, mux)
 	configureChatRoutes(logger, h, mux)
+	configureDraftRoutes(logger, h, mux)
 	configureSearchRoutes(logger, h, mux)
 	configureSubscriptionRoutes(logger, h, mux)
 
@@ -176,15 +177,15 @@ func configureChatRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.Se
 	for pattern, f := range authRoutes {
 		mux.HandleFunc(pattern, middleware.AuthRequired(logger, h.AuthService, f))
 	}
+}
 
-	//publicRoutes := map[string]http.HandlerFunc{
-	//	"GET /api/v1/chats":              h.GetUserChats,
-	//	"GET /api/v1/messages/{user_id}": h.ReadMessages,
-	//}
-	//for pattern, f := range publicRoutes {
-	//	mux.HandleFunc(pattern, f)
-	//}
-
+func configureDraftRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.ServeMux) {
+	authRoutes := map[string]http.HandlerFunc{
+		"POST /api/v1/drafts": h.UpdateDraft,
+	}
+	for pattern, f := range authRoutes {
+		mux.HandleFunc(pattern, middleware.AuthRequired(logger, h.AuthService, f))
+	}
 }
 
 func configureSearchRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.ServeMux) {

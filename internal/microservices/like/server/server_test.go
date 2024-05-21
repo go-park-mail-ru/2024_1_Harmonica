@@ -9,7 +9,7 @@ import (
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	like "harmonica/internal/microservices/like/proto"
-	mock_service "harmonica/mocks/microservices/like/service"
+	mock_service "harmonica/mocks/microservices/like/server/service"
 	"testing"
 )
 

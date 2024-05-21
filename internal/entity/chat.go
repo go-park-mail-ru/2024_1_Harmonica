@@ -23,21 +23,8 @@ type Message struct {
 	SentAt     time.Time     `db:"sent_at" json:"sent_at"`
 }
 
-//type MessageRequest struct {
-//	ReceiverId UserID `json:"receiver_id"`
-//	Text       string `json:"text"`
-//}
-
 func (m *Message) Sanitize() {
 	m.Text = html.EscapeString(m.Text)
-}
-
-type MessageResponse struct {
-	SenderId UserID `db:"sender_id" json:"sender_id"`
-	Text     string `db:"text" json:"text"`
-	//Status   MessageStatus `db:"status" json:"status"`
-	IsRead bool      `db:"message_read" json:"message_read"`
-	SentAt time.Time `db:"sent_at" json:"sent_at"`
 }
 
 type Action string
@@ -63,8 +50,21 @@ type UserFromChat struct {
 	AvatarURL string `db:"avatar_url" json:"avatar_url" swaggerignore:"true"`
 }
 
+type MessageResponse struct {
+	SenderId UserID `db:"sender_id" json:"sender_id"`
+	Text     string `db:"text" json:"text"`
+	//Status   MessageStatus `db:"status" json:"status"`
+	IsRead bool      `db:"message_read" json:"message_read"`
+	SentAt time.Time `db:"sent_at" json:"sent_at"`
+}
+
+func (m *MessageResponse) Sanitize() {
+	m.Text = html.EscapeString(m.Text)
+}
+
 type Messages struct {
 	User     UserFromChat      `db:"user" json:"user"`
+	Draft    DraftResponse     `db:"draft" json:"draft"`
 	Messages []MessageResponse `db:"messages" json:"messages"`
 }
 

@@ -34,6 +34,9 @@ var (
 	ErrNotFound            = errors.New("not found")
 	ErrMinioTurnedOff      = errors.New("minio server doesn't response")
 	ErrNotAllowedExtension = errors.New("this file extension is not allowed")
+	ErrUndefined           = errors.New("this error is undefined")
+	// для случая, если забудем передать значение LocalErr в errInfo;
+	// до этого нововведения при таком раскладе событий приложение паниковало
 )
 
 var ErrorCodes = map[error]struct {
@@ -71,6 +74,7 @@ var ErrorCodes = map[error]struct {
 	ErrNotFound:            {HttpCode: 404, LocalCode: 29},
 	ErrMinioTurnedOff:      {HttpCode: 500, LocalCode: 30},
 	ErrNotAllowedExtension: {HttpCode: 400, LocalCode: 31},
+	ErrUndefined:           {HttpCode: 400, LocalCode: 32},
 }
 
 var GetLocalErrorByCode = map[int64]error{
@@ -105,4 +109,5 @@ var GetLocalErrorByCode = map[int64]error{
 	29: ErrNotFound,
 	30: ErrMinioTurnedOff,
 	31: ErrNotAllowedExtension,
+	32: ErrUndefined,
 }

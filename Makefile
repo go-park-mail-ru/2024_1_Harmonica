@@ -46,10 +46,13 @@ mocks:  ./internal/service/interfaces.go \
 		./internal/microservices/auth/server/service/interfaces.go \
 		./internal/microservices/auth/server/repository/interfaces.go \
 		./internal/microservices/image/server/service/interfaces.go \
-		./internal/microservices/image/server/repository/interfaces.go 
+		./internal/microservices/image/server/repository/interfaces.go
 	@echo "Generating mocks..."
 	@rm -rf $(MOCKS_DESTINATION)
-	@for file in $^; do mockgen -source=$$file -destination=$(MOCKS_DESTINATION)/$$file; done
+	@for file in $^; do \
+    		dest=$(MOCKS_DESTINATION)/$$(echo $$file | cut -c 10-); \
+    		mkdir -p $$(dirname $$dest); \
+    		mockgen -source=$$file -destination=$$dest; done
 
 proto_auth:
 	export PATH="$(PATH):$(go env GOPATH)/bin" && \
