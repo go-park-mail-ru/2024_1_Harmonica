@@ -154,10 +154,11 @@ func configureBoardRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.S
 		"DELETE /api/v1/boards/{board_id}":               h.DeleteBoard,
 		"POST /api/v1/boards/{board_id}/pins/{pin_id}":   h.AddPinToBoard,
 		"DELETE /api/v1/boards/{board_id}/pins/{pin_id}": h.DeletePinFromBoard,
+		"GET /api/v1/boards/excluding/{pin_id}":          h.GetUserBoardsWithoutPin,
 	}
 	checkAuthRoutes := map[string]http.HandlerFunc{
 		"GET /api/v1/boards/{board_id}":         h.GetBoard,
-		"GET /api/v1/boards/created/{nickname}": h.UserBoards,
+		"GET /api/v1/boards/created/{nickname}": h.GetUserBoards,
 	}
 	for pattern, f := range authRoutes {
 		mux.HandleFunc(pattern, middleware.AuthRequired(logger, h.AuthService, f))
