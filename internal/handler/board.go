@@ -283,6 +283,7 @@ func (h *APIHandler) GetUserBoards(w http.ResponseWriter, r *http.Request) {
 	userId, errInfo := CheckAuth(ctx)
 	if errInfo != emptyErrorInfo {
 		WriteErrorResponse(w, h.logger, requestId, errInfo)
+		return
 	}
 
 	limit, offset, err := GetLimitAndOffset(r)
@@ -306,9 +307,10 @@ func (h *APIHandler) GetUserBoardsWithoutPin(w http.ResponseWriter, r *http.Requ
 		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(err, errs.ErrInvalidSlug))
 		return
 	}
-	userId, errInfo := CheckAuth(ctx)
-	if errInfo != emptyErrorInfo {
-		WriteErrorResponse(w, h.logger, requestId, errInfo)
+	userId, ok := ctx.Value("user_id").(entity.UserID)
+	if !ok {
+		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrTypeConversion))
+		return
 	}
 	boards, errInfo := h.service.GetUserBoardsWithoutPin(ctx, entity.PinID(pinId), userId)
 	if errInfo != emptyErrorInfo {
