@@ -38,5 +38,17 @@ func (h *APIHandler) UpdateDraft(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, h.logger, requestId, errInfo)
 		return
 	}
+
+	// отправка в websocket
+	wsMessage := &entity.WSMessage{
+		Action: entity.ActionDraft,
+		Payload: entity.WSMessagePayload{
+			Text:       draft.Text,
+			SenderId:   draft.SenderId,
+			ReceiverId: draft.ReceiverId,
+		},
+	}
+	h.hub.broadcast <- wsMessage
+
 	WriteDefaultResponse(w, h.logger, nil)
 }

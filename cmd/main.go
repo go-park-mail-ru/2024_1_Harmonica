@@ -181,7 +181,7 @@ func configureChatRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.Se
 
 func configureDraftRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.ServeMux) {
 	authRoutes := map[string]http.HandlerFunc{
-		"POST /api/v1/drafts": h.UpdateDraft,
+		"POST /api/v1/drafts/{receiver_id}": h.UpdateDraft,
 	}
 	for pattern, f := range authRoutes {
 		mux.HandleFunc(pattern, middleware.AuthRequired(logger, h.AuthService, f))
