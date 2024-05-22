@@ -53,7 +53,9 @@ func runServer(addr string) {
 	mux.HandleFunc("GET /img/{image_name}", h.GetImage)
 
 	go hub.Run()
+
 	mux.HandleFunc("GET /ws", middleware.AuthRequired(logger, h.AuthService, h.ServeWs))
+	//mux.HandleFunc("GET /ws", h.ServeWs)
 
 	loggedMux := middleware.Logging(logger, mux)
 
@@ -178,8 +180,9 @@ func configureChatRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.Se
 	}
 
 	//publicRoutes := map[string]http.HandlerFunc{
-	//	"GET /api/v1/chats":              h.GetUserChats,
-	//	"GET /api/v1/messages/{user_id}": h.ReadMessages,
+	//	"POST /api/v1/messages/{receiver_id}": h.SendMessage,
+	//	//"GET /api/v1/messages/{user_id}": h.ReadMessages,
+	//	"GET /api/v1/chats": h.GetUserChats,
 	//}
 	//for pattern, f := range publicRoutes {
 	//	mux.HandleFunc(pattern, f)

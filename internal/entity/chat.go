@@ -48,13 +48,15 @@ const (
 
 var Actions = []Action{ActionMessage}
 
-type ChatMessage struct {
-	Action  Action `json:"action"`
-	Payload struct {
-		Text       string `json:"text"`
-		SenderId   UserID `json:"sender_id"`
-		ReceiverId UserID `json:"receiver_id"`
-	} `json:"payload"`
+type WSMessagePayload struct {
+	Text       string `json:"text"`
+	SenderId   UserID `json:"sender_id"`
+	ReceiverId UserID `json:"receiver_id"`
+}
+
+type WSMessage struct {
+	Action  Action           `json:"action"`
+	Payload WSMessagePayload `json:"payload"`
 }
 
 type UserFromChat struct {

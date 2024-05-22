@@ -8,14 +8,14 @@ import (
 type Hub struct {
 	clients    map[entity.UserID][]*Client
 	mu         sync.Mutex
-	broadcast  chan *entity.ChatMessage // Inbound messages from the clients.
-	register   chan *Client             // Register requests from the clients.
-	unregister chan *Client             // Unregister requests from clients.
+	broadcast  chan *entity.WSMessage // Inbound messages from the clients.
+	register   chan *Client           // Register requests from the clients.
+	unregister chan *Client           // Unregister requests from clients.
 }
 
 func NewHub() *Hub {
 	return &Hub{
-		broadcast:  make(chan *entity.ChatMessage),
+		broadcast:  make(chan *entity.WSMessage),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		clients:    make(map[entity.UserID][]*Client),

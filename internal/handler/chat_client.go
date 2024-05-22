@@ -26,7 +26,7 @@ var upgrader = websocket.Upgrader{
 type Client struct {
 	hub       *Hub
 	conn      *websocket.Conn
-	message   chan *entity.ChatMessage //send chan []byte
+	message   chan *entity.WSMessage //send chan []byte
 	userId    entity.UserID
 	wsConnKey string
 	logger    *zap.Logger
@@ -36,7 +36,7 @@ func NewClient(hub *Hub, conn *websocket.Conn, userId entity.UserID, wsConnKey s
 	return &Client{
 		hub:       hub,
 		conn:      conn,
-		message:   make(chan *entity.ChatMessage, 100), //send: make(chan []byte, 256), // создаем буферизованный канал для исходящих сообщений
+		message:   make(chan *entity.WSMessage, 100), //send: make(chan []byte, 256), // создаем буферизованный канал для исходящих сообщений
 		userId:    userId,
 		wsConnKey: wsConnKey,
 		logger:    l,
@@ -65,35 +65,35 @@ func (h *APIHandler) ServeWs(w http.ResponseWriter, r *http.Request) {
 	client.hub.register <- client
 
 	go client.WriteMessage()
-	go client.ReadMessage()
+	//go client.ReadMessage()
 }
 
-func (c *Client) ReadMessage() {
-	defer func() {
-		c.hub.unregister <- c
-		c.conn.Close()
-	}()
-	c.conn.SetReadLimit(maxMessageSize)
-	c.conn.SetReadDeadline(time.Now().Add(pongWait))
-	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
-
-	for {
-		var chatMessage entity.ChatMessage
-		err := c.conn.ReadJSON(&chatMessage)
-		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				c.logger.Error(
-					errs.ErrWSConnectionClosed.Error(),
-					zap.Int("local_error_code", errs.ErrorCodes[errs.ErrWSConnectionClosed].LocalCode),
-					zap.String("general_error", err.Error()),
-				)
-			}
-			break
-		}
-		chatMessage.Payload.SenderId = c.userId
-		c.hub.broadcast <- &chatMessage
-	}
-}
+//func (c *Client) ReadMessage() {
+//	defer func() {
+//		c.hub.unregister <- c
+//		c.conn.Close()
+//	}()
+//	c.conn.SetReadLimit(maxMessageSize)
+//	c.conn.SetReadDeadline(time.Now().Add(pongWait))
+//	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+//
+//	for {
+//		var chatMessage entity.ChatMessage
+//		err := c.conn.ReadJSON(&chatMessage)
+//		if err != nil {
+//			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+//				c.logger.Error(
+//					errs.ErrWSConnectionClosed.Error(),
+//					zap.Int("local_error_code", errs.ErrorCodes[errs.ErrWSConnectionClosed].LocalCode),
+//					zap.String("general_error", err.Error()),
+//				)
+//			}
+//			break
+//		}
+//		chatMessage.Payload.SenderId = c.userId
+//		c.hub.broadcast <- &chatMessage
+//	}
+//}
 
 func (c *Client) WriteMessage() {
 	ticker := time.NewTicker(pingPeriod)
