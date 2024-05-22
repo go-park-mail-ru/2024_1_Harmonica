@@ -8,14 +8,14 @@ import (
 type Hub struct {
 	clients    map[entity.UserID][]*Client
 	mu         sync.Mutex
-	broadcast  chan *entity.ChatMessage // Inbound messages from the clients.
-	register   chan *Client             // Register requests from the clients.
-	unregister chan *Client             // Unregister requests from clients.
+	broadcast  chan *entity.WSMessage // Inbound messages from the clients.
+	register   chan *Client           // Register requests from the clients.
+	unregister chan *Client           // Unregister requests from clients.
 }
 
 func NewHub() *Hub {
 	return &Hub{
-		broadcast:  make(chan *entity.ChatMessage),
+		broadcast:  make(chan *entity.WSMessage),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		clients:    make(map[entity.UserID][]*Client),
@@ -36,8 +36,10 @@ func (hub *Hub) Run() {
 		case chatMessage := <-hub.broadcast:
 			senderId := chatMessage.Payload.SenderId
 			receiverId := chatMessage.Payload.ReceiverId
+			action := chatMessage.Action
 			hub.mu.Lock()
-			if clients, ok := hub.clients[receiverId]; ok {
+			if clients, ok := hub.clients[receiverId]; ok &&
+				action == entity.ActionMessage {
 				for _, client := range clients {
 					select {
 					case client.message <- chatMessage:
@@ -50,7 +52,9 @@ func (hub *Hub) Run() {
 			}
 			// это для того, чтобы сообщение, отправленное юзером, отображалось во всех его вкладках
 			clients, ok := hub.clients[senderId]
-			if ok && receiverId != senderId {
+			if ok &&
+				((action == entity.ActionMessage && receiverId != senderId) ||
+					(action == entity.ActionDraft)) {
 				for _, client := range clients {
 					select {
 					case client.message <- chatMessage:

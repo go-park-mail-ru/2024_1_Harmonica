@@ -34,8 +34,11 @@ type IRepository interface {
 	GetUserBoardsWithoutPin(ctx context.Context, pinId entity.PinID, userId entity.UserID) (entity.UserBoardsWithoutPin, error)
 
 	CreateMessage(ctx context.Context, message entity.Message) error
-	GetMessages(ctx context.Context, firstUserId, secondUserId entity.UserID) (entity.Messages, error)
+	GetMessages(ctx context.Context, dialogUserId, authUserId entity.UserID) (entity.Messages, error)
 	GetUserChats(ctx context.Context, userId entity.UserID) (entity.UserChats, error)
+
+	GetDraft(ctx context.Context, receiverId, senderId entity.UserID) (entity.DraftResponse, error)
+	UpdateDraft(ctx context.Context, draft entity.Draft) error
 
 	AddSubscriptionToUser(ctx context.Context, userId, subscribeUserId entity.UserID) error
 	DeleteSubscriptionToUser(ctx context.Context, userId, unsubscribeUserId entity.UserID) error

@@ -23,13 +23,34 @@ type Message struct {
 	SentAt     time.Time     `db:"sent_at" json:"sent_at"`
 }
 
-//type MessageRequest struct {
-//	ReceiverId UserID `json:"receiver_id"`
-//	Text       string `json:"text"`
-//}
-
 func (m *Message) Sanitize() {
 	m.Text = html.EscapeString(m.Text)
+}
+
+type Action string
+
+const (
+	ActionMessage Action = "CHAT_MESSAGE"
+	ActionDraft   Action = "CHAT_DRAFT"
+)
+
+var Actions = []Action{ActionMessage}
+
+type WSMessagePayload struct {
+	Text       string `json:"text"`
+	SenderId   UserID `json:"sender_id"`
+	ReceiverId UserID `json:"receiver_id"`
+}
+
+type WSMessage struct {
+	Action  Action           `json:"action"`
+	Payload WSMessagePayload `json:"payload"`
+}
+
+type UserFromChat struct {
+	UserID    UserID `db:"user_id" json:"user_id" swaggerignore:"true"`
+	Nickname  string `db:"nickname" json:"nickname"`
+	AvatarURL string `db:"avatar_url" json:"avatar_url" swaggerignore:"true"`
 }
 
 type MessageResponse struct {
@@ -40,31 +61,13 @@ type MessageResponse struct {
 	SentAt time.Time `db:"sent_at" json:"sent_at"`
 }
 
-type Action string
-
-const (
-	ActionMessage Action = "CHAT_MESSAGE"
-)
-
-var Actions = []Action{ActionMessage}
-
-type ChatMessage struct {
-	Action  Action `json:"action"`
-	Payload struct {
-		Text       string `json:"text"`
-		SenderId   UserID `json:"sender_id"`
-		ReceiverId UserID `json:"receiver_id"`
-	} `json:"payload"`
-}
-
-type UserFromChat struct {
-	UserID    UserID `db:"user_id" json:"user_id" swaggerignore:"true"`
-	Nickname  string `db:"nickname" json:"nickname"`
-	AvatarURL string `db:"avatar_url" json:"avatar_url" swaggerignore:"true"`
+func (m *MessageResponse) Sanitize() {
+	m.Text = html.EscapeString(m.Text)
 }
 
 type Messages struct {
 	User     UserFromChat      `db:"user" json:"user"`
+	Draft    DraftResponse     `db:"draft" json:"draft"`
 	Messages []MessageResponse `db:"messages" json:"messages"`
 }
 

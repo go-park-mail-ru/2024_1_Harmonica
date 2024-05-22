@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"github.com/lib/pq"
 	"harmonica/internal/entity"
@@ -26,12 +27,26 @@ func (s *RepositoryService) CreateMessage(ctx context.Context, message entity.Me
 			LocalErr:   localErr,
 		}
 	}
+	err = s.repo.UpdateDraft(ctx, entity.Draft{SenderId: message.SenderId, ReceiverId: message.ReceiverId, Text: ""})
+	if err != nil {
+		return errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrDBInternal,
+		}
+	}
 	return emptyErrorInfo
 }
 
-func (s *RepositoryService) GetMessages(ctx context.Context, firstUserId, secondUserId entity.UserID) (entity.Messages, errs.ErrorInfo) {
-	messages, err := s.repo.GetMessages(ctx, firstUserId, secondUserId)
+func (s *RepositoryService) GetMessages(ctx context.Context, dialogUserId, authUserId entity.UserID) (entity.Messages, errs.ErrorInfo) {
+	messages, err := s.repo.GetMessages(ctx, dialogUserId, authUserId)
 	if err != nil {
+		return entity.Messages{}, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrDBInternal,
+		}
+	}
+	messages.Draft, err = s.repo.GetDraft(ctx, dialogUserId, authUserId)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return entity.Messages{}, errs.ErrorInfo{
 			GeneralErr: err,
 			LocalErr:   errs.ErrDBInternal,

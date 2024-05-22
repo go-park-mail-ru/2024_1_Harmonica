@@ -26,7 +26,7 @@ var upgrader = websocket.Upgrader{
 type Client struct {
 	hub       *Hub
 	conn      *websocket.Conn
-	message   chan *entity.ChatMessage //send chan []byte
+	message   chan *entity.WSMessage //send chan []byte
 	userId    entity.UserID
 	wsConnKey string
 	logger    *zap.Logger
@@ -36,7 +36,7 @@ func NewClient(hub *Hub, conn *websocket.Conn, userId entity.UserID, wsConnKey s
 	return &Client{
 		hub:       hub,
 		conn:      conn,
-		message:   make(chan *entity.ChatMessage, 100), //send: make(chan []byte, 256), // создаем буферизованный канал для исходящих сообщений
+		message:   make(chan *entity.WSMessage, 100), // создаем буферизованный канал для исходящих сообщений
 		userId:    userId,
 		wsConnKey: wsConnKey,
 		logger:    l,
@@ -78,7 +78,7 @@ func (c *Client) ReadMessage() {
 	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 
 	for {
-		var chatMessage entity.ChatMessage
+		var chatMessage entity.WSMessage
 		err := c.conn.ReadJSON(&chatMessage)
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
@@ -129,8 +129,11 @@ func (c *Client) WriteMessage() {
 				chatMessage = <-c.message
 				senderId := chatMessage.Payload.SenderId
 				receiverId := chatMessage.Payload.ReceiverId
+				action := chatMessage.Action
 				//if chatMessage.ReceiverId == c.userId {
-				if (receiverId == c.userId || senderId == c.userId) && senderId != receiverId {
+				if (action == entity.ActionMessage && (receiverId == c.userId ||
+					senderId == c.userId) && senderId != receiverId) ||
+					(action == entity.ActionDraft && senderId == c.userId) {
 					err = c.conn.WriteJSON(<-c.message)
 					if err != nil {
 						//возникла ошибка при отправке json -> простое сообщение мб отправится

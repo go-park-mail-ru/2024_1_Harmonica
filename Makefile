@@ -46,7 +46,7 @@ mocks:  ./internal/service/interfaces.go \
 		./internal/microservices/auth/server/service/interfaces.go \
 		./internal/microservices/auth/server/repository/interfaces.go \
 		./internal/microservices/image/server/service/interfaces.go \
-		./internal/microservices/image/server/repository/interfaces.go 
+		./internal/microservices/image/server/repository/interfaces.go
 	@echo "Generating mocks..."
 	@rm -rf $(MOCKS_DESTINATION)
 	@for file in $^; do \

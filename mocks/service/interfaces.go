@@ -195,18 +195,18 @@ func (mr *MockIServiceMockRecorder) GetFeedPins(ctx, limit, offset interface{}) 
 }
 
 // GetMessages mocks base method.
-func (m *MockIService) GetMessages(ctx context.Context, firstUserId, secondUserId entity.UserID) (entity.Messages, errs.ErrorInfo) {
+func (m *MockIService) GetMessages(ctx context.Context, dialogUserId, authUserId entity.UserID) (entity.Messages, errs.ErrorInfo) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMessages", ctx, firstUserId, secondUserId)
+	ret := m.ctrl.Call(m, "GetMessages", ctx, dialogUserId, authUserId)
 	ret0, _ := ret[0].(entity.Messages)
 	ret1, _ := ret[1].(errs.ErrorInfo)
 	return ret0, ret1
 }
 
 // GetMessages indicates an expected call of GetMessages.
-func (mr *MockIServiceMockRecorder) GetMessages(ctx, firstUserId, secondUserId interface{}) *gomock.Call {
+func (mr *MockIServiceMockRecorder) GetMessages(ctx, dialogUserId, authUserId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessages", reflect.TypeOf((*MockIService)(nil).GetMessages), ctx, firstUserId, secondUserId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessages", reflect.TypeOf((*MockIService)(nil).GetMessages), ctx, dialogUserId, authUserId)
 }
 
 // GetPinById mocks base method.
@@ -431,6 +431,20 @@ func (m *MockIService) UpdateBoard(ctx context.Context, board entity.Board, user
 func (mr *MockIServiceMockRecorder) UpdateBoard(ctx, board, userId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateBoard", reflect.TypeOf((*MockIService)(nil).UpdateBoard), ctx, board, userId)
+}
+
+// UpdateDraft mocks base method.
+func (m *MockIService) UpdateDraft(ctx context.Context, draft entity.Draft) errs.ErrorInfo {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateDraft", ctx, draft)
+	ret0, _ := ret[0].(errs.ErrorInfo)
+	return ret0
+}
+
+// UpdateDraft indicates an expected call of UpdateDraft.
+func (mr *MockIServiceMockRecorder) UpdateDraft(ctx, draft interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateDraft", reflect.TypeOf((*MockIService)(nil).UpdateDraft), ctx, draft)
 }
 
 // UpdatePin mocks base method.

@@ -32,8 +32,10 @@ type IService interface {
 	GetUserBoardsWithoutPin(ctx context.Context, pinId entity.PinID, userId entity.UserID) (entity.UserBoardsWithoutPin, errs.ErrorInfo)
 
 	CreateMessage(ctx context.Context, message entity.Message) errs.ErrorInfo
-	GetMessages(ctx context.Context, firstUserId, secondUserId entity.UserID) (entity.Messages, errs.ErrorInfo)
+	GetMessages(ctx context.Context, dialogUserId, authUserId entity.UserID) (entity.Messages, errs.ErrorInfo)
 	GetUserChats(ctx context.Context, userId entity.UserID) (entity.UserChats, errs.ErrorInfo)
+
+	UpdateDraft(ctx context.Context, draft entity.Draft) errs.ErrorInfo
 
 	AddSubscriptionToUser(ctx context.Context, userId, subscribeUserId entity.UserID) errs.ErrorInfo
 	DeleteSubscriptionToUser(ctx context.Context, userId, unsubscribeUserId entity.UserID) errs.ErrorInfo
