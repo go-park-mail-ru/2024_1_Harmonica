@@ -6,7 +6,7 @@ import (
 	"go.uber.org/zap"
 	"harmonica/internal/entity/errs"
 	image "harmonica/internal/microservices/image/proto"
-	mock_service "harmonica/mocks/microservices/image/service"
+	mock_service "harmonica/mocks/microservices/image/server/service"
 	"testing"
 
 	"github.com/golang/mock/gomock"
