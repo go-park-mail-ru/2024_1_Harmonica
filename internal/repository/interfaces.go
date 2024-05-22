@@ -31,6 +31,7 @@ type IRepository interface {
 	DeleteBoard(ctx context.Context, boardId entity.BoardID) error
 	GetUserBoards(ctx context.Context, authorId, userId entity.UserID, limit, offset int) (entity.UserBoards, error)
 	CheckBoardAuthorExistence(ctx context.Context, userId entity.UserID, boardId entity.BoardID) (bool, error)
+	GetUserBoardsWithoutPin(ctx context.Context, pinId entity.PinID, userId entity.UserID) (entity.UserBoardsWithoutPin, error)
 
 	CreateMessage(ctx context.Context, message entity.Message) error
 	GetMessages(ctx context.Context, firstUserId, secondUserId entity.UserID) (entity.Messages, error)

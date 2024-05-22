@@ -29,6 +29,7 @@ type IService interface {
 	DeletePinFromBoard(ctx context.Context, boardId entity.BoardID, pinId entity.PinID, userId entity.UserID) errs.ErrorInfo
 	DeleteBoard(ctx context.Context, boardId entity.BoardID, userId entity.UserID) errs.ErrorInfo
 	GetUserBoards(ctx context.Context, authorNickname string, userId entity.UserID, limit, offset int) (entity.UserBoards, errs.ErrorInfo)
+	GetUserBoardsWithoutPin(ctx context.Context, pinId entity.PinID, userId entity.UserID) (entity.UserBoardsWithoutPin, errs.ErrorInfo)
 
 	CreateMessage(ctx context.Context, message entity.Message) errs.ErrorInfo
 	GetMessages(ctx context.Context, firstUserId, secondUserId entity.UserID) (entity.Messages, errs.ErrorInfo)

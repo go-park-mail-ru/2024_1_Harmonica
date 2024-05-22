@@ -52,6 +52,11 @@ const (
 	//WHERE public.board_author.author_id=$1 ORDER BY public.board.created_at DESC LIMIT $2 OFFSET $3`
 
 	QueryCheckBoardAuthorExistence = `SELECT EXISTS(SELECT 1 FROM public.board_author WHERE author_id=$1 AND board_id=$2)`
+
+	QueryGetUserBoardsWithoutPin = `SELECT b.board_id, b.title, b.description, b.cover_url, b.visibility_type
+	FROM public.board b JOIN public.board_author ba ON b.board_id = ba.board_id
+    LEFT JOIN public.board_pin bp ON b.board_id = bp.board_id AND bp.pin_id = $1
+	WHERE ba.author_id = $2 AND bp.pin_id IS NULL ORDER BY b.created_at DESC ;`
 )
 
 func (r *DBRepository) CreateBoard(ctx context.Context, board entity.Board,
@@ -224,4 +229,20 @@ func (r *DBRepository) CheckBoardAuthorExistence(ctx context.Context, userId ent
 	err := r.db.QueryRowContext(ctx, QueryCheckBoardAuthorExistence, userId, boardId).Scan(&exists)
 	LogDBQuery(r, ctx, QueryCheckBoardAuthorExistence, time.Since(start))
 	return exists, err
+}
+
+func (r *DBRepository) GetUserBoardsWithoutPin(ctx context.Context, pinId entity.PinID,
+	userId entity.UserID) (entity.UserBoardsWithoutPin, error) {
+	boards := entity.UserBoardsWithoutPin{}
+	start := time.Now()
+	rows, err := r.db.QueryContext(ctx, QueryGetUserBoardsWithoutPin, pinId, userId)
+	LogDBQuery(r, ctx, QueryGetUserBoards, time.Since(start))
+	if err != nil {
+		return entity.UserBoardsWithoutPin{}, err
+	}
+	err = carta.Map(rows, &boards.Boards)
+	//if err != nil {
+	//	return entity.UserBoardsWithoutPin{}, err
+	//}
+	return boards, err
 }

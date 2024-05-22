@@ -254,6 +254,21 @@ func (mr *MockIServiceMockRecorder) GetUserBoards(ctx, authorNickname, userId, l
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserBoards", reflect.TypeOf((*MockIService)(nil).GetUserBoards), ctx, authorNickname, userId, limit, offset)
 }
 
+// GetUserBoardsWithoutPin mocks base method.
+func (m *MockIService) GetUserBoardsWithoutPin(ctx context.Context, pinId entity.PinID, userId entity.UserID) (entity.UserBoardsWithoutPin, errs.ErrorInfo) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserBoardsWithoutPin", ctx, pinId, userId)
+	ret0, _ := ret[0].(entity.UserBoardsWithoutPin)
+	ret1, _ := ret[1].(errs.ErrorInfo)
+	return ret0, ret1
+}
+
+// GetUserBoardsWithoutPin indicates an expected call of GetUserBoardsWithoutPin.
+func (mr *MockIServiceMockRecorder) GetUserBoardsWithoutPin(ctx, pinId, userId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserBoardsWithoutPin", reflect.TypeOf((*MockIService)(nil).GetUserBoardsWithoutPin), ctx, pinId, userId)
+}
+
 // GetUserByEmail mocks base method.
 func (m *MockIService) GetUserByEmail(ctx context.Context, email string) (entity.User, errs.ErrorInfo) {
 	m.ctrl.T.Helper()

@@ -271,6 +271,18 @@ func (s *RepositoryService) GetUserBoards(ctx context.Context, authorNickname st
 	return boards, emptyErrorInfo
 }
 
+func (s *RepositoryService) GetUserBoardsWithoutPin(ctx context.Context, pinId entity.PinID,
+	userId entity.UserID) (entity.UserBoardsWithoutPin, errs.ErrorInfo) {
+	boards, err := s.repo.GetUserBoardsWithoutPin(ctx, pinId, userId)
+	if err != nil {
+		return entity.UserBoardsWithoutPin{}, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrDBInternal,
+		}
+	}
+	return boards, emptyErrorInfo
+}
+
 //func AuthorContains(authors []entity.BoardAuthor, userId entity.UserID) bool {
 //	for _, author := range authors {
 //		if author.UserId == userId {

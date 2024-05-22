@@ -32,14 +32,13 @@ func (b *Board) Sanitize() {
 }
 
 type UserBoard struct {
-	BoardID        BoardID        `db:"board_id" json:"board_id"`
-	Title          string         `db:"title" json:"title"`
-	CreatedAt      time.Time      `db:"created_at" json:"created_at"`
-	Description    string         `db:"description" json:"description"`
-	CoverURL       string         `db:"cover_url" json:"cover_url" swaggerignore:"true"`
-	VisibilityType VisibilityType `db:"visibility_type" json:"visibility_type"`
-	//IsOwner              bool           `json:"is_owner"` // здесь это поле не используем
-	RecentPinContentUrls []string `db:"recent_pins" json:"recent_pins"`
+	BoardID              BoardID        `db:"board_id" json:"board_id"`
+	Title                string         `db:"title" json:"title"`
+	CreatedAt            time.Time      `db:"created_at" json:"created_at"`
+	Description          string         `db:"description" json:"description"`
+	CoverURL             string         `db:"cover_url" json:"cover_url" swaggerignore:"true"`
+	VisibilityType       VisibilityType `db:"visibility_type" json:"visibility_type"`
+	RecentPinContentUrls []string       `db:"recent_pins" json:"recent_pins"`
 }
 
 func (b *UserBoard) Sanitize() {
@@ -52,6 +51,29 @@ type UserBoards struct {
 }
 
 func (b *UserBoards) Sanitize() {
+	for _, board := range b.Boards {
+		board.Sanitize()
+	}
+}
+
+type UserBoardWithoutPin struct {
+	BoardID        BoardID        `db:"board_id" json:"board_id"`
+	Title          string         `db:"title" json:"title"`
+	Description    string         `db:"description" json:"description"`
+	CoverURL       string         `db:"cover_url" json:"cover_url" swaggerignore:"true"`
+	VisibilityType VisibilityType `db:"visibility_type" json:"visibility_type"`
+}
+
+func (b *UserBoardWithoutPin) Sanitize() {
+	b.Title = html.EscapeString(b.Title)
+	b.Description = html.EscapeString(b.Description)
+}
+
+type UserBoardsWithoutPin struct {
+	Boards []UserBoardWithoutPin `json:"boards"`
+}
+
+func (b *UserBoardsWithoutPin) Sanitize() {
 	for _, board := range b.Boards {
 		board.Sanitize()
 	}
