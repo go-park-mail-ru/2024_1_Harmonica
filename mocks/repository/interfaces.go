@@ -207,6 +207,21 @@ func (mr *MockIRepositoryMockRecorder) DeleteSubscriptionToUser(ctx, userId, uns
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSubscriptionToUser", reflect.TypeOf((*MockIRepository)(nil).DeleteSubscriptionToUser), ctx, userId, unsubscribeUserId)
 }
 
+// GetAllUsers mocks base method.
+func (m *MockIRepository) GetAllUsers(ctx context.Context) ([]entity.SearchUser, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllUsers", ctx)
+	ret0, _ := ret[0].([]entity.SearchUser)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllUsers indicates an expected call of GetAllUsers.
+func (mr *MockIRepositoryMockRecorder) GetAllUsers(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllUsers", reflect.TypeOf((*MockIRepository)(nil).GetAllUsers), ctx)
+}
+
 // GetBoardAuthors mocks base method.
 func (m *MockIRepository) GetBoardAuthors(ctx context.Context, boardId entity.BoardID) ([]entity.BoardAuthor, error) {
 	m.ctrl.T.Helper()

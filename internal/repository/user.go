@@ -6,6 +6,7 @@ import (
 	"harmonica/internal/microservices/image/proto"
 	"time"
 
+	"github.com/jackskj/carta"
 	"go.uber.org/zap"
 )
 
@@ -23,7 +24,23 @@ const (
 	QueryUpdateUserPassword = `UPDATE public.user SET "password"=$2 WHERE user_id=$1`
 
 	QueryUpdateUserAvatar = `UPDATE public.user SET "avatar_url"=$2 WHERE user_id=$1`
+
+	QueryGetAllUsers = `SELECT 
+	(SELECT COUNT(*) FROM public.subscribe_on_person WHERE followed_user_id = u.user_id) AS subs,
+	user_id, nickname, avatar_url FROM public."user" u ORDER BY u.register_at DESC`
 )
+
+func (r *DBRepository) GetAllUsers(ctx context.Context) ([]entity.SearchUser, error) {
+	start := time.Now()
+	rows, err := r.db.QueryContext(ctx, QueryGetAllUsers)
+	LogDBQuery(r, ctx, QueryGetAllUsers, time.Since(start))
+	if err != nil {
+		return []entity.SearchUser{}, err
+	}
+	var res []entity.SearchUser
+	err = carta.Map(rows, &res)
+	return res, err
+}
 
 func (r *DBRepository) GetUserByEmail(ctx context.Context, email string) (entity.User, error) {
 	start := time.Now()
