@@ -35,6 +35,21 @@ func (m *MockIRepository) EXPECT() *MockIRepositoryMockRecorder {
 	return m.recorder
 }
 
+// AddComment mocks base method.
+func (m *MockIRepository) AddComment(ctx context.Context, comment string, pinId entity.PinID, userId entity.UserID) (entity.CommentID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddComment", ctx, comment, pinId, userId)
+	ret0, _ := ret[0].(entity.CommentID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddComment indicates an expected call of AddComment.
+func (mr *MockIRepositoryMockRecorder) AddComment(ctx, comment, pinId, userId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddComment", reflect.TypeOf((*MockIRepository)(nil).AddComment), ctx, comment, pinId, userId)
+}
+
 // AddPinToBoard mocks base method.
 func (m *MockIRepository) AddPinToBoard(ctx context.Context, boardId entity.BoardID, pinId entity.PinID) error {
 	m.ctrl.T.Helper()
@@ -120,6 +135,20 @@ func (m *MockIRepository) CreateMessage(ctx context.Context, message entity.Mess
 func (mr *MockIRepositoryMockRecorder) CreateMessage(ctx, message interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateMessage", reflect.TypeOf((*MockIRepository)(nil).CreateMessage), ctx, message)
+}
+
+// CreateNotification mocks base method.
+func (m *MockIRepository) CreateNotification(ctx context.Context, notification entity.Notification) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateNotification", ctx, notification)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateNotification indicates an expected call of CreateNotification.
+func (mr *MockIRepositoryMockRecorder) CreateNotification(ctx, notification interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNotification", reflect.TypeOf((*MockIRepository)(nil).CreateNotification), ctx, notification)
 }
 
 // CreatePin mocks base method.
@@ -238,6 +267,36 @@ func (mr *MockIRepositoryMockRecorder) GetBoardPins(ctx, boardId, limit, offset 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBoardPins", reflect.TypeOf((*MockIRepository)(nil).GetBoardPins), ctx, boardId, limit, offset)
 }
 
+// GetComments mocks base method.
+func (m *MockIRepository) GetComments(ctx context.Context, pinId entity.PinID) (entity.GetCommentsResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetComments", ctx, pinId)
+	ret0, _ := ret[0].(entity.GetCommentsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetComments indicates an expected call of GetComments.
+func (mr *MockIRepositoryMockRecorder) GetComments(ctx, pinId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetComments", reflect.TypeOf((*MockIRepository)(nil).GetComments), ctx, pinId)
+}
+
+// GetDraft mocks base method.
+func (m *MockIRepository) GetDraft(ctx context.Context, receiverId, senderId entity.UserID) (entity.DraftResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDraft", ctx, receiverId, senderId)
+	ret0, _ := ret[0].(entity.DraftResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDraft indicates an expected call of GetDraft.
+func (mr *MockIRepositoryMockRecorder) GetDraft(ctx, receiverId, senderId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDraft", reflect.TypeOf((*MockIRepository)(nil).GetDraft), ctx, receiverId, senderId)
+}
+
 // GetFeedPins mocks base method.
 func (m *MockIRepository) GetFeedPins(ctx context.Context, limit, offset int) (entity.FeedPins, error) {
 	m.ctrl.T.Helper()
@@ -254,18 +313,18 @@ func (mr *MockIRepositoryMockRecorder) GetFeedPins(ctx, limit, offset interface{
 }
 
 // GetMessages mocks base method.
-func (m *MockIRepository) GetMessages(ctx context.Context, firstUserId, secondUserId entity.UserID) (entity.Messages, error) {
+func (m *MockIRepository) GetMessages(ctx context.Context, dialogUserId, authUserId entity.UserID) (entity.Messages, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMessages", ctx, firstUserId, secondUserId)
+	ret := m.ctrl.Call(m, "GetMessages", ctx, dialogUserId, authUserId)
 	ret0, _ := ret[0].(entity.Messages)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetMessages indicates an expected call of GetMessages.
-func (mr *MockIRepositoryMockRecorder) GetMessages(ctx, firstUserId, secondUserId interface{}) *gomock.Call {
+func (mr *MockIRepositoryMockRecorder) GetMessages(ctx, dialogUserId, authUserId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessages", reflect.TypeOf((*MockIRepository)(nil).GetMessages), ctx, firstUserId, secondUserId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessages", reflect.TypeOf((*MockIRepository)(nil).GetMessages), ctx, dialogUserId, authUserId)
 }
 
 // GetPinById mocks base method.
@@ -313,6 +372,21 @@ func (mr *MockIRepositoryMockRecorder) GetSubscriptionsInfo(ctx, userToGetInfoId
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubscriptionsInfo", reflect.TypeOf((*MockIRepository)(nil).GetSubscriptionsInfo), ctx, userToGetInfoId, userId)
 }
 
+// GetUnreadNotifications mocks base method.
+func (m *MockIRepository) GetUnreadNotifications(ctx context.Context, userId entity.UserID) (entity.Notifications, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUnreadNotifications", ctx, userId)
+	ret0, _ := ret[0].(entity.Notifications)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUnreadNotifications indicates an expected call of GetUnreadNotifications.
+func (mr *MockIRepositoryMockRecorder) GetUnreadNotifications(ctx, userId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUnreadNotifications", reflect.TypeOf((*MockIRepository)(nil).GetUnreadNotifications), ctx, userId)
+}
+
 // GetUserBoards mocks base method.
 func (m *MockIRepository) GetUserBoards(ctx context.Context, authorId, userId entity.UserID, limit, offset int) (entity.UserBoards, error) {
 	m.ctrl.T.Helper()
@@ -326,6 +400,21 @@ func (m *MockIRepository) GetUserBoards(ctx context.Context, authorId, userId en
 func (mr *MockIRepositoryMockRecorder) GetUserBoards(ctx, authorId, userId, limit, offset interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserBoards", reflect.TypeOf((*MockIRepository)(nil).GetUserBoards), ctx, authorId, userId, limit, offset)
+}
+
+// GetUserBoardsWithoutPin mocks base method.
+func (m *MockIRepository) GetUserBoardsWithoutPin(ctx context.Context, pinId entity.PinID, userId entity.UserID) (entity.UserBoardsWithoutPin, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserBoardsWithoutPin", ctx, pinId, userId)
+	ret0, _ := ret[0].(entity.UserBoardsWithoutPin)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserBoardsWithoutPin indicates an expected call of GetUserBoardsWithoutPin.
+func (mr *MockIRepositoryMockRecorder) GetUserBoardsWithoutPin(ctx, pinId, userId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserBoardsWithoutPin", reflect.TypeOf((*MockIRepository)(nil).GetUserBoardsWithoutPin), ctx, pinId, userId)
 }
 
 // GetUserByEmail mocks base method.
@@ -505,6 +594,20 @@ func (m *MockIRepository) UpdateBoard(ctx context.Context, board entity.Board) (
 func (mr *MockIRepositoryMockRecorder) UpdateBoard(ctx, board interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateBoard", reflect.TypeOf((*MockIRepository)(nil).UpdateBoard), ctx, board)
+}
+
+// UpdateDraft mocks base method.
+func (m *MockIRepository) UpdateDraft(ctx context.Context, draft entity.Draft) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateDraft", ctx, draft)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateDraft indicates an expected call of UpdateDraft.
+func (mr *MockIRepositoryMockRecorder) UpdateDraft(ctx, draft interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateDraft", reflect.TypeOf((*MockIRepository)(nil).UpdateDraft), ctx, draft)
 }
 
 // UpdatePin mocks base method.

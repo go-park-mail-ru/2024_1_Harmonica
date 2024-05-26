@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/minio/minio-go/v7"
 	"harmonica/internal/entity/errs"
-	mock_repository "harmonica/mocks/microservices/image/repository"
+	mock_repository "harmonica/mocks/microservices/image/server/repository"
 	"testing"
 
 	"github.com/golang/mock/gomock"

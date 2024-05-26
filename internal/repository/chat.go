@@ -45,19 +45,19 @@ func (r *DBRepository) CreateMessage(ctx context.Context, message entity.Message
 	return err
 }
 
-func (r *DBRepository) GetMessages(ctx context.Context, firstUserId, secondUserId entity.UserID) (entity.Messages, error) {
+func (r *DBRepository) GetMessages(ctx context.Context, dialogUserId, authUserId entity.UserID) (entity.Messages, error) {
 	messages := entity.Messages{}
-	firstUser, err := r.GetUserById(ctx, firstUserId)
+	dialogUser, err := r.GetUserById(ctx, dialogUserId)
 	if err != nil {
 		return entity.Messages{}, err
 	}
 	messages.User = entity.UserFromChat{
-		UserID:    firstUser.UserID,
-		Nickname:  firstUser.Nickname,
-		AvatarURL: firstUser.AvatarURL,
+		UserID:    dialogUser.UserID,
+		Nickname:  dialogUser.Nickname,
+		AvatarURL: dialogUser.AvatarURL,
 	}
 	start := time.Now()
-	rows, err := r.db.QueryContext(ctx, QueryGetMessages, firstUserId, secondUserId)
+	rows, err := r.db.QueryContext(ctx, QueryGetMessages, dialogUserId, authUserId)
 	LogDBQuery(r, ctx, QueryGetMessages, time.Since(start))
 	if err != nil {
 		return entity.Messages{}, err

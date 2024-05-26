@@ -271,7 +271,7 @@ func (h *APIHandler) DeleteBoard(w http.ResponseWriter, r *http.Request) {
 //	@Failure		403			{object}	errs.ErrorResponse	"Possible code responses: 14."
 //	@Failure		500			{object}	errs.ErrorResponse	"Possible code responses: 11."
 //	@Router			/boards/created/{nickname}/ [get]
-func (h *APIHandler) UserBoards(w http.ResponseWriter, r *http.Request) {
+func (h *APIHandler) GetUserBoards(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	requestId := r.Context().Value("request_id").(string)
 
@@ -283,6 +283,7 @@ func (h *APIHandler) UserBoards(w http.ResponseWriter, r *http.Request) {
 	userId, errInfo := CheckAuth(ctx)
 	if errInfo != emptyErrorInfo {
 		WriteErrorResponse(w, h.logger, requestId, errInfo)
+		return
 	}
 
 	limit, offset, err := GetLimitAndOffset(r)
@@ -291,6 +292,27 @@ func (h *APIHandler) UserBoards(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	boards, errInfo := h.service.GetUserBoards(ctx, authorNickname, userId, limit, offset)
+	if errInfo != emptyErrorInfo {
+		WriteErrorResponse(w, h.logger, requestId, errInfo)
+		return
+	}
+	WriteDefaultResponse(w, h.logger, boards)
+}
+
+func (h *APIHandler) GetUserBoardsWithoutPin(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	requestId := r.Context().Value("request_id").(string)
+	pinId, err := ReadInt64Slug(r, "pin_id")
+	if err != nil {
+		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(err, errs.ErrInvalidSlug))
+		return
+	}
+	userId, ok := ctx.Value("user_id").(entity.UserID)
+	if !ok {
+		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrTypeConversion))
+		return
+	}
+	boards, errInfo := h.service.GetUserBoardsWithoutPin(ctx, entity.PinID(pinId), userId)
 	if errInfo != emptyErrorInfo {
 		WriteErrorResponse(w, h.logger, requestId, errInfo)
 		return

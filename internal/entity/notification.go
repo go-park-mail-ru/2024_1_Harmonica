@@ -21,7 +21,7 @@ type Notification struct {
 	Type              NotificationType `db:"type" json:"type"`
 	TriggeredByUserId UserID           `db:"triggered_by_user_id" json:"triggered_by_user_id"`
 	PinId             PinID            `db:"pin_id" json:"pin_id"`
-	CommentId         int64            `db:"comment_id" json:"comment_id"`
+	CommentId         CommentID        `db:"comment_id" json:"comment_id"`
 	MessageId         int64            `db:"message_id" json:"message_id"`
 	CreatedAt         time.Time        `db:"created_at" json:"created_at"`
 }

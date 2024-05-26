@@ -6,12 +6,13 @@ type WSAction string
 
 const (
 	WSActionChatMessage              WSAction = "CHAT_MESSAGE"
+	WSActionChatDraft                WSAction = "CHAT_DRAFT"
 	WSActionNotificationSubscription WSAction = "NOTIFICATION_SUBSCRIPTION"
 	WSActionNotificationNewPin       WSAction = "NOTIFICATION_NEW_PIN"
 	WSActionNotificationComment      WSAction = "NOTIFICATION_COMMENT"
 )
 
-var WSActions = []WSAction{WSActionChatMessage, WSActionNotificationSubscription,
+var WSActions = []WSAction{WSActionChatMessage, WSActionChatDraft, WSActionNotificationSubscription,
 	WSActionNotificationNewPin, WSActionNotificationComment}
 
 // структуры для внутренней отправки в канал broadcast
@@ -47,6 +48,7 @@ type WSCommentNotificationPayload struct {
 	UserId          UserID                      `db:"user_id" json:"user_id"`
 	TriggeredByUser TriggeredByUser             `db:"triggered_by_user" json:"triggered_by_user"`
 	Comment         CommentNotificationResponse `db:"comment" json:"comment"`
+	Pin             PinNotificationResponse     `db:"pin" json:"pin"` // пин, к которому написали комментарий
 }
 
 type WSChatMessagePayload struct {

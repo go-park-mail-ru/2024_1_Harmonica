@@ -36,6 +36,21 @@ func (m *MockIService) EXPECT() *MockIServiceMockRecorder {
 	return m.recorder
 }
 
+// AddComment mocks base method.
+func (m *MockIService) AddComment(ctx context.Context, comment string, pinId entity.PinID, userId entity.UserID) (entity.PinPageResponse, errs.ErrorInfo) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddComment", ctx, comment, pinId, userId)
+	ret0, _ := ret[0].(entity.PinPageResponse)
+	ret1, _ := ret[1].(errs.ErrorInfo)
+	return ret0, ret1
+}
+
+// AddComment indicates an expected call of AddComment.
+func (mr *MockIServiceMockRecorder) AddComment(ctx, comment, pinId, userId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddComment", reflect.TypeOf((*MockIService)(nil).AddComment), ctx, comment, pinId, userId)
+}
+
 // AddPinToBoard mocks base method.
 func (m *MockIService) AddPinToBoard(ctx context.Context, boardId entity.BoardID, pinId entity.PinID, userId entity.UserID) errs.ErrorInfo {
 	m.ctrl.T.Helper()
@@ -91,6 +106,20 @@ func (m *MockIService) CreateMessage(ctx context.Context, message entity.Message
 func (mr *MockIServiceMockRecorder) CreateMessage(ctx, message interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateMessage", reflect.TypeOf((*MockIService)(nil).CreateMessage), ctx, message)
+}
+
+// CreateNotification mocks base method.
+func (m *MockIService) CreateNotification(ctx context.Context, notification entity.Notification) errs.ErrorInfo {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateNotification", ctx, notification)
+	ret0, _ := ret[0].(errs.ErrorInfo)
+	return ret0
+}
+
+// CreateNotification indicates an expected call of CreateNotification.
+func (mr *MockIServiceMockRecorder) CreateNotification(ctx, notification interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNotification", reflect.TypeOf((*MockIService)(nil).CreateNotification), ctx, notification)
 }
 
 // CreatePin mocks base method.
@@ -179,6 +208,21 @@ func (mr *MockIServiceMockRecorder) GetBoardById(ctx, boardId, userId, limit, of
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBoardById", reflect.TypeOf((*MockIService)(nil).GetBoardById), ctx, boardId, userId, limit, offset)
 }
 
+// GetComments mocks base method.
+func (m *MockIService) GetComments(ctx context.Context, pinId entity.PinID) (entity.GetCommentsResponse, errs.ErrorInfo) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetComments", ctx, pinId)
+	ret0, _ := ret[0].(entity.GetCommentsResponse)
+	ret1, _ := ret[1].(errs.ErrorInfo)
+	return ret0, ret1
+}
+
+// GetComments indicates an expected call of GetComments.
+func (mr *MockIServiceMockRecorder) GetComments(ctx, pinId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetComments", reflect.TypeOf((*MockIService)(nil).GetComments), ctx, pinId)
+}
+
 // GetFeedPins mocks base method.
 func (m *MockIService) GetFeedPins(ctx context.Context, limit, offset int) (entity.FeedPins, errs.ErrorInfo) {
 	m.ctrl.T.Helper()
@@ -195,18 +239,18 @@ func (mr *MockIServiceMockRecorder) GetFeedPins(ctx, limit, offset interface{}) 
 }
 
 // GetMessages mocks base method.
-func (m *MockIService) GetMessages(ctx context.Context, firstUserId, secondUserId entity.UserID) (entity.Messages, errs.ErrorInfo) {
+func (m *MockIService) GetMessages(ctx context.Context, dialogUserId, authUserId entity.UserID) (entity.Messages, errs.ErrorInfo) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMessages", ctx, firstUserId, secondUserId)
+	ret := m.ctrl.Call(m, "GetMessages", ctx, dialogUserId, authUserId)
 	ret0, _ := ret[0].(entity.Messages)
 	ret1, _ := ret[1].(errs.ErrorInfo)
 	return ret0, ret1
 }
 
 // GetMessages indicates an expected call of GetMessages.
-func (mr *MockIServiceMockRecorder) GetMessages(ctx, firstUserId, secondUserId interface{}) *gomock.Call {
+func (mr *MockIServiceMockRecorder) GetMessages(ctx, dialogUserId, authUserId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessages", reflect.TypeOf((*MockIService)(nil).GetMessages), ctx, firstUserId, secondUserId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessages", reflect.TypeOf((*MockIService)(nil).GetMessages), ctx, dialogUserId, authUserId)
 }
 
 // GetPinById mocks base method.
@@ -239,6 +283,21 @@ func (mr *MockIServiceMockRecorder) GetSubscriptionsFeedPins(ctx, userId, limit,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubscriptionsFeedPins", reflect.TypeOf((*MockIService)(nil).GetSubscriptionsFeedPins), ctx, userId, limit, offset)
 }
 
+// GetUnreadNotifications mocks base method.
+func (m *MockIService) GetUnreadNotifications(ctx context.Context, userId entity.UserID) (entity.Notifications, errs.ErrorInfo) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUnreadNotifications", ctx, userId)
+	ret0, _ := ret[0].(entity.Notifications)
+	ret1, _ := ret[1].(errs.ErrorInfo)
+	return ret0, ret1
+}
+
+// GetUnreadNotifications indicates an expected call of GetUnreadNotifications.
+func (mr *MockIServiceMockRecorder) GetUnreadNotifications(ctx, userId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUnreadNotifications", reflect.TypeOf((*MockIService)(nil).GetUnreadNotifications), ctx, userId)
+}
+
 // GetUserBoards mocks base method.
 func (m *MockIService) GetUserBoards(ctx context.Context, authorNickname string, userId entity.UserID, limit, offset int) (entity.UserBoards, errs.ErrorInfo) {
 	m.ctrl.T.Helper()
@@ -252,6 +311,21 @@ func (m *MockIService) GetUserBoards(ctx context.Context, authorNickname string,
 func (mr *MockIServiceMockRecorder) GetUserBoards(ctx, authorNickname, userId, limit, offset interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserBoards", reflect.TypeOf((*MockIService)(nil).GetUserBoards), ctx, authorNickname, userId, limit, offset)
+}
+
+// GetUserBoardsWithoutPin mocks base method.
+func (m *MockIService) GetUserBoardsWithoutPin(ctx context.Context, pinId entity.PinID, userId entity.UserID) (entity.UserBoardsWithoutPin, errs.ErrorInfo) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserBoardsWithoutPin", ctx, pinId, userId)
+	ret0, _ := ret[0].(entity.UserBoardsWithoutPin)
+	ret1, _ := ret[1].(errs.ErrorInfo)
+	return ret0, ret1
+}
+
+// GetUserBoardsWithoutPin indicates an expected call of GetUserBoardsWithoutPin.
+func (mr *MockIServiceMockRecorder) GetUserBoardsWithoutPin(ctx, pinId, userId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserBoardsWithoutPin", reflect.TypeOf((*MockIService)(nil).GetUserBoardsWithoutPin), ctx, pinId, userId)
 }
 
 // GetUserByEmail mocks base method.
@@ -416,6 +490,20 @@ func (m *MockIService) UpdateBoard(ctx context.Context, board entity.Board, user
 func (mr *MockIServiceMockRecorder) UpdateBoard(ctx, board, userId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateBoard", reflect.TypeOf((*MockIService)(nil).UpdateBoard), ctx, board, userId)
+}
+
+// UpdateDraft mocks base method.
+func (m *MockIService) UpdateDraft(ctx context.Context, draft entity.Draft) errs.ErrorInfo {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateDraft", ctx, draft)
+	ret0, _ := ret[0].(errs.ErrorInfo)
+	return ret0
+}
+
+// UpdateDraft indicates an expected call of UpdateDraft.
+func (mr *MockIServiceMockRecorder) UpdateDraft(ctx, draft interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateDraft", reflect.TypeOf((*MockIService)(nil).UpdateDraft), ctx, draft)
 }
 
 // UpdatePin mocks base method.

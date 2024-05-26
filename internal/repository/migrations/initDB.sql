@@ -35,11 +35,12 @@ CREATE TABLE public.board (
 
 DROP TABLE IF EXISTS public.board_pin;
 CREATE TABLE public.board_pin (
-	board_id bigint NOT NULL,
-	pin_id bigint NOT NULL,
-	PRIMARY KEY (board_id, pin_id),
-	FOREIGN KEY(board_id) REFERENCES public.board(board_id) ON DELETE CASCADE,
-	FOREIGN KEY(pin_id) REFERENCES public.pin(pin_id) ON DELETE CASCADE
+    board_id bigint NOT NULL,
+    pin_id bigint NOT NULL,
+    added_at timestamptz NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (board_id, pin_id),
+    FOREIGN KEY(board_id) REFERENCES public.board(board_id) ON DELETE CASCADE,
+    FOREIGN KEY(pin_id) REFERENCES public.pin(pin_id) ON DELETE CASCADE
 );
 
 DROP TABLE IF EXISTS public.board_author;
@@ -83,12 +84,22 @@ CREATE TYPE MESSAGE_STATUS AS ENUM('read', 'unread');
 
 DROP TABLE IF EXISTS public.message;
 CREATE TABLE public.message (
-    message_id bigint NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                                message_id bigint NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                                sender_id bigint NOT NULL,
+                                receiver_id bigint NOT NULL,
+                                text TEXT NOT NULL,
+                                status MESSAGE_STATUS NOT NULL DEFAULT 'unread',
+                                sent_at timestamptz NULL DEFAULT CURRENT_TIMESTAMP,
+                                FOREIGN KEY(sender_id) REFERENCES public.user(user_id) ON DELETE CASCADE,
+                                FOREIGN KEY(receiver_id) REFERENCES public.user(user_id) ON DELETE CASCADE
+);
+
+DROP TABLE IF EXISTS public.draft;
+CREATE TABLE public.draft (
     sender_id bigint NOT NULL,
     receiver_id bigint NOT NULL,
     text TEXT NOT NULL,
-    status MESSAGE_STATUS NOT NULL DEFAULT 'unread',
-    sent_at timestamptz NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (sender_id, receiver_id),
     FOREIGN KEY(sender_id) REFERENCES public.user(user_id) ON DELETE CASCADE,
     FOREIGN KEY(receiver_id) REFERENCES public.user(user_id) ON DELETE CASCADE
 );

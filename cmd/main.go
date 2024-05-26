@@ -7,6 +7,7 @@ import (
 	auth "harmonica/internal/microservices/auth/proto"
 	image "harmonica/internal/microservices/image/proto"
 	like "harmonica/internal/microservices/like/proto"
+
 	"harmonica/internal/repository"
 	"harmonica/internal/service"
 	"log"
@@ -44,16 +45,17 @@ func runServer(addr string) {
 	configurePinRoutes(logger, h, mux)
 	configureBoardRoutes(logger, h, mux)
 	configureChatRoutes(logger, h, mux)
+	configureDraftRoutes(logger, h, mux)
 	configureSearchRoutes(logger, h, mux)
 	configureSubscriptionRoutes(logger, h, mux)
 	configureNotificationRoutes(logger, h, mux)
+	configureCommentsRoutes(logger, h, mux)
 
 	mux.Handle("GET /docs/swagger.json", http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))))
 	mux.Handle("GET /swagger/", v3.NewHandler("My API", "/docs/swagger.json", "/swagger"))
 	mux.HandleFunc("GET /img/{image_name}", h.GetImage)
 
 	go hub.Run()
-
 	mux.HandleFunc("GET /ws", middleware.AuthRequired(logger, h.AuthService, h.ServeWs))
 
 	loggedMux := middleware.Logging(logger, mux)
@@ -155,10 +157,11 @@ func configureBoardRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.S
 		"DELETE /api/v1/boards/{board_id}":               h.DeleteBoard,
 		"POST /api/v1/boards/{board_id}/pins/{pin_id}":   h.AddPinToBoard,
 		"DELETE /api/v1/boards/{board_id}/pins/{pin_id}": h.DeletePinFromBoard,
+		"GET /api/v1/boards/excluding/{pin_id}":          h.GetUserBoardsWithoutPin,
 	}
 	checkAuthRoutes := map[string]http.HandlerFunc{
 		"GET /api/v1/boards/{board_id}":         h.GetBoard,
-		"GET /api/v1/boards/created/{nickname}": h.UserBoards,
+		"GET /api/v1/boards/created/{nickname}": h.GetUserBoards,
 	}
 	for pattern, f := range authRoutes {
 		mux.HandleFunc(pattern, middleware.AuthRequired(logger, h.AuthService, f))
@@ -177,7 +180,15 @@ func configureChatRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.Se
 	for pattern, f := range authRoutes {
 		mux.HandleFunc(pattern, middleware.AuthRequired(logger, h.AuthService, f))
 	}
+}
 
+func configureDraftRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.ServeMux) {
+	authRoutes := map[string]http.HandlerFunc{
+		"POST /api/v1/drafts/{receiver_id}": h.UpdateDraft,
+	}
+	for pattern, f := range authRoutes {
+		mux.HandleFunc(pattern, middleware.AuthRequired(logger, h.AuthService, f))
+	}
 }
 
 func configureSearchRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.ServeMux) {
@@ -212,6 +223,21 @@ func configureNotificationRoutes(logger *zap.Logger, h *handler.APIHandler, mux 
 	}
 	for pattern, f := range authRoutes {
 		mux.HandleFunc(pattern, middleware.AuthRequired(logger, h.AuthService, f))
+	}
+}
+
+func configureCommentsRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.ServeMux) {
+	authRoutes := map[string]http.HandlerFunc{
+		"POST /api/v1/pin/comments/{pin_id}": h.AddComment,
+	}
+	checkAuthRoutes := map[string]http.HandlerFunc{
+		"GET /api/v1/pin/comments/{pin_id}": h.GetComments,
+	}
+	for pattern, f := range authRoutes {
+		mux.HandleFunc(pattern, middleware.AuthRequired(logger, h.AuthService, f))
+	}
+	for pattern, f := range checkAuthRoutes {
+		mux.HandleFunc(pattern, middleware.CheckAuth(logger, h.AuthService, f))
 	}
 }
 

@@ -38,7 +38,7 @@ func (hub *Hub) Run() {
 			receiverId := messageFromChan.Payload.UserId
 			action := messageFromChan.Action
 			hub.mu.Lock()
-			if clients, ok := hub.clients[receiverId]; ok {
+			if clients, ok := hub.clients[receiverId]; ok && action != entity.WSActionChatDraft {
 				for _, client := range clients {
 					select {
 					case client.message <- messageFromChan:
@@ -51,7 +51,8 @@ func (hub *Hub) Run() {
 			}
 			// это для того, чтобы сообщение, отправленное юзером в чате, отображалось во всех его вкладках
 			clients, ok := hub.clients[senderId]
-			if ok && action == entity.WSActionChatMessage && receiverId != senderId {
+			if ok && (action == entity.WSActionChatMessage && receiverId != senderId) ||
+				(action == entity.WSActionChatDraft) {
 				for _, client := range clients {
 					select {
 					case client.message <- messageFromChan:

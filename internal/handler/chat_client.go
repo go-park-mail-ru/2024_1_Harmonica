@@ -83,7 +83,7 @@ func (c *Client) WriteMessage() {
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 
 			// отправка сообщения
-			messageToSend, senderId, receiverId := configureMessageToSend(messageFromChan)
+			messageToSend, _, _ := configureMessageToSend(messageFromChan)
 			err := c.conn.WriteJSON(messageToSend)
 
 			if err != nil {
@@ -101,12 +101,13 @@ func (c *Client) WriteMessage() {
 			n := len(c.message)
 			for i := 0; i < n; i++ {
 				messageFromChan = <-c.message
-				messageToSend, senderId, receiverId = configureMessageToSend(messageFromChan)
+				messageToSend, senderId, receiverId := configureMessageToSend(messageFromChan)
 				action := messageFromChan.Action
 
 				//if (receiverId == c.userId || senderId == c.userId) && senderId != receiverId {
-				if (action == entity.WSActionChatMessage && (receiverId == c.userId || senderId == c.userId) &&
-					senderId != receiverId) || (action != entity.WSActionChatMessage && receiverId == c.userId) {
+				if (action == entity.WSActionChatMessage && (receiverId == c.userId || senderId == c.userId) && senderId != receiverId) ||
+					(action == entity.WSActionChatDraft && senderId == c.userId) ||
+					(action != entity.WSActionChatMessage && action != entity.WSActionChatDraft && receiverId == c.userId) {
 
 					// отправка сообщения
 					err = c.conn.WriteJSON(messageToSend)
@@ -148,6 +149,12 @@ func configureMessageToSend(message *entity.WSMessage) (entity.WSMessageToSend, 
 			ReceiverId: receiverId,
 			Text:       message.Payload.Message.Text,
 		}
+	case entity.WSActionChatDraft:
+		messageToSend.Payload = entity.WSChatMessagePayload{
+			SenderId:   senderId,
+			ReceiverId: receiverId,
+			Text:       message.Payload.Message.Text,
+		}
 	case entity.WSActionNotificationSubscription:
 		messageToSend.Payload = entity.WSSubscriptionNotificationPayload{
 			UserId:          receiverId,
@@ -164,6 +171,7 @@ func configureMessageToSend(message *entity.WSMessage) (entity.WSMessageToSend, 
 			UserId:          receiverId,
 			TriggeredByUser: message.Payload.TriggeredByUser,
 			Comment:         message.Payload.Comment,
+			Pin:             message.Payload.Pin,
 		}
 	}
 	return messageToSend, senderId, receiverId

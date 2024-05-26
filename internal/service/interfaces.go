@@ -29,10 +29,13 @@ type IService interface {
 	DeletePinFromBoard(ctx context.Context, boardId entity.BoardID, pinId entity.PinID, userId entity.UserID) errs.ErrorInfo
 	DeleteBoard(ctx context.Context, boardId entity.BoardID, userId entity.UserID) errs.ErrorInfo
 	GetUserBoards(ctx context.Context, authorNickname string, userId entity.UserID, limit, offset int) (entity.UserBoards, errs.ErrorInfo)
+	GetUserBoardsWithoutPin(ctx context.Context, pinId entity.PinID, userId entity.UserID) (entity.UserBoardsWithoutPin, errs.ErrorInfo)
 
 	CreateMessage(ctx context.Context, message entity.Message) errs.ErrorInfo
-	GetMessages(ctx context.Context, firstUserId, secondUserId entity.UserID) (entity.Messages, errs.ErrorInfo)
+	GetMessages(ctx context.Context, dialogUserId, authUserId entity.UserID) (entity.Messages, errs.ErrorInfo)
 	GetUserChats(ctx context.Context, userId entity.UserID) (entity.UserChats, errs.ErrorInfo)
+
+	UpdateDraft(ctx context.Context, draft entity.Draft) errs.ErrorInfo
 
 	AddSubscriptionToUser(ctx context.Context, userId, subscribeUserId entity.UserID) errs.ErrorInfo
 	DeleteSubscriptionToUser(ctx context.Context, userId, unsubscribeUserId entity.UserID) errs.ErrorInfo
@@ -43,4 +46,7 @@ type IService interface {
 
 	CreateNotification(ctx context.Context, notification entity.Notification) errs.ErrorInfo
 	GetUnreadNotifications(ctx context.Context, userId entity.UserID) (entity.Notifications, errs.ErrorInfo)
+
+	AddComment(ctx context.Context, comment string, pinId entity.PinID, userId entity.UserID) (entity.PinPageResponse, errs.ErrorInfo)
+	GetComments(ctx context.Context, pinId entity.PinID) (entity.GetCommentsResponse, errs.ErrorInfo)
 }

@@ -37,6 +37,7 @@ func (h *APIHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	message.SenderId = senderId
+
 	errInfo := h.service.CreateMessage(ctx, message)
 	if errInfo != emptyErrorInfo {
 		WriteErrorResponse(w, h.logger, requestId, errInfo)
@@ -67,7 +68,8 @@ func (h *APIHandler) ReadMessages(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		requestId = "0"
 	}
-	requestUserId, err := ReadInt64Slug(r, "user_id")
+
+	dialogUserId, err := ReadInt64Slug(r, "user_id")
 	if err != nil {
 		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(err, errs.ErrInvalidSlug))
 		return
@@ -77,7 +79,8 @@ func (h *APIHandler) ReadMessages(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrTypeConversion))
 		return
 	}
-	messages, errInfo := h.service.GetMessages(ctx, entity.UserID(requestUserId), authUserId)
+
+	messages, errInfo := h.service.GetMessages(ctx, entity.UserID(dialogUserId), authUserId)
 	if errInfo != emptyErrorInfo {
 		WriteErrorResponse(w, h.logger, requestId, errInfo)
 		return
