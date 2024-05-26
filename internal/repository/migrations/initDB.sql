@@ -101,3 +101,15 @@ CREATE TABLE public.draft (
     FOREIGN KEY(sender_id) REFERENCES public.user(user_id) ON DELETE CASCADE,
     FOREIGN KEY(receiver_id) REFERENCES public.user(user_id) ON DELETE CASCADE
 );
+
+DROP TABLE IF EXISTS public.comment;
+CREATE TABLE public.comment (
+    comment_id bigint NOT NULL,
+    user_id bigint NOT NULL,
+	pin_id bigint NOT NULL,
+    text TEXT NOT NULL CHECK(length(text)>=1),
+	created_at timestamptz NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (comment_id),
+    FOREIGN KEY(user_id) REFERENCES public.user(user_id) ON DELETE CASCADE,
+    FOREIGN KEY(pin_id) REFERENCES public.pin(pin_id) ON DELETE CASCADE
+);

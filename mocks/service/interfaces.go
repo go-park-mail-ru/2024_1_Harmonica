@@ -36,6 +36,20 @@ func (m *MockIService) EXPECT() *MockIServiceMockRecorder {
 	return m.recorder
 }
 
+// AddComment mocks base method.
+func (m *MockIService) AddComment(ctx context.Context, comment string, pinId entity.PinID, userId entity.UserID) errs.ErrorInfo {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddComment", ctx, comment, pinId, userId)
+	ret0, _ := ret[0].(errs.ErrorInfo)
+	return ret0
+}
+
+// AddComment indicates an expected call of AddComment.
+func (mr *MockIServiceMockRecorder) AddComment(ctx, comment, pinId, userId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddComment", reflect.TypeOf((*MockIService)(nil).AddComment), ctx, comment, pinId, userId)
+}
+
 // AddPinToBoard mocks base method.
 func (m *MockIService) AddPinToBoard(ctx context.Context, boardId entity.BoardID, pinId entity.PinID, userId entity.UserID) errs.ErrorInfo {
 	m.ctrl.T.Helper()
@@ -177,6 +191,21 @@ func (m *MockIService) GetBoardById(ctx context.Context, boardId entity.BoardID,
 func (mr *MockIServiceMockRecorder) GetBoardById(ctx, boardId, userId, limit, offset interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBoardById", reflect.TypeOf((*MockIService)(nil).GetBoardById), ctx, boardId, userId, limit, offset)
+}
+
+// GetComments mocks base method.
+func (m *MockIService) GetComments(ctx context.Context, pinId entity.PinID) (entity.GetCommentsResponse, errs.ErrorInfo) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetComments", ctx, pinId)
+	ret0, _ := ret[0].(entity.GetCommentsResponse)
+	ret1, _ := ret[1].(errs.ErrorInfo)
+	return ret0, ret1
+}
+
+// GetComments indicates an expected call of GetComments.
+func (mr *MockIServiceMockRecorder) GetComments(ctx, pinId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetComments", reflect.TypeOf((*MockIService)(nil).GetComments), ctx, pinId)
 }
 
 // GetFeedPins mocks base method.
