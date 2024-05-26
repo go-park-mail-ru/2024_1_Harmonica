@@ -45,11 +45,15 @@ func (h *APIHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 
 	// отправка в websocket
 	chatMessage := &entity.WSMessage{
-		Action: entity.ActionMessage,
+		Action: entity.WSActionChatMessage,
 		Payload: entity.WSMessagePayload{
-			Text:       message.Text,
-			SenderId:   message.SenderId,
-			ReceiverId: message.ReceiverId,
+			UserId: message.ReceiverId,
+			TriggeredByUser: entity.TriggeredByUser{
+				UserId: message.SenderId,
+			},
+			Message: entity.MessageNotificationResponse{
+				Text: message.Text,
+			},
 		},
 	}
 	h.hub.broadcast <- chatMessage

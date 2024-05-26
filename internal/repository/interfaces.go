@@ -45,4 +45,7 @@ type IRepository interface {
 	SearchForUsers(ctx context.Context, query string) ([]entity.SearchUser, error)
 	SearchForPins(ctx context.Context, query string) ([]entity.SearchPin, error)
 	SearchForBoards(ctx context.Context, query string) ([]entity.SearchBoard, error)
+
+	CreateNotification(ctx context.Context, notification entity.Notification) error
+	GetUnreadNotifications(ctx context.Context, userId entity.UserID) (entity.Notifications, error)
 }

@@ -75,12 +75,24 @@ func (s *RepositoryService) CreatePin(ctx context.Context, pin entity.Pin) (enti
 	pinId, errCreate := s.repo.CreatePin(ctx, pin)
 	if errCreate != nil {
 		return entity.PinPageResponse{}, errs.ErrorInfo{
-			GeneralErr: errCreate, // добавила эту ошибку, ранее возвращалось nil
+			GeneralErr: errCreate,
 			LocalErr:   errs.ErrDBInternal,
 		}
 	}
 	res, errFind := s.repo.GetPinById(ctx, pinId)
 	if errFind != nil {
+		return entity.PinPageResponse{}, errs.ErrorInfo{
+			GeneralErr: errFind,
+			LocalErr:   errs.ErrDBInternal,
+		}
+	}
+	n := entity.Notification{
+		Type:              entity.NotificationTypeNewPin,
+		TriggeredByUserId: pin.AuthorId,
+		PinId:             res.PinId,
+	}
+	err := s.repo.CreateNotification(ctx, n)
+	if err != nil {
 		return entity.PinPageResponse{}, errs.ErrorInfo{
 			GeneralErr: errFind,
 			LocalErr:   errs.ErrDBInternal,

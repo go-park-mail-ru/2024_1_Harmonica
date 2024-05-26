@@ -23,11 +23,6 @@ type Message struct {
 	SentAt     time.Time     `db:"sent_at" json:"sent_at"`
 }
 
-//type MessageRequest struct {
-//	ReceiverId UserID `json:"receiver_id"`
-//	Text       string `json:"text"`
-//}
-
 func (m *Message) Sanitize() {
 	m.Text = html.EscapeString(m.Text)
 }
@@ -38,25 +33,6 @@ type MessageResponse struct {
 	//Status   MessageStatus `db:"status" json:"status"`
 	IsRead bool      `db:"message_read" json:"message_read"`
 	SentAt time.Time `db:"sent_at" json:"sent_at"`
-}
-
-type Action string
-
-const (
-	ActionMessage Action = "CHAT_MESSAGE"
-)
-
-var Actions = []Action{ActionMessage}
-
-type WSMessagePayload struct {
-	Text       string `json:"text"`
-	SenderId   UserID `json:"sender_id"`
-	ReceiverId UserID `json:"receiver_id"`
-}
-
-type WSMessage struct {
-	Action  Action           `json:"action"`
-	Payload WSMessagePayload `json:"payload"`
 }
 
 type UserFromChat struct {

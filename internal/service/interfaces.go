@@ -40,4 +40,7 @@ type IService interface {
 	GetUserSubscriptions(ctx context.Context, userId entity.UserID) (entity.UserSubscriptions, errs.ErrorInfo)
 
 	Search(ctx context.Context, query string) (entity.SearchResult, errs.ErrorInfo)
+
+	CreateNotification(ctx context.Context, notification entity.Notification) errs.ErrorInfo
+	GetUnreadNotifications(ctx context.Context, userId entity.UserID) (entity.Notifications, errs.ErrorInfo)
 }

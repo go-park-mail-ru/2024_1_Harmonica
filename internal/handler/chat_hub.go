@@ -33,14 +33,15 @@ func (hub *Hub) Run() {
 			hub.mu.Lock()
 			deleteClientFromHub(hub, client)
 			hub.mu.Unlock()
-		case chatMessage := <-hub.broadcast:
-			senderId := chatMessage.Payload.SenderId
-			receiverId := chatMessage.Payload.ReceiverId
+		case messageFromChan := <-hub.broadcast:
+			senderId := messageFromChan.Payload.TriggeredByUser.UserId
+			receiverId := messageFromChan.Payload.UserId
+			action := messageFromChan.Action
 			hub.mu.Lock()
 			if clients, ok := hub.clients[receiverId]; ok {
 				for _, client := range clients {
 					select {
-					case client.message <- chatMessage:
+					case client.message <- messageFromChan:
 						// отправка прошла успешно
 					default:
 						close(client.message)
@@ -48,12 +49,12 @@ func (hub *Hub) Run() {
 					}
 				}
 			}
-			// это для того, чтобы сообщение, отправленное юзером, отображалось во всех его вкладках
+			// это для того, чтобы сообщение, отправленное юзером в чате, отображалось во всех его вкладках
 			clients, ok := hub.clients[senderId]
-			if ok && receiverId != senderId {
+			if ok && action == entity.WSActionChatMessage && receiverId != senderId {
 				for _, client := range clients {
 					select {
-					case client.message <- chatMessage:
+					case client.message <- messageFromChan:
 						// отправка прошла успешно
 					default:
 						close(client.message)

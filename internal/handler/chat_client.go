@@ -36,7 +36,7 @@ func NewClient(hub *Hub, conn *websocket.Conn, userId entity.UserID, wsConnKey s
 	return &Client{
 		hub:       hub,
 		conn:      conn,
-		message:   make(chan *entity.WSMessage, 100), //send: make(chan []byte, 256), // создаем буферизованный канал для исходящих сообщений
+		message:   make(chan *entity.WSMessage, 100), // буферизованный канал для исходящих сообщений
 		userId:    userId,
 		wsConnKey: wsConnKey,
 		logger:    l,
@@ -65,55 +65,29 @@ func (h *APIHandler) ServeWs(w http.ResponseWriter, r *http.Request) {
 	client.hub.register <- client
 
 	go client.WriteMessage()
-	//go client.ReadMessage()
 }
-
-//func (c *Client) ReadMessage() {
-//	defer func() {
-//		c.hub.unregister <- c
-//		c.conn.Close()
-//	}()
-//	c.conn.SetReadLimit(maxMessageSize)
-//	c.conn.SetReadDeadline(time.Now().Add(pongWait))
-//	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
-//
-//	for {
-//		var chatMessage entity.ChatMessage
-//		err := c.conn.ReadJSON(&chatMessage)
-//		if err != nil {
-//			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-//				c.logger.Error(
-//					errs.ErrWSConnectionClosed.Error(),
-//					zap.Int("local_error_code", errs.ErrorCodes[errs.ErrWSConnectionClosed].LocalCode),
-//					zap.String("general_error", err.Error()),
-//				)
-//			}
-//			break
-//		}
-//		chatMessage.Payload.SenderId = c.userId
-//		c.hub.broadcast <- &chatMessage
-//	}
-//}
 
 func (c *Client) WriteMessage() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
-		//c.hub.unregister <- c //почему это тут не нужно?
 		c.conn.Close()
 	}()
 	for {
 		select {
-		case chatMessage, ok := <-c.message:
+		case messageFromChan, ok := <-c.message:
 			if !ok {
-				// The hub closed the channel
-				_ = c.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				_ = c.conn.WriteMessage(websocket.CloseMessage, []byte{}) // the hub closed the channel
 				return
 			}
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
-			err := c.conn.WriteJSON(chatMessage)
+
+			// отправка сообщения
+			messageToSend, senderId, receiverId := configureMessageToSend(messageFromChan)
+			err := c.conn.WriteJSON(messageToSend)
+
 			if err != nil {
-				//возникла ошибка при отправке json -> простое сообщение мб отправится
+				// возникла ошибка при отправке json -> простое сообщение мб отправится
 				_ = c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				c.logger.Error(
 					errs.ErrWSConnectionClosed.Error(),
@@ -123,15 +97,20 @@ func (c *Client) WriteMessage() {
 				return
 			}
 
-			// Add queued chat messages to the current websocket message.
+			// add queued chat messages to the current websocket message
 			n := len(c.message)
 			for i := 0; i < n; i++ {
-				chatMessage = <-c.message
-				senderId := chatMessage.Payload.SenderId
-				receiverId := chatMessage.Payload.ReceiverId
-				//if chatMessage.ReceiverId == c.userId {
-				if (receiverId == c.userId || senderId == c.userId) && senderId != receiverId {
-					err = c.conn.WriteJSON(<-c.message)
+				messageFromChan = <-c.message
+				messageToSend, senderId, receiverId = configureMessageToSend(messageFromChan)
+				action := messageFromChan.Action
+
+				//if (receiverId == c.userId || senderId == c.userId) && senderId != receiverId {
+				if (action == entity.WSActionChatMessage && (receiverId == c.userId || senderId == c.userId) &&
+					senderId != receiverId) || (action != entity.WSActionChatMessage && receiverId == c.userId) {
+
+					// отправка сообщения
+					err = c.conn.WriteJSON(messageToSend)
+
 					if err != nil {
 						//возникла ошибка при отправке json -> простое сообщение мб отправится
 						_ = c.conn.WriteMessage(websocket.CloseMessage, []byte{})
@@ -147,8 +126,6 @@ func (c *Client) WriteMessage() {
 		case <-ticker.C:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-				//не понятно, нужно и возможно ли тут как-то оповещать пользователя о закрытии соединения,
-				//так как ошибка возникла как раз при попытке отправки сообщения
 				c.logger.Error(
 					errs.ErrWSConnectionClosed.Error(),
 					zap.Int("local_error_code", errs.ErrorCodes[errs.ErrWSConnectionClosed].LocalCode),
@@ -158,4 +135,36 @@ func (c *Client) WriteMessage() {
 			}
 		}
 	}
+}
+
+func configureMessageToSend(message *entity.WSMessage) (entity.WSMessageToSend, entity.UserID, entity.UserID) {
+	senderId := message.Payload.TriggeredByUser.UserId
+	receiverId := message.Payload.UserId
+	messageToSend := entity.WSMessageToSend{Action: message.Action}
+	switch message.Action {
+	case entity.WSActionChatMessage:
+		messageToSend.Payload = entity.WSChatMessagePayload{
+			SenderId:   senderId,
+			ReceiverId: receiverId,
+			Text:       message.Payload.Message.Text,
+		}
+	case entity.WSActionNotificationSubscription:
+		messageToSend.Payload = entity.WSSubscriptionNotificationPayload{
+			UserId:          receiverId,
+			TriggeredByUser: message.Payload.TriggeredByUser,
+		}
+	case entity.WSActionNotificationNewPin:
+		messageToSend.Payload = entity.WSNewPinNotificationPayload{
+			UserId:          receiverId,
+			TriggeredByUser: message.Payload.TriggeredByUser,
+			Pin:             message.Payload.Pin,
+		}
+	case entity.WSActionNotificationComment:
+		messageToSend.Payload = entity.WSCommentNotificationPayload{
+			UserId:          receiverId,
+			TriggeredByUser: message.Payload.TriggeredByUser,
+			Comment:         message.Payload.Comment,
+		}
+	}
+	return messageToSend, senderId, receiverId
 }

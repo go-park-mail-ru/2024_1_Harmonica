@@ -7,7 +7,6 @@ import (
 	auth "harmonica/internal/microservices/auth/proto"
 	image "harmonica/internal/microservices/image/proto"
 	like "harmonica/internal/microservices/like/proto"
-
 	"harmonica/internal/repository"
 	"harmonica/internal/service"
 	"log"
@@ -47,6 +46,7 @@ func runServer(addr string) {
 	configureChatRoutes(logger, h, mux)
 	configureSearchRoutes(logger, h, mux)
 	configureSubscriptionRoutes(logger, h, mux)
+	configureNotificationRoutes(logger, h, mux)
 
 	mux.Handle("GET /docs/swagger.json", http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))))
 	mux.Handle("GET /swagger/", v3.NewHandler("My API", "/docs/swagger.json", "/swagger"))
@@ -55,7 +55,6 @@ func runServer(addr string) {
 	go hub.Run()
 
 	mux.HandleFunc("GET /ws", middleware.AuthRequired(logger, h.AuthService, h.ServeWs))
-	//mux.HandleFunc("GET /ws", h.ServeWs)
 
 	loggedMux := middleware.Logging(logger, mux)
 
@@ -179,15 +178,6 @@ func configureChatRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.Se
 		mux.HandleFunc(pattern, middleware.AuthRequired(logger, h.AuthService, f))
 	}
 
-	//publicRoutes := map[string]http.HandlerFunc{
-	//	"POST /api/v1/messages/{receiver_id}": h.SendMessage,
-	//	//"GET /api/v1/messages/{user_id}": h.ReadMessages,
-	//	"GET /api/v1/chats": h.GetUserChats,
-	//}
-	//for pattern, f := range publicRoutes {
-	//	mux.HandleFunc(pattern, f)
-	//}
-
 }
 
 func configureSearchRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.ServeMux) {
@@ -210,6 +200,23 @@ func configureSubscriptionRoutes(logger *zap.Logger, h *handler.APIHandler, mux 
 	}
 	for pattern, f := range authRoutes {
 		mux.HandleFunc(pattern, middleware.AuthRequired(logger, h.AuthService, f))
+	}
+	for pattern, f := range publicRoutes {
+		mux.HandleFunc(pattern, f)
+	}
+}
+
+func configureNotificationRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.ServeMux) {
+	authRoutes := map[string]http.HandlerFunc{
+		//"GET /api/v1/notifications": h.ReadNotifications,
+	}
+	for pattern, f := range authRoutes {
+		mux.HandleFunc(pattern, middleware.AuthRequired(logger, h.AuthService, f))
+	}
+
+	// TODO исправить
+	publicRoutes := map[string]http.HandlerFunc{
+		"GET /api/v1/notifications": h.ReadNotifications,
 	}
 	for pattern, f := range publicRoutes {
 		mux.HandleFunc(pattern, f)

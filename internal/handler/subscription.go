@@ -19,8 +19,30 @@ func (h *APIHandler) SubscribeToUser(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, h.logger, requestId, errInfo)
 		return
 	}
+
+	// инфа о юзере, который подписывается
+	user, errInfo := h.service.GetUserById(ctx, userId)
+	if errInfo != emptyErrorInfo {
+		WriteErrorResponse(w, h.logger, requestId, errInfo)
+		return
+	}
+	// отправка в websocket - отправляем тому, на кого подписались
+	notification := &entity.WSMessage{
+		Action: entity.WSActionNotificationSubscription,
+		Payload: entity.WSMessagePayload{
+			UserId: subscribeUserId,
+			TriggeredByUser: entity.TriggeredByUser{
+				UserId:    userId,
+				Nickname:  user.Nickname,
+				AvatarURL: user.AvatarURL,
+			},
+		},
+	}
+	h.hub.broadcast <- notification
+
 	WriteDefaultResponse(w, h.logger, nil)
 }
+
 func (h *APIHandler) UnsubscribeFromUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	requestId := ctx.Value("request_id").(string)
