@@ -49,4 +49,7 @@ type IRepository interface {
 	SearchForUsers(ctx context.Context, query string) ([]entity.SearchUser, error)
 	SearchForPins(ctx context.Context, query string) ([]entity.SearchPin, error)
 	SearchForBoards(ctx context.Context, query string) ([]entity.SearchBoard, error)
+
+	AddComment(ctx context.Context, comment string, pinId entity.PinID, userId entity.UserID) error
+	GetComments(ctx context.Context, pinId entity.PinID) (entity.GetCommentsResponse, error)
 }

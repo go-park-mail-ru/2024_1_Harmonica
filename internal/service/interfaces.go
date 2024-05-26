@@ -43,4 +43,7 @@ type IService interface {
 	GetUserSubscriptions(ctx context.Context, userId entity.UserID) (entity.UserSubscriptions, errs.ErrorInfo)
 
 	Search(ctx context.Context, query string) (entity.SearchResult, errs.ErrorInfo)
+
+	AddComment(ctx context.Context, comment string, pinId entity.PinID, userId entity.UserID) errs.ErrorInfo
+	GetComments(ctx context.Context, pinId entity.PinID) (entity.GetCommentsResponse, errs.ErrorInfo)
 }

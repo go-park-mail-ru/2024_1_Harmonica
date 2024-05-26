@@ -48,6 +48,7 @@ func runServer(addr string) {
 	configureDraftRoutes(logger, h, mux)
 	configureSearchRoutes(logger, h, mux)
 	configureSubscriptionRoutes(logger, h, mux)
+	configureCommentsRoutes(logger, h, mux)
 
 	mux.Handle("GET /docs/swagger.json", http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))))
 	mux.Handle("GET /swagger/", v3.NewHandler("My API", "/docs/swagger.json", "/swagger"))
@@ -145,6 +146,21 @@ func configurePinRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.Ser
 	}
 	for pattern, f := range publicRoutes {
 		mux.HandleFunc(pattern, f)
+	}
+}
+
+func configureCommentsRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.ServeMux) {
+	authRoutes := map[string]http.HandlerFunc{
+		"POST /api/v1/pin/comments/{pin_id}": h.AddComment,
+	}
+	checkAuthRoutes := map[string]http.HandlerFunc{
+		"GET /api/v1/pin/comments/{pin_id}": h.GetComments,
+	}
+	for pattern, f := range authRoutes {
+		mux.HandleFunc(pattern, middleware.AuthRequired(logger, h.AuthService, f))
+	}
+	for pattern, f := range checkAuthRoutes {
+		mux.HandleFunc(pattern, middleware.CheckAuth(logger, h.AuthService, f))
 	}
 }
 

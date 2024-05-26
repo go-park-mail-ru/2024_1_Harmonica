@@ -35,6 +35,20 @@ func (m *MockIRepository) EXPECT() *MockIRepositoryMockRecorder {
 	return m.recorder
 }
 
+// AddComment mocks base method.
+func (m *MockIRepository) AddComment(ctx context.Context, comment string, pinId entity.PinID, userId entity.UserID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddComment", ctx, comment, pinId, userId)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddComment indicates an expected call of AddComment.
+func (mr *MockIRepositoryMockRecorder) AddComment(ctx, comment, pinId, userId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddComment", reflect.TypeOf((*MockIRepository)(nil).AddComment), ctx, comment, pinId, userId)
+}
+
 // AddPinToBoard mocks base method.
 func (m *MockIRepository) AddPinToBoard(ctx context.Context, boardId entity.BoardID, pinId entity.PinID) error {
 	m.ctrl.T.Helper()
@@ -236,6 +250,21 @@ func (m *MockIRepository) GetBoardPins(ctx context.Context, boardId entity.Board
 func (mr *MockIRepositoryMockRecorder) GetBoardPins(ctx, boardId, limit, offset interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBoardPins", reflect.TypeOf((*MockIRepository)(nil).GetBoardPins), ctx, boardId, limit, offset)
+}
+
+// GetComments mocks base method.
+func (m *MockIRepository) GetComments(ctx context.Context, pinId entity.PinID) (entity.GetCommentsResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetComments", ctx, pinId)
+	ret0, _ := ret[0].(entity.GetCommentsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetComments indicates an expected call of GetComments.
+func (mr *MockIRepositoryMockRecorder) GetComments(ctx, pinId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetComments", reflect.TypeOf((*MockIRepository)(nil).GetComments), ctx, pinId)
 }
 
 // GetDraft mocks base method.
