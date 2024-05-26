@@ -230,6 +230,33 @@ func (h *APIHandler) CreatePin(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, h.logger, requestId, errInfo)
 		return
 	}
+
+	// подписчики - это те, кому нужно отправить уведомление о публикации пина
+	subscribers, errInfo := h.service.GetUserSubscribers(ctx, res.PinAuthor.UserId)
+	if errInfo != emptyErrorInfo {
+		WriteErrorResponse(w, h.logger, requestId, errInfo)
+		return
+	}
+	// отправка в websocket
+	notification := &entity.WSMessage{
+		Action: entity.WSActionNotificationNewPin,
+		Payload: entity.WSMessagePayload{
+			TriggeredByUser: entity.TriggeredByUser{
+				UserId:    res.PinAuthor.UserId,
+				Nickname:  res.PinAuthor.Nickname,
+				AvatarURL: res.PinAuthor.AvatarURL,
+			},
+			Pin: entity.PinNotificationResponse{
+				PinId:      res.PinId,
+				ContentUrl: res.ContentUrl,
+			},
+		},
+	}
+	for _, s := range subscribers.Subscribers {
+		notification.Payload.UserId = s.UserId
+		h.hub.broadcast <- notification
+	}
+
 	WriteDefaultResponse(w, h.logger, res)
 }
 

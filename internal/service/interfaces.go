@@ -44,6 +44,9 @@ type IService interface {
 
 	Search(ctx context.Context, query string) (entity.SearchResult, errs.ErrorInfo)
 
-	AddComment(ctx context.Context, comment string, pinId entity.PinID, userId entity.UserID) errs.ErrorInfo
+	CreateNotification(ctx context.Context, notification entity.Notification) errs.ErrorInfo
+	GetUnreadNotifications(ctx context.Context, userId entity.UserID) (entity.Notifications, errs.ErrorInfo)
+
+	AddComment(ctx context.Context, comment string, pinId entity.PinID, userId entity.UserID) (entity.PinPageResponse, errs.ErrorInfo)
 	GetComments(ctx context.Context, pinId entity.PinID) (entity.GetCommentsResponse, errs.ErrorInfo)
 }

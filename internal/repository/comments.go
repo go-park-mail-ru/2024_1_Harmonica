@@ -14,14 +14,15 @@ const (
 	WHERE public.comment.pin_id = $1
 	ORDER BY public.comment.created_at DESC`
 
-	QueryAddComment = `INSERT INTO public.comment ("user_id", "pin_id", "text") VALUES($1, $2, $3)`
+	QueryAddComment = `INSERT INTO public.comment ("user_id", "pin_id", "text") VALUES ($1, $2, $3) RETURNING comment_id`
 )
 
-func (r *DBRepository) AddComment(ctx context.Context, comment string, pinId entity.PinID, userId entity.UserID) error {
+func (r *DBRepository) AddComment(ctx context.Context, comment string, pinId entity.PinID, userId entity.UserID) (entity.CommentID, error) {
+	commentId := entity.CommentID(0)
 	start := time.Now()
-	_, err := r.db.ExecContext(ctx, QueryAddComment, userId, pinId, comment)
+	err := r.db.QueryRowContext(ctx, QueryAddComment, userId, pinId, comment).Scan(&commentId)
 	LogDBQuery(r, ctx, QueryAddComment, time.Since(start))
-	return err
+	return commentId, err
 }
 
 func (r *DBRepository) GetComments(ctx context.Context, pinId entity.PinID) (entity.GetCommentsResponse, error) {

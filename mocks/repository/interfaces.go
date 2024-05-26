@@ -36,11 +36,12 @@ func (m *MockIRepository) EXPECT() *MockIRepositoryMockRecorder {
 }
 
 // AddComment mocks base method.
-func (m *MockIRepository) AddComment(ctx context.Context, comment string, pinId entity.PinID, userId entity.UserID) error {
+func (m *MockIRepository) AddComment(ctx context.Context, comment string, pinId entity.PinID, userId entity.UserID) (entity.CommentID, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddComment", ctx, comment, pinId, userId)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(entity.CommentID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // AddComment indicates an expected call of AddComment.
@@ -134,6 +135,20 @@ func (m *MockIRepository) CreateMessage(ctx context.Context, message entity.Mess
 func (mr *MockIRepositoryMockRecorder) CreateMessage(ctx, message interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateMessage", reflect.TypeOf((*MockIRepository)(nil).CreateMessage), ctx, message)
+}
+
+// CreateNotification mocks base method.
+func (m *MockIRepository) CreateNotification(ctx context.Context, notification entity.Notification) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateNotification", ctx, notification)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateNotification indicates an expected call of CreateNotification.
+func (mr *MockIRepositoryMockRecorder) CreateNotification(ctx, notification interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNotification", reflect.TypeOf((*MockIRepository)(nil).CreateNotification), ctx, notification)
 }
 
 // CreatePin mocks base method.
@@ -355,6 +370,21 @@ func (m *MockIRepository) GetSubscriptionsInfo(ctx context.Context, userToGetInf
 func (mr *MockIRepositoryMockRecorder) GetSubscriptionsInfo(ctx, userToGetInfoId, userId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubscriptionsInfo", reflect.TypeOf((*MockIRepository)(nil).GetSubscriptionsInfo), ctx, userToGetInfoId, userId)
+}
+
+// GetUnreadNotifications mocks base method.
+func (m *MockIRepository) GetUnreadNotifications(ctx context.Context, userId entity.UserID) (entity.Notifications, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUnreadNotifications", ctx, userId)
+	ret0, _ := ret[0].(entity.Notifications)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUnreadNotifications indicates an expected call of GetUnreadNotifications.
+func (mr *MockIRepositoryMockRecorder) GetUnreadNotifications(ctx, userId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUnreadNotifications", reflect.TypeOf((*MockIRepository)(nil).GetUnreadNotifications), ctx, userId)
 }
 
 // GetUserBoards mocks base method.

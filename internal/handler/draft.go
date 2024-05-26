@@ -40,15 +40,19 @@ func (h *APIHandler) UpdateDraft(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// отправка в websocket
-	wsMessage := &entity.WSMessage{
-		Action: entity.ActionDraft,
+	chatDraft := &entity.WSMessage{
+		Action: entity.WSActionChatDraft,
 		Payload: entity.WSMessagePayload{
-			Text:       draft.Text,
-			SenderId:   draft.SenderId,
-			ReceiverId: draft.ReceiverId,
+			UserId: draft.ReceiverId,
+			TriggeredByUser: entity.TriggeredByUser{
+				UserId: draft.SenderId,
+			},
+			Message: entity.MessageNotificationResponse{
+				Text: draft.Text,
+			},
 		},
 	}
-	h.hub.broadcast <- wsMessage
+	h.hub.broadcast <- chatDraft
 
 	WriteDefaultResponse(w, h.logger, nil)
 }
