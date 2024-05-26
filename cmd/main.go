@@ -108,7 +108,7 @@ func configureUserRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.Se
 		"GET /api/v1/is_auth":          h.IsAuth, // check it
 		"GET /api/v1/logout":           h.Logout,
 		"GET /api/v1/users/{nickname}": h.GetUser,
-		"GET /api/v1/users/all":        h.GetAllUsers,
+		"GET /api/v1/all/users":        h.GetAllUsers,
 	}
 	for pattern, f := range authRoutes {
 		mux.HandleFunc(pattern, middleware.AuthRequired(logger, h.AuthService, f))
