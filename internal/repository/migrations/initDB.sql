@@ -80,16 +80,18 @@ CREATE TABLE public.subscribe_on_person (
 	FOREIGN KEY(followed_user_id) REFERENCES public.user(user_id) ON DELETE CASCADE
 );
 
+CREATE TYPE MESSAGE_STATUS AS ENUM('read', 'unread');
+
 DROP TABLE IF EXISTS public.message;
 CREATE TABLE public.message (
-    message_id bigint NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    sender_id bigint NOT NULL,
-    receiver_id bigint NOT NULL,
-    text TEXT NOT NULL,
-    status MESSAGE_STATUS NOT NULL DEFAULT 'unread',
-    sent_at timestamptz NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY(sender_id) REFERENCES public.user(user_id) ON DELETE CASCADE,
-    FOREIGN KEY(receiver_id) REFERENCES public.user(user_id) ON DELETE CASCADE
+                                message_id bigint NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                                sender_id bigint NOT NULL,
+                                receiver_id bigint NOT NULL,
+                                text TEXT NOT NULL,
+                                status MESSAGE_STATUS NOT NULL DEFAULT 'unread',
+                                sent_at timestamptz NULL DEFAULT CURRENT_TIMESTAMP,
+                                FOREIGN KEY(sender_id) REFERENCES public.user(user_id) ON DELETE CASCADE,
+                                FOREIGN KEY(receiver_id) REFERENCES public.user(user_id) ON DELETE CASCADE
 );
 
 DROP TABLE IF EXISTS public.draft;
@@ -104,12 +106,32 @@ CREATE TABLE public.draft (
 
 DROP TABLE IF EXISTS public.comment;
 CREATE TABLE public.comment (
-    comment_id bigint NOT NULL,
+    comment_id bigint NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id bigint NOT NULL,
-	pin_id bigint NOT NULL,
-    text TEXT NOT NULL CHECK(length(text)>=1),
-	created_at timestamptz NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (comment_id),
-    FOREIGN KEY(user_id) REFERENCES public.user(user_id) ON DELETE CASCADE,
-    FOREIGN KEY(pin_id) REFERENCES public.pin(pin_id) ON DELETE CASCADE
+    pin_id bigint NOT NULL,
+    text TEXT NOT NULL,
+    created_at timestamptz NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES public.user(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (pin_id) REFERENCES public.pin(pin_id) ON DELETE CASCADE
+);
+
+CREATE TYPE NOTIFICATION_TYPE AS ENUM('subscription', 'new_pin', 'comment', 'message');
+CREATE TYPE NOTIFICATION_STATUS AS ENUM ('read', 'unread');
+
+DROP TABLE IF EXISTS public.notification;
+CREATE TABLE public.notification (
+    notification_id bigint NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id bigint NOT NULL,  -- пользователь, получающий уведомление
+    type NOTIFICATION_TYPE NOT NULL,  -- тип уведомления
+    triggered_by_user_id bigint NOT NULL,  -- пользователь, вызвавший уведомление (например, подписчик или комментатор)
+    pin_id bigint,  -- идентификатор пина, если уведомление связано с пином
+    comment_id bigint,  -- идентификатор комментария, если уведомление связано с комментарием
+    message_id bigint,
+    status NOTIFICATION_STATUS NOT NULL DEFAULT 'unread',
+    created_at timestamptz NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES public.user(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (triggered_by_user_id) REFERENCES public.user(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (pin_id) REFERENCES public.pin(pin_id) ON DELETE CASCADE,
+    FOREIGN KEY (comment_id) REFERENCES public.comment(comment_id) ON DELETE CASCADE,
+    FOREIGN KEY (message_id) REFERENCES public.message(message_id) ON DELETE CASCADE
 );

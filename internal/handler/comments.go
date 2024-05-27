@@ -4,6 +4,7 @@ import (
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"net/http"
+	"time"
 )
 
 func (h *APIHandler) AddComment(w http.ResponseWriter, r *http.Request) {
@@ -24,11 +25,41 @@ func (h *APIHandler) AddComment(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	errInfo := h.service.AddComment(r.Context(), comment.Value, entity.PinID(pinId), userId)
+	pin, errInfo := h.service.AddComment(r.Context(), comment.Value, entity.PinID(pinId), userId)
 	if errInfo != emptyErrorInfo {
 		WriteErrorResponse(w, h.logger, requestId, errInfo)
 		return
 	}
+
+	// инфа о юзере, который прокомментировал
+	user, errInfo := h.service.GetUserById(r.Context(), userId)
+	if errInfo != emptyErrorInfo {
+		WriteErrorResponse(w, h.logger, requestId, errInfo)
+		return
+	}
+	// отправка в websocket - отправляем автору пина
+	notification := &entity.WSMessage{
+		Action: entity.WSActionNotificationComment,
+		Payload: entity.WSMessagePayload{
+			UserId: pin.PinAuthor.UserId,
+			TriggeredByUser: entity.TriggeredByUser{
+				UserId:    userId,
+				Nickname:  user.Nickname,
+				AvatarURL: user.AvatarURL,
+			},
+			Comment: entity.CommentNotificationResponse{
+				Text: comment.Value,
+			},
+			Pin: entity.PinNotificationResponse{
+				PinId:      entity.PinID(pinId),
+				ContentUrl: pin.ContentUrl,
+			},
+			CreatedAt: time.Now(),
+		},
+	}
+	h.hub.broadcast <- notification
+
+	WriteDefaultResponse(w, h.logger, nil)
 }
 
 func (h *APIHandler) GetComments(w http.ResponseWriter, r *http.Request) {

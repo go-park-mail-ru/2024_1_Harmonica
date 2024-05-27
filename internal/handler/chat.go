@@ -43,6 +43,22 @@ func (h *APIHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, h.logger, requestId, errInfo)
 		return
 	}
+
+	// отправка в websocket
+	chatMessage := &entity.WSMessage{
+		Action: entity.WSActionChatMessage,
+		Payload: entity.WSMessagePayload{
+			UserId: message.ReceiverId,
+			TriggeredByUser: entity.TriggeredByUser{
+				UserId: message.SenderId,
+			},
+			Message: entity.MessageNotificationResponse{
+				Text: message.Text,
+			},
+		},
+	}
+	h.hub.broadcast <- chatMessage
+
 	WriteDefaultResponse(w, h.logger, nil)
 }
 

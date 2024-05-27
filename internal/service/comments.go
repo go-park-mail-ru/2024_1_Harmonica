@@ -2,35 +2,55 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 )
 
-func (s *RepositoryService) AddComment(ctx context.Context, comment string, pinId entity.PinID, userId entity.UserID) errs.ErrorInfo {
+func (s *RepositoryService) AddComment(ctx context.Context, comment string, pinId entity.PinID, userId entity.UserID) (entity.PinPageResponse, errs.ErrorInfo) {
 	exists, err := s.repo.CheckPinExistence(ctx, pinId)
 	if err != nil {
-		return errs.ErrorInfo{
+		return entity.PinPageResponse{}, errs.ErrorInfo{
 			GeneralErr: err,
 			LocalErr:   errs.ErrDBInternal,
 		}
 	}
 	if !exists {
-		return errs.ErrorInfo{LocalErr: errs.ErrNotFound}
+		return entity.PinPageResponse{}, errs.ErrorInfo{LocalErr: errs.ErrNotFound}
 	}
 	if len(comment) <= 0 {
-		return errs.ErrorInfo{
+		return entity.PinPageResponse{}, errs.ErrorInfo{
 			LocalErr: errs.ErrEmptyComment,
 		}
 	}
-	err = s.repo.AddComment(ctx, comment, pinId, userId)
+	commentId, err := s.repo.AddComment(ctx, comment, pinId, userId)
 	if err != nil {
-		return errs.ErrorInfo{
+		return entity.PinPageResponse{}, errs.ErrorInfo{
 			GeneralErr: err,
 			LocalErr:   errs.ErrDBInternal,
 		}
 	}
-	return errs.ErrorInfo{}
+	pin, err := s.repo.GetPinById(ctx, pinId)
+	if err != nil {
+		return entity.PinPageResponse{}, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrDBInternal,
+		}
+	}
+	n := entity.Notification{
+		Type:              entity.NotificationTypeComment,
+		UserId:            pin.PinAuthor.UserId,
+		TriggeredByUserId: userId,
+		CommentId:         commentId,
+		PinId:             pinId,
+	}
+	err = s.repo.CreateNotification(ctx, n)
+	if err != nil {
+		return entity.PinPageResponse{}, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrDBInternal,
+		}
+	}
+	return pin, errs.ErrorInfo{}
 }
 
 func (s *RepositoryService) GetComments(ctx context.Context, pinId entity.PinID) (entity.GetCommentsResponse, errs.ErrorInfo) {
@@ -45,7 +65,6 @@ func (s *RepositoryService) GetComments(ctx context.Context, pinId entity.PinID)
 		return entity.GetCommentsResponse{}, errs.ErrorInfo{LocalErr: errs.ErrNotFound}
 	}
 	res, err := s.repo.GetComments(ctx, pinId)
-	fmt.Println(err)
 	if err != nil {
 		return entity.GetCommentsResponse{}, errs.ErrorInfo{
 			GeneralErr: err,
