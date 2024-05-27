@@ -24,7 +24,7 @@ deploy:
 
 test:
 	go test -v -coverpkg ./... ./... -coverprofile cover.out.tmp && \
-	cat cover.out.tmp | grep -v "mock" | grep -v "docs.go" | grep -v "proto" > cover.out && \
+	cat cover.out.tmp | grep -v "mock" | grep -v "docs.go" | grep -v "proto" | grep -v "easyjson" > cover.out && \
 	rm cover.out.tmp && \
 	go tool cover -func cover.out
 
@@ -74,3 +74,7 @@ run_image:
 
 run_likes:
 	go run cmd/like/main.go
+
+easyjson:
+	easyjson -all -pkg internal/entity
+	easyjson -all -pkg internal/entity/errs

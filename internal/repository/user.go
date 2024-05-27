@@ -30,15 +30,15 @@ const (
 	user_id, nickname, avatar_url FROM public."user" u ORDER BY u.register_at DESC`
 )
 
-func (r *DBRepository) GetAllUsers(ctx context.Context) ([]entity.SearchUser, error) {
+func (r *DBRepository) GetAllUsers(ctx context.Context) (entity.SearchUsers, error) {
 	start := time.Now()
 	rows, err := r.db.QueryContext(ctx, QueryGetAllUsers)
 	LogDBQuery(r, ctx, QueryGetAllUsers, time.Since(start))
 	if err != nil {
-		return []entity.SearchUser{}, err
+		return entity.SearchUsers{}, err
 	}
-	var res []entity.SearchUser
-	err = carta.Map(rows, &res)
+	var res entity.SearchUsers
+	err = carta.Map(rows, &res.Users)
 	return res, err
 }
 

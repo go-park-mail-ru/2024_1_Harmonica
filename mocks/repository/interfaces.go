@@ -223,10 +223,10 @@ func (mr *MockIRepositoryMockRecorder) DeleteSubscriptionToUser(ctx, userId, uns
 }
 
 // GetAllUsers mocks base method.
-func (m *MockIRepository) GetAllUsers(ctx context.Context) ([]entity.SearchUser, error) {
+func (m *MockIRepository) GetAllUsers(ctx context.Context) (entity.SearchUsers, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllUsers", ctx)
-	ret0, _ := ret[0].([]entity.SearchUser)
+	ret0, _ := ret[0].(entity.SearchUsers)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

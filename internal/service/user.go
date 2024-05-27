@@ -11,10 +11,10 @@ var (
 	emptyErrorInfo = errs.ErrorInfo{}
 )
 
-func (s *RepositoryService) GetAllUsers(ctx context.Context) ([]entity.SearchUser, error) {
+func (s *RepositoryService) GetAllUsers(ctx context.Context) (entity.SearchUsers, error) {
 	res, err := s.repo.GetAllUsers(ctx)
 	if err != nil {
-		return []entity.SearchUser{}, err
+		return entity.SearchUsers{}, err
 	}
 	return res, err
 }

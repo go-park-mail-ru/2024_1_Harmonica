@@ -2,10 +2,11 @@ package handler
 
 import (
 	"context"
-	"encoding/json"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"net/http"
+
+	"github.com/mailru/easyjson"
 )
 
 // Create board.
@@ -123,7 +124,7 @@ func (h *APIHandler) UpdateBoard(w http.ResponseWriter, r *http.Request) {
 	newBoard.VisibilityType = "public"
 
 	boardParams := r.FormValue("board")
-	err = json.Unmarshal([]byte(boardParams), &newBoard)
+	err = easyjson.Unmarshal([]byte(boardParams), &newBoard)
 	if err != nil {
 		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(err, errs.ErrReadingRequestBody))
 		return

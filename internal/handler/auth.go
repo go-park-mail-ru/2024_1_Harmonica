@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"harmonica/internal/entity"
@@ -11,6 +10,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/mailru/easyjson"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/metadata"
 )
@@ -49,7 +49,7 @@ func (h *APIHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var user entity.User
-	err = json.Unmarshal(bodyBytes, &user)
+	err = easyjson.Unmarshal(bodyBytes, &user)
 	if err != nil {
 		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{
 			GeneralErr: err,
@@ -172,7 +172,7 @@ func WriteUserResponse(w http.ResponseWriter, logger *zap.Logger, user entity.Us
 		Nickname:  user.Nickname,
 		AvatarURL: user.AvatarURL,
 	}
-	response, _ := json.Marshal(userResponse)
+	response, _ := easyjson.Marshal(userResponse)
 	_, err := w.Write(response)
 	if err != nil {
 		logger.Error(

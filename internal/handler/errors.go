@@ -1,11 +1,11 @@
 package handler
 
 import (
-	"encoding/json"
 	"harmonica/internal/entity/errs"
 	"log"
 	"net/http"
 
+	"github.com/mailru/easyjson"
 	"go.uber.org/zap"
 )
 
@@ -34,7 +34,7 @@ func WriteErrorResponse(w http.ResponseWriter, logger *zap.Logger, requestId str
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(errs.ErrorCodes[errInfo.LocalErr].HttpCode)
 
-	response, _ := json.Marshal(errs.ErrorResponse{
+	response, _ := easyjson.Marshal(errs.ErrorResponse{
 		Code:    errs.ErrorCodes[errInfo.LocalErr].LocalCode,
 		Message: errInfo.LocalErr.Error(),
 	})
@@ -72,7 +72,7 @@ func WriteErrorsListResponse(w http.ResponseWriter, logger *zap.Logger, requestI
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(errs.ErrorCodes[errors[0].LocalErr].HttpCode) // это выглядит как-то не прикольно
 
-	response, _ := json.Marshal(errsList)
+	response, _ := easyjson.Marshal(errsList)
 	_, err := w.Write(response)
 	if err != nil {
 		log.Println(err)

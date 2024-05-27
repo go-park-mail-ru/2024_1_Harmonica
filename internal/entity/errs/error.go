@@ -9,6 +9,7 @@ type ErrorsListResponse struct {
 	Errors []ErrorResponse `json:"errors"`
 }
 
+//easyjson:skip
 type ErrorInfo struct {
 	GeneralErr error
 	LocalErr   error
