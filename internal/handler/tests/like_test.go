@@ -376,7 +376,7 @@ func TestHandler_GetFavorites(t *testing.T) {
 			expectedJSON:       `{"pins":null}`,
 			expectedRequest: &proto.GetFavoritesRequest{
 				UserId: 1,
-				Limit:  10,
+				Limit:  40,
 				Offset: 0,
 			},
 			expectedResponse: &proto.GetFavoritesResponse{
@@ -397,7 +397,7 @@ func TestHandler_GetFavorites(t *testing.T) {
 			expectedJSON:       MakeErrorResponse(errs.ErrDBInternal),
 			expectedRequest: &proto.GetFavoritesRequest{
 				UserId: 1,
-				Limit:  10,
+				Limit:  40,
 				Offset: 0,
 			},
 			expectedResponse: &proto.GetFavoritesResponse{
@@ -418,7 +418,7 @@ func TestHandler_GetFavorites(t *testing.T) {
 			expectedJSON:       MakeErrorResponse(errs.ErrGRPCWentWrong),
 			expectedRequest: &proto.GetFavoritesRequest{
 				UserId: 1,
-				Limit:  10,
+				Limit:  40,
 				Offset: 0,
 			},
 			expectedResponse: &proto.GetFavoritesResponse{
