@@ -1,13 +1,14 @@
 package handler
 
 import (
-	"encoding/json"
-	"go.uber.org/zap"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"io"
 	"net/http"
 	"strconv"
+
+	"github.com/mailru/easyjson"
+	"go.uber.org/zap"
 )
 
 const FEED_PINS_LIMIT = 40
@@ -29,18 +30,18 @@ func GetLimitAndOffset(r *http.Request) (int, int, error) {
 	return limit, offset, nil
 }
 
-func UnmarshalRequest(r *http.Request, dest any) error {
+func UnmarshalRequest(r *http.Request, dest easyjson.Unmarshaler) error {
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		return err
 	}
-	err = json.Unmarshal(bodyBytes, &dest)
+	err = easyjson.Unmarshal(bodyBytes, dest)
 	return err
 }
 
-func WriteDefaultResponse(w http.ResponseWriter, logger *zap.Logger, object any) {
+func WriteDefaultResponse(w http.ResponseWriter, logger *zap.Logger, object easyjson.Marshaler) {
 	w.Header().Set("Content-Type", "application/json")
-	response, _ := json.Marshal(object)
+	response, _ := easyjson.Marshal(object)
 	_, err := w.Write(response)
 	if err != nil {
 		logger.Error(
@@ -205,7 +206,7 @@ func (h *APIHandler) CreatePin(w http.ResponseWriter, r *http.Request) {
 
 	pinParams := r.FormValue("pin")
 	pin := entity.Pin{AllowComments: true}
-	err := json.Unmarshal([]byte(pinParams), &pin)
+	err := easyjson.Unmarshal([]byte(pinParams), &pin)
 	if err != nil {
 		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{
 			GeneralErr: err,

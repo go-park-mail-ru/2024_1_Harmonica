@@ -56,5 +56,5 @@ type IRepository interface {
 	AddComment(ctx context.Context, comment string, pinId entity.PinID, userId entity.UserID) (entity.CommentID, error)
 	GetComments(ctx context.Context, pinId entity.PinID) (entity.GetCommentsResponse, error)
 
-	GetAllUsers(ctx context.Context) ([]entity.SearchUser, error)
+	GetAllUsers(ctx context.Context) (entity.SearchUsers, error)
 }

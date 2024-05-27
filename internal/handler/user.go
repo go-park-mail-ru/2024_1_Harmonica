@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"fmt"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
@@ -10,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/mailru/easyjson"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/metadata"
 )
@@ -42,7 +42,7 @@ func (h *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var user entity.User
-	err = json.Unmarshal(bodyBytes, &user)
+	err = easyjson.Unmarshal(bodyBytes, &user)
 	if err != nil {
 		WriteErrorsListResponse(w, h.logger, requestId, errs.ErrorInfo{
 			GeneralErr: err,
@@ -215,7 +215,7 @@ func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		user.AvatarURL = h.FormImgURL(name)
 	}
 	userParams := r.FormValue("user")
-	err = json.Unmarshal([]byte(userParams), &user)
+	err = easyjson.Unmarshal([]byte(userParams), &user)
 	fmt.Println(r.FormValue("user"), err)
 	if err != nil {
 		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(err, errs.ErrReadingRequestBody))

@@ -77,3 +77,7 @@ type UserSubscribers struct {
 type UserSubscriptions struct {
 	Subscriptions []UserSubscriptionInfo `json:"subscriptions"`
 }
+
+type SearchUsers struct {
+	Users []SearchUser `json:"users"`
+}
