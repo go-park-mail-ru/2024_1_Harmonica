@@ -10,7 +10,7 @@ import (
 	"strconv"
 )
 
-const FEED_PINS_LIMIT = 10
+const FEED_PINS_LIMIT = 40
 
 func PageToLimitAndOffset(page int) (int, int) {
 	return FEED_PINS_LIMIT, page * FEED_PINS_LIMIT
