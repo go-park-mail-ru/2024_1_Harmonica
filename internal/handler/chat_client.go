@@ -83,7 +83,7 @@ func (c *Client) WriteMessage() {
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 
 			// отправка сообщения
-			messageToSend, senderId, receiverId := configureMessageToSend(messageFromChan)
+			messageToSend, _, _ := configureMessageToSend(messageFromChan)
 			err := c.conn.WriteJSON(messageToSend)
 
 			if err != nil {
@@ -101,7 +101,7 @@ func (c *Client) WriteMessage() {
 			n := len(c.message)
 			for i := 0; i < n; i++ {
 				messageFromChan = <-c.message
-				messageToSend, senderId, receiverId = configureMessageToSend(messageFromChan)
+				messageToSend, senderId, receiverId := configureMessageToSend(messageFromChan)
 				action := messageFromChan.Action
 
 				//if (receiverId == c.userId || senderId == c.userId) && senderId != receiverId {
