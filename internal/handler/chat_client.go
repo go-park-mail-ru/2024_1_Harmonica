@@ -56,7 +56,7 @@ func (h *APIHandler) ServeWs(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrWSConnectionUpgrade))
+		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(err, errs.ErrWSConnectionUpgrade))
 		return
 	}
 

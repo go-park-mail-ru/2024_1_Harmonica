@@ -194,6 +194,7 @@ func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	userIdFromSession, ok := ctx.Value("user_id").(entity.UserID)
 	if !ok {
 		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(err, errs.ErrTypeConversion))
+		return
 	}
 	if uint64(userIdFromSession) != userIdFromSlug {
 		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrDiffUserId))

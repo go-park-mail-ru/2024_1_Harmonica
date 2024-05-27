@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"go.uber.org/zap"
 	"harmonica/config"
 	"harmonica/internal/entity/errs"
 	image "harmonica/internal/microservices/image/proto"
@@ -29,7 +30,15 @@ func (h *APIHandler) GetImage(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{LocalErr: errs.GetLocalErrorByCode[res.LocalError]})
 		return
 	}
-	w.Write(res.Image)
+	_, err = w.Write(res.Image)
+	if err != nil {
+		h.logger.Error(
+			errs.ErrServerInternal.Error(),
+			zap.Int("local_error_code", errs.ErrorCodes[errs.ErrServerInternal].LocalCode),
+			zap.String("general_error", err.Error()),
+		)
+		return
+	}
 }
 
 func (h *APIHandler) UploadImage(r *http.Request, imageName string) (string, error) {
