@@ -36,12 +36,14 @@ type WSMessage struct {
 type WSSubscriptionNotificationPayload struct {
 	UserId          UserID          `db:"user_id" json:"user_id"`
 	TriggeredByUser TriggeredByUser `db:"triggered_by_user" json:"triggered_by_user"`
+	CreatedAt       time.Time       `db:"created_at" json:"created_at"`
 }
 
 type WSNewPinNotificationPayload struct {
 	UserId          UserID                  `db:"user_id" json:"user_id"`
 	TriggeredByUser TriggeredByUser         `db:"triggered_by_user" json:"triggered_by_user"`
 	Pin             PinNotificationResponse `db:"pin" json:"pin"`
+	CreatedAt       time.Time               `db:"created_at" json:"created_at"`
 }
 
 type WSCommentNotificationPayload struct {
@@ -49,6 +51,7 @@ type WSCommentNotificationPayload struct {
 	TriggeredByUser TriggeredByUser             `db:"triggered_by_user" json:"triggered_by_user"`
 	Comment         CommentNotificationResponse `db:"comment" json:"comment"`
 	Pin             PinNotificationResponse     `db:"pin" json:"pin"` // пин, к которому написали комментарий
+	CreatedAt       time.Time                   `db:"created_at" json:"created_at"`
 }
 
 type WSChatMessagePayload struct {

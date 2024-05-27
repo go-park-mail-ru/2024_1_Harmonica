@@ -193,6 +193,21 @@ func (mr *MockIServiceMockRecorder) DeleteSubscriptionToUser(ctx, userId, unsubs
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSubscriptionToUser", reflect.TypeOf((*MockIService)(nil).DeleteSubscriptionToUser), ctx, userId, unsubscribeUserId)
 }
 
+// GetAllUsers mocks base method.
+func (m *MockIService) GetAllUsers(ctx context.Context) ([]entity.SearchUser, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllUsers", ctx)
+	ret0, _ := ret[0].([]entity.SearchUser)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllUsers indicates an expected call of GetAllUsers.
+func (mr *MockIServiceMockRecorder) GetAllUsers(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllUsers", reflect.TypeOf((*MockIService)(nil).GetAllUsers), ctx)
+}
+
 // GetBoardById mocks base method.
 func (m *MockIService) GetBoardById(ctx context.Context, boardId entity.BoardID, userId entity.UserID, limit, offset int) (entity.FullBoard, errs.ErrorInfo) {
 	m.ctrl.T.Helper()

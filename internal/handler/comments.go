@@ -4,6 +4,7 @@ import (
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"net/http"
+	"time"
 )
 
 func (h *APIHandler) AddComment(w http.ResponseWriter, r *http.Request) {
@@ -53,6 +54,7 @@ func (h *APIHandler) AddComment(w http.ResponseWriter, r *http.Request) {
 				PinId:      entity.PinID(pinId),
 				ContentUrl: pin.ContentUrl,
 			},
+			CreatedAt: time.Now(),
 		},
 	}
 	h.hub.broadcast <- notification

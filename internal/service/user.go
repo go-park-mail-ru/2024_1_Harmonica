@@ -11,6 +11,14 @@ var (
 	emptyErrorInfo = errs.ErrorInfo{}
 )
 
+func (s *RepositoryService) GetAllUsers(ctx context.Context) ([]entity.SearchUser, error) {
+	res, err := s.repo.GetAllUsers(ctx)
+	if err != nil {
+		return []entity.SearchUser{}, err
+	}
+	return res, err
+}
+
 func (s *RepositoryService) GetUserByEmail(ctx context.Context, email string) (entity.User, errs.ErrorInfo) {
 	user, err := s.repo.GetUserByEmail(ctx, email)
 	if err != nil {

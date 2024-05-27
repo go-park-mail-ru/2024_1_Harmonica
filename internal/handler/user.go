@@ -194,6 +194,7 @@ func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	userIdFromSession, ok := ctx.Value("user_id").(entity.UserID)
 	if !ok {
 		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(err, errs.ErrTypeConversion))
+		return
 	}
 	if uint64(userIdFromSession) != userIdFromSlug {
 		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrDiffUserId))
@@ -258,3 +259,15 @@ func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 //	}
 //	return userResponse
 //}
+
+func (h *APIHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
+	requestId := r.Context().Value("request_id").(string)
+	res, err := h.service.GetAllUsers(r.Context())
+	if err != nil {
+		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{
+			GeneralErr: err,
+			LocalErr:   errs.ErrDBInternal,
+		})
+	}
+	WriteDefaultResponse(w, h.logger, res)
+}

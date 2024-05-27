@@ -4,6 +4,7 @@ import (
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
 	"net/http"
+	"time"
 )
 
 func (h *APIHandler) SubscribeToUser(w http.ResponseWriter, r *http.Request) {
@@ -36,6 +37,7 @@ func (h *APIHandler) SubscribeToUser(w http.ResponseWriter, r *http.Request) {
 				Nickname:  user.Nickname,
 				AvatarURL: user.AvatarURL,
 			},
+			CreatedAt: time.Now(),
 		},
 	}
 	h.hub.broadcast <- notification

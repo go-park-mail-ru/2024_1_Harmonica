@@ -56,7 +56,7 @@ func (h *APIHandler) ServeWs(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(nil, errs.ErrWSConnectionUpgrade))
+		WriteErrorResponse(w, h.logger, requestId, MakeErrorInfo(err, errs.ErrWSConnectionUpgrade))
 		return
 	}
 
@@ -159,12 +159,14 @@ func configureMessageToSend(message *entity.WSMessage) (entity.WSMessageToSend, 
 		messageToSend.Payload = entity.WSSubscriptionNotificationPayload{
 			UserId:          receiverId,
 			TriggeredByUser: message.Payload.TriggeredByUser,
+			CreatedAt:       message.Payload.CreatedAt,
 		}
 	case entity.WSActionNotificationNewPin:
 		messageToSend.Payload = entity.WSNewPinNotificationPayload{
 			UserId:          receiverId,
 			TriggeredByUser: message.Payload.TriggeredByUser,
 			Pin:             message.Payload.Pin,
+			CreatedAt:       message.Payload.CreatedAt,
 		}
 	case entity.WSActionNotificationComment:
 		messageToSend.Payload = entity.WSCommentNotificationPayload{
@@ -172,6 +174,7 @@ func configureMessageToSend(message *entity.WSMessage) (entity.WSMessageToSend, 
 			TriggeredByUser: message.Payload.TriggeredByUser,
 			Comment:         message.Payload.Comment,
 			Pin:             message.Payload.Pin,
+			CreatedAt:       message.Payload.CreatedAt,
 		}
 	}
 	return messageToSend, senderId, receiverId

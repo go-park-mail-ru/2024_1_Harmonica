@@ -150,6 +150,7 @@ func (h *APIHandler) IsAuth(w http.ResponseWriter, r *http.Request) {
 			LocalErr:   errs.ErrGRPCWentWrong,
 			GeneralErr: err,
 		})
+		return
 	}
 	if !res.Valid {
 		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{LocalErr: errs.GetLocalErrorByCode[res.LocalError]})

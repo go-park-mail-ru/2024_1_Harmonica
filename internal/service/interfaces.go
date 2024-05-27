@@ -49,4 +49,6 @@ type IService interface {
 
 	AddComment(ctx context.Context, comment string, pinId entity.PinID, userId entity.UserID) (entity.PinPageResponse, errs.ErrorInfo)
 	GetComments(ctx context.Context, pinId entity.PinID) (entity.GetCommentsResponse, errs.ErrorInfo)
+
+	GetAllUsers(ctx context.Context) ([]entity.SearchUser, error)
 }
