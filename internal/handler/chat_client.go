@@ -159,12 +159,14 @@ func configureMessageToSend(message *entity.WSMessage) (entity.WSMessageToSend, 
 		messageToSend.Payload = entity.WSSubscriptionNotificationPayload{
 			UserId:          receiverId,
 			TriggeredByUser: message.Payload.TriggeredByUser,
+			NotificationId:  message.Payload.NotificationId,
 			CreatedAt:       message.Payload.CreatedAt,
 		}
 	case entity.WSActionNotificationNewPin:
 		messageToSend.Payload = entity.WSNewPinNotificationPayload{
 			UserId:          receiverId,
 			TriggeredByUser: message.Payload.TriggeredByUser,
+			NotificationId:  message.Payload.NotificationId,
 			Pin:             message.Payload.Pin,
 			CreatedAt:       message.Payload.CreatedAt,
 		}
@@ -172,6 +174,7 @@ func configureMessageToSend(message *entity.WSMessage) (entity.WSMessageToSend, 
 		messageToSend.Payload = entity.WSCommentNotificationPayload{
 			UserId:          receiverId,
 			TriggeredByUser: message.Payload.TriggeredByUser,
+			NotificationId:  message.Payload.NotificationId,
 			Comment:         message.Payload.Comment,
 			Pin:             message.Payload.Pin,
 			CreatedAt:       message.Payload.CreatedAt,

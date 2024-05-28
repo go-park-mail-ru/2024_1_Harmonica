@@ -28,18 +28,18 @@ func (s *RepositoryService) AddSubscriptionToUser(ctx context.Context,
 			}
 		}
 	}
-	n := entity.Notification{
-		Type:              entity.NotificationTypeSubscription,
-		UserId:            subscribeUserId,
-		TriggeredByUserId: userId,
-	}
-	err = s.repo.CreateNotification(ctx, n)
-	if err != nil {
-		return errs.ErrorInfo{
-			GeneralErr: err,
-			LocalErr:   errs.ErrDBInternal,
-		}
-	}
+	//n := entity.Notification{
+	//	Type:              entity.NotificationTypeSubscription,
+	//	UserId:            subscribeUserId,
+	//	TriggeredByUserId: userId,
+	//}
+	//_, err := s.repo.CreateNotification(ctx, n)
+	//if err != nil {
+	//	return errs.ErrorInfo{
+	//		GeneralErr: err,
+	//		LocalErr:   errs.ErrDBInternal,
+	//	}
+	//}
 	return emptyErrorInfo
 }
 

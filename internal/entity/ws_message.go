@@ -20,6 +20,7 @@ var WSActions = []WSAction{WSActionChatMessage, WSActionChatDraft, WSActionNotif
 type WSMessagePayload struct {
 	UserId          UserID                      `db:"user_id" json:"user_id"`
 	TriggeredByUser TriggeredByUser             `db:"triggered_by_user" json:"triggered_by_user"`
+	NotificationId  NotificationID              `db:"notification_id" json:"notification_id"`
 	Pin             PinNotificationResponse     `db:"pin" json:"pin"`
 	Comment         CommentNotificationResponse `db:"comment" json:"comment"`
 	Message         MessageNotificationResponse `db:"message" json:"message"`
@@ -34,12 +35,14 @@ type WSMessage struct {
 // структуры для отправки непосредственно в вебсокет-соединение
 
 type WSSubscriptionNotificationPayload struct {
+	NotificationId  NotificationID  `db:"notification_id" json:"notification_id"`
 	UserId          UserID          `db:"user_id" json:"user_id"`
 	TriggeredByUser TriggeredByUser `db:"triggered_by_user" json:"triggered_by_user"`
 	CreatedAt       time.Time       `db:"created_at" json:"created_at"`
 }
 
 type WSNewPinNotificationPayload struct {
+	NotificationId  NotificationID          `db:"notification_id" json:"notification_id"`
 	UserId          UserID                  `db:"user_id" json:"user_id"`
 	TriggeredByUser TriggeredByUser         `db:"triggered_by_user" json:"triggered_by_user"`
 	Pin             PinNotificationResponse `db:"pin" json:"pin"`
@@ -47,6 +50,7 @@ type WSNewPinNotificationPayload struct {
 }
 
 type WSCommentNotificationPayload struct {
+	NotificationId  NotificationID              `db:"notification_id" json:"notification_id"`
 	UserId          UserID                      `db:"user_id" json:"user_id"`
 	TriggeredByUser TriggeredByUser             `db:"triggered_by_user" json:"triggered_by_user"`
 	Comment         CommentNotificationResponse `db:"comment" json:"comment"`

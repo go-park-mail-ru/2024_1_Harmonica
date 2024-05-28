@@ -50,8 +50,11 @@ type IRepository interface {
 	SearchForPins(ctx context.Context, query string) ([]entity.SearchPin, error)
 	SearchForBoards(ctx context.Context, query string) ([]entity.SearchBoard, error)
 
-	CreateNotification(ctx context.Context, notification entity.Notification) error
+	CreateNotification(ctx context.Context, notification entity.Notification) (entity.NotificationID, error)
+	GetNotificationById(ctx context.Context, notificationId entity.NotificationID) (entity.Notification, error)
 	GetUnreadNotifications(ctx context.Context, userId entity.UserID) (entity.Notifications, error)
+	ReadNotification(ctx context.Context, notificationId entity.NotificationID) error
+	ReadAllNotifications(ctx context.Context, userId entity.UserID) error
 
 	AddComment(ctx context.Context, comment string, pinId entity.PinID, userId entity.UserID) (entity.CommentID, error)
 	GetComments(ctx context.Context, pinId entity.PinID) (entity.GetCommentsResponse, error)

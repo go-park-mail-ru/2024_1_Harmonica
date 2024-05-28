@@ -44,10 +44,12 @@ type IService interface {
 
 	Search(ctx context.Context, query string) (entity.SearchResult, errs.ErrorInfo)
 
-	CreateNotification(ctx context.Context, notification entity.Notification) errs.ErrorInfo
+	CreateNotification(ctx context.Context, n entity.Notification) (entity.NotificationID, errs.ErrorInfo)
 	GetUnreadNotifications(ctx context.Context, userId entity.UserID) (entity.Notifications, errs.ErrorInfo)
+	ReadNotification(ctx context.Context, notificationId entity.NotificationID, userId entity.UserID) errs.ErrorInfo
+	ReadAllNotifications(ctx context.Context, userId entity.UserID) errs.ErrorInfo
 
-	AddComment(ctx context.Context, comment string, pinId entity.PinID, userId entity.UserID) (entity.PinPageResponse, errs.ErrorInfo)
+	AddComment(ctx context.Context, comment string, pinId entity.PinID, userId entity.UserID) (entity.PinPageResponse, entity.CommentID, errs.ErrorInfo)
 	GetComments(ctx context.Context, pinId entity.PinID) (entity.GetCommentsResponse, errs.ErrorInfo)
 
 	GetAllUsers(ctx context.Context) (entity.SearchUsers, error)

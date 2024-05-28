@@ -21,6 +21,18 @@ func (h *APIHandler) SubscribeToUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// создание уведомления для того, на кого подписались
+	n := entity.Notification{
+		Type:              entity.NotificationTypeSubscription,
+		UserId:            subscribeUserId,
+		TriggeredByUserId: userId,
+	}
+	nId, errInfo := h.service.CreateNotification(r.Context(), n)
+	if errInfo != emptyErrorInfo {
+		WriteErrorResponse(w, h.logger, requestId, errInfo)
+		return
+	}
+
 	// инфа о юзере, который подписывается
 	user, errInfo := h.service.GetUserById(ctx, userId)
 	if errInfo != emptyErrorInfo {
@@ -37,7 +49,8 @@ func (h *APIHandler) SubscribeToUser(w http.ResponseWriter, r *http.Request) {
 				Nickname:  user.Nickname,
 				AvatarURL: user.AvatarURL,
 			},
-			CreatedAt: time.Now(),
+			NotificationId: nId,
+			CreatedAt:      time.Now(),
 		},
 	}
 	h.hub.broadcast <- notification

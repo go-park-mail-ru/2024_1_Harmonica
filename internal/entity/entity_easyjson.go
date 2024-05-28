@@ -36,6 +36,8 @@ func easyjson163c17a9DecodeHarmonicaInternalEntity(in *jlexer.Lexer, out *WSSubs
 			continue
 		}
 		switch key {
+		case "notification_id":
+			out.NotificationId = NotificationID(in.Uint64())
 		case "user_id":
 			out.UserId = UserID(in.Uint64())
 		case "triggered_by_user":
@@ -59,8 +61,13 @@ func easyjson163c17a9EncodeHarmonicaInternalEntity(out *jwriter.Writer, in WSSub
 	first := true
 	_ = first
 	{
-		const prefix string = ",\"user_id\":"
+		const prefix string = ",\"notification_id\":"
 		out.RawString(prefix[1:])
+		out.Uint64(uint64(in.NotificationId))
+	}
+	{
+		const prefix string = ",\"user_id\":"
+		out.RawString(prefix)
 		out.Uint64(uint64(in.UserId))
 	}
 	{
@@ -118,6 +125,8 @@ func easyjson163c17a9DecodeHarmonicaInternalEntity1(in *jlexer.Lexer, out *WSNew
 			continue
 		}
 		switch key {
+		case "notification_id":
+			out.NotificationId = NotificationID(in.Uint64())
 		case "user_id":
 			out.UserId = UserID(in.Uint64())
 		case "triggered_by_user":
@@ -143,8 +152,13 @@ func easyjson163c17a9EncodeHarmonicaInternalEntity1(out *jwriter.Writer, in WSNe
 	first := true
 	_ = first
 	{
-		const prefix string = ",\"user_id\":"
+		const prefix string = ",\"notification_id\":"
 		out.RawString(prefix[1:])
+		out.Uint64(uint64(in.NotificationId))
+	}
+	{
+		const prefix string = ",\"user_id\":"
+		out.RawString(prefix)
 		out.Uint64(uint64(in.UserId))
 	}
 	{
@@ -296,6 +310,8 @@ func easyjson163c17a9DecodeHarmonicaInternalEntity3(in *jlexer.Lexer, out *WSMes
 			out.UserId = UserID(in.Uint64())
 		case "triggered_by_user":
 			(out.TriggeredByUser).UnmarshalEasyJSON(in)
+		case "notification_id":
+			out.NotificationId = NotificationID(in.Uint64())
 		case "pin":
 			(out.Pin).UnmarshalEasyJSON(in)
 		case "comment":
@@ -329,6 +345,11 @@ func easyjson163c17a9EncodeHarmonicaInternalEntity3(out *jwriter.Writer, in WSMe
 		const prefix string = ",\"triggered_by_user\":"
 		out.RawString(prefix)
 		(in.TriggeredByUser).MarshalEasyJSON(out)
+	}
+	{
+		const prefix string = ",\"notification_id\":"
+		out.RawString(prefix)
+		out.Uint64(uint64(in.NotificationId))
 	}
 	{
 		const prefix string = ",\"pin\":"
@@ -468,6 +489,8 @@ func easyjson163c17a9DecodeHarmonicaInternalEntity5(in *jlexer.Lexer, out *WSCom
 			continue
 		}
 		switch key {
+		case "notification_id":
+			out.NotificationId = NotificationID(in.Uint64())
 		case "user_id":
 			out.UserId = UserID(in.Uint64())
 		case "triggered_by_user":
@@ -495,8 +518,13 @@ func easyjson163c17a9EncodeHarmonicaInternalEntity5(out *jwriter.Writer, in WSCo
 	first := true
 	_ = first
 	{
-		const prefix string = ",\"user_id\":"
+		const prefix string = ",\"notification_id\":"
 		out.RawString(prefix[1:])
+		out.Uint64(uint64(in.NotificationId))
+	}
+	{
+		const prefix string = ",\"user_id\":"
+		out.RawString(prefix)
 		out.Uint64(uint64(in.UserId))
 	}
 	{
@@ -3407,7 +3435,7 @@ func easyjson163c17a9DecodeHarmonicaInternalEntity35(in *jlexer.Lexer, out *Noti
 		}
 		switch key {
 		case "notification_id":
-			out.NotificationId = int64(in.Int64())
+			out.NotificationId = NotificationID(in.Uint64())
 		case "user_id":
 			out.UserId = UserID(in.Uint64())
 		case "type":
@@ -3441,7 +3469,7 @@ func easyjson163c17a9EncodeHarmonicaInternalEntity35(out *jwriter.Writer, in Not
 	{
 		const prefix string = ",\"notification_id\":"
 		out.RawString(prefix[1:])
-		out.Int64(int64(in.NotificationId))
+		out.Uint64(uint64(in.NotificationId))
 	}
 	{
 		const prefix string = ",\"user_id\":"
@@ -3524,7 +3552,7 @@ func easyjson163c17a9DecodeHarmonicaInternalEntity36(in *jlexer.Lexer, out *Noti
 		}
 		switch key {
 		case "notification_id":
-			out.NotificationId = int64(in.Int64())
+			out.NotificationId = NotificationID(in.Uint64())
 		case "user_id":
 			out.UserId = UserID(in.Uint64())
 		case "type":
@@ -3558,7 +3586,7 @@ func easyjson163c17a9EncodeHarmonicaInternalEntity36(out *jwriter.Writer, in Not
 	{
 		const prefix string = ",\"notification_id\":"
 		out.RawString(prefix[1:])
-		out.Int64(int64(in.NotificationId))
+		out.Uint64(uint64(in.NotificationId))
 	}
 	{
 		const prefix string = ",\"user_id\":"
@@ -4737,7 +4765,7 @@ func easyjson163c17a9DecodeHarmonicaInternalEntity49(in *jlexer.Lexer, out *Comm
 		}
 		switch key {
 		case "comment_id":
-			out.CommentId = int64(in.Int64())
+			out.CommentId = CommentID(in.Uint64())
 		case "text":
 			out.Text = string(in.String())
 		default:
@@ -4757,7 +4785,7 @@ func easyjson163c17a9EncodeHarmonicaInternalEntity49(out *jwriter.Writer, in Com
 	{
 		const prefix string = ",\"comment_id\":"
 		out.RawString(prefix[1:])
-		out.Int64(int64(in.CommentId))
+		out.Uint64(uint64(in.CommentId))
 	}
 	{
 		const prefix string = ",\"text\":"

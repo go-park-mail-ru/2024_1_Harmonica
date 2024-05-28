@@ -86,18 +86,18 @@ func (s *RepositoryService) CreatePin(ctx context.Context, pin entity.Pin) (enti
 			LocalErr:   errs.ErrDBInternal,
 		}
 	}
-	n := entity.Notification{
-		Type:              entity.NotificationTypeNewPin,
-		TriggeredByUserId: pin.AuthorId,
-		PinId:             res.PinId,
-	}
-	err := s.repo.CreateNotification(ctx, n)
-	if err != nil {
-		return entity.PinPageResponse{}, errs.ErrorInfo{
-			GeneralErr: errFind,
-			LocalErr:   errs.ErrDBInternal,
-		}
-	}
+	//n := entity.Notification{
+	//	Type:              entity.NotificationTypeNewPin,
+	//	TriggeredByUserId: pin.AuthorId,
+	//	PinId:             res.PinId,
+	//}
+	//_, err := s.repo.CreateNotification(ctx, n)
+	//if err != nil {
+	//	return entity.PinPageResponse{}, errs.ErrorInfo{
+	//		GeneralErr: err,
+	//		LocalErr:   errs.ErrDBInternal,
+	//	}
+	//}
 	return res, emptyErrorInfo
 }
 

@@ -25,7 +25,21 @@ func (h *APIHandler) AddComment(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	pin, errInfo := h.service.AddComment(r.Context(), comment.Value, entity.PinID(pinId), userId)
+	pin, commentId, errInfo := h.service.AddComment(r.Context(), comment.Value, entity.PinID(pinId), userId)
+	if errInfo != emptyErrorInfo {
+		WriteErrorResponse(w, h.logger, requestId, errInfo)
+		return
+	}
+
+	// создание уведомления о новом комментарии для автора пина
+	n := entity.Notification{
+		Type:              entity.NotificationTypeComment,
+		UserId:            pin.PinAuthor.UserId,
+		TriggeredByUserId: userId,
+		CommentId:         commentId,
+		PinId:             entity.PinID(pinId),
+	}
+	nId, errInfo := h.service.CreateNotification(r.Context(), n)
 	if errInfo != emptyErrorInfo {
 		WriteErrorResponse(w, h.logger, requestId, errInfo)
 		return
@@ -47,6 +61,7 @@ func (h *APIHandler) AddComment(w http.ResponseWriter, r *http.Request) {
 				Nickname:  user.Nickname,
 				AvatarURL: user.AvatarURL,
 			},
+			NotificationId: nId,
 			Comment: entity.CommentNotificationResponse{
 				Text: comment.Value,
 			},
