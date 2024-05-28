@@ -220,7 +220,9 @@ func configureSubscriptionRoutes(logger *zap.Logger, h *handler.APIHandler, mux 
 
 func configureNotificationRoutes(logger *zap.Logger, h *handler.APIHandler, mux *http.ServeMux) {
 	authRoutes := map[string]http.HandlerFunc{
-		"GET /api/v1/notifications": h.ReadNotifications,
+		"GET /api/v1/notifications":                         h.GetUnreadNotifications,
+		"POST /api/v1/notifications/read/{notification_id}": h.ReadNotification,
+		"POST /api/v1/notifications/read/all":               h.ReadAllNotifications,
 	}
 	for pattern, f := range authRoutes {
 		mux.HandleFunc(pattern, middleware.AuthRequired(logger, h.AuthService, f))

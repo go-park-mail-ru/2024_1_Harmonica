@@ -1,14 +1,15 @@
 package test_repository
 
-/*
 import (
 	"database/sql/driver"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"harmonica/internal/entity"
 	"harmonica/internal/entity/errs"
+	"harmonica/internal/microservices/image/proto"
 	"harmonica/internal/repository"
 	"testing"
+	"time"
 )
 
 func TestRepository_CreateMessage(t *testing.T) {
@@ -57,12 +58,17 @@ func TestRepository_CreateMessage(t *testing.T) {
 }
 
 func TestRepository_GetMessages(t *testing.T) {
-	db, mock, ctrl, _, repo := SetupDBMock(t)
+	db, mock, ctrl, imageClient, repo := SetupDBMock(t)
 	defer ctrl.Finish()
 	defer db.Close()
 
 	firstUserID := entity.UserID(1)
 	secondUserID := entity.UserID(2)
+	dialogUser := entity.User{
+		UserID:    firstUserID,
+		Nickname:  "testuser",
+		AvatarURL: "http://example.com/avatar.png",
+	}
 
 	tests := []struct {
 		name           string
@@ -73,27 +79,53 @@ func TestRepository_GetMessages(t *testing.T) {
 		{
 			name: "OK test",
 			setupMocks: func() {
+				imageClient.EXPECT().GetImageBounds(CtxWithRequestId, &proto.GetImageBoundsRequest{Url: dialogUser.AvatarURL}).
+					Return(&proto.GetImageBoundsResponse{}, nil)
+				mock.ExpectQuery(repository.QueryGetUserById).
+					WithArgs(firstUserID).
+					WillReturnRows(sqlmock.NewRows([]string{"user_id", "nickname", "avatar_url"}).
+						AddRow(dialogUser.UserID, dialogUser.Nickname, dialogUser.AvatarURL))
 				mock.ExpectQuery(repository.QueryGetMessages).
 					WithArgs(firstUserID, secondUserID).
 					WillReturnRows(sqlmock.NewRows([]string{"sender_id", "receiver_id", "text"}).
 						AddRow(1, 2, "Hello!"))
 			},
 			expectedResult: entity.Messages{
+				User: entity.UserFromChat{
+					UserID:    dialogUser.UserID,
+					Nickname:  dialogUser.Nickname,
+					AvatarURL: dialogUser.AvatarURL,
+				},
 				Messages: []entity.MessageResponse{
 					{
-						SenderId:   1,
-						ReceiverId: 2,
-						Text:       "Hello!",
+						SenderId: 1,
+						Text:     "Hello!",
 					},
 				},
 			},
 			expectedErr: nil,
 		},
 		{
-			name: "Error test",
+			name: "Error test 1",
 			setupMocks: func() {
+				imageClient.EXPECT().GetImageBounds(CtxWithRequestId, &proto.GetImageBoundsRequest{Url: dialogUser.AvatarURL}).
+					Return(&proto.GetImageBoundsResponse{}, nil)
+				mock.ExpectQuery(repository.QueryGetUserById).
+					WithArgs(firstUserID).
+					WillReturnRows(sqlmock.NewRows([]string{"user_id", "nickname", "avatar_url"}).
+						AddRow(dialogUser.UserID, dialogUser.Nickname, dialogUser.AvatarURL))
 				mock.ExpectQuery(repository.QueryGetMessages).
 					WithArgs(firstUserID, secondUserID).
+					WillReturnError(errs.ErrDBInternal)
+			},
+			expectedResult: entity.Messages{},
+			expectedErr:    errs.ErrDBInternal,
+		},
+		{
+			name: "Error test 2",
+			setupMocks: func() {
+				mock.ExpectQuery(repository.QueryGetUserById).
+					WithArgs(firstUserID).
 					WillReturnError(errs.ErrDBInternal)
 			},
 			expectedResult: entity.Messages{},
@@ -115,6 +147,7 @@ func TestRepository_GetUserChats(t *testing.T) {
 	db, mock, ctrl, _, repo := SetupDBMock(t)
 	defer ctrl.Finish()
 	defer db.Close()
+	testTime := time.Now()
 
 	tests := []struct {
 		name           string
@@ -126,12 +159,18 @@ func TestRepository_GetUserChats(t *testing.T) {
 			name: "OK test",
 			setupMocks: func() {
 				mock.ExpectQuery(repository.QueryGetUserChats).
-					WillReturnRows(sqlmock.NewRows([]string{"user_id", "nickname"}).
-						AddRow(1, "user"))
+					WithArgs(1).
+					WillReturnRows(sqlmock.NewRows([]string{"user_user_id", "user_nickname", "user_avatar_url",
+						"chat_last_message_sender_id", "chat_last_message_text", "chat_last_message_message_read",
+						"chat_last_message_sent_at"}).
+						AddRow(1, "user", "", 0, "", false, testTime))
 			},
 			expectedResult: entity.UserChats{
-				OtherUserChats: []entity.UserChat{
-					{UserID: 1, Nickname: "user"},
+				Chats: []entity.UserChat{
+					{
+						User:        entity.UserFromChat{UserID: 1, Nickname: "user"},
+						LastMessage: entity.MessageResponse{SentAt: testTime},
+					},
 				},
 			},
 			expectedErr: nil,
@@ -156,4 +195,3 @@ func TestRepository_GetUserChats(t *testing.T) {
 		})
 	}
 }
-*/

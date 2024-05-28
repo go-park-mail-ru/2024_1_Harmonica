@@ -16,7 +16,7 @@ var NotificationTypes = []NotificationType{
 }
 
 type Notification struct {
-	NotificationId    int64            `db:"notification_id" json:"notification_id"`
+	NotificationId    NotificationID   `db:"notification_id" json:"notification_id"`
 	UserId            UserID           `db:"user_id" json:"user_id"`
 	Type              NotificationType `db:"type" json:"type"`
 	TriggeredByUserId UserID           `db:"triggered_by_user_id" json:"triggered_by_user_id"`
@@ -40,8 +40,8 @@ type PinNotificationResponse struct {
 }
 
 type CommentNotificationResponse struct {
-	CommentId int64  `db:"comment_id" json:"comment_id"`
-	Text      string `db:"text" json:"text"`
+	CommentId CommentID `db:"comment_id" json:"comment_id"`
+	Text      string    `db:"text" json:"text"`
 }
 
 type MessageNotificationResponse struct {
@@ -49,7 +49,7 @@ type MessageNotificationResponse struct {
 }
 
 type NotificationResponse struct {
-	NotificationId  int64                       `db:"notification_id" json:"notification_id"`
+	NotificationId  NotificationID              `db:"notification_id" json:"notification_id"`
 	UserId          UserID                      `db:"user_id" json:"user_id"`
 	Type            NotificationType            `db:"type" json:"type"`
 	TriggeredByUser TriggeredByUser             `db:"triggered_by_user" json:"triggered_by_user"`
