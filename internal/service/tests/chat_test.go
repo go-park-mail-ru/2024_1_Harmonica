@@ -1,6 +1,5 @@
 package test_service
 
-/*
 import (
 	"context"
 	"github.com/golang/mock/gomock"
@@ -23,12 +22,14 @@ func TestService_CreateMessage(t *testing.T) {
 	}
 	type ExpectedMockArgs struct {
 		Message entity.Message
+		Draft   entity.Draft
 	}
 	type ExpectedMockReturn struct {
 		Error error
 	}
 	mockBehaviour := func(repo *mock_repository.MockIRepository, ctx context.Context, mockArgs ExpectedMockArgs, mockReturn ExpectedMockReturn) {
 		repo.EXPECT().CreateMessage(ctx, mockArgs.Message).Return(mockReturn.Error)
+		repo.EXPECT().UpdateDraft(ctx, mockArgs.Draft).Return(mockReturn.Error).MaxTimes(1)
 	}
 	testTable := []struct {
 		name               string
@@ -45,11 +46,17 @@ func TestService_CreateMessage(t *testing.T) {
 				Text:       "Hello, World!",
 			}},
 			expectedReturn: ExpectedReturn{},
-			expectedMockArgs: ExpectedMockArgs{Message: entity.Message{
-				SenderId:   1,
-				ReceiverId: 2,
-				Text:       "Hello, World!",
-			}},
+			expectedMockArgs: ExpectedMockArgs{
+				Message: entity.Message{
+					SenderId:   1,
+					ReceiverId: 2,
+					Text:       "Hello, World!",
+				},
+				Draft: entity.Draft{
+					SenderId:   1,
+					ReceiverId: 2,
+				},
+			},
 			expectedMockReturn: ExpectedMockReturn{},
 		},
 		{
@@ -120,10 +127,13 @@ func TestService_GetMessages(t *testing.T) {
 	}
 	type ExpectedMockReturn struct {
 		Messages entity.Messages
-		Error    error
+		Draft    entity.DraftResponse
+		Error1   error
+		Error2   error
 	}
 	mockBehaviour := func(repo *mock_repository.MockIRepository, ctx context.Context, mockArgs ExpectedMockArgs, mockReturn ExpectedMockReturn) {
-		repo.EXPECT().GetMessages(ctx, mockArgs.UserId1, mockArgs.UserId2).Return(mockReturn.Messages, mockReturn.Error)
+		repo.EXPECT().GetMessages(ctx, mockArgs.UserId1, mockArgs.UserId2).Return(mockReturn.Messages, mockReturn.Error1)
+		repo.EXPECT().GetDraft(ctx, mockArgs.UserId1, mockArgs.UserId2).Return(mockReturn.Draft, mockReturn.Error2).MaxTimes(1)
 	}
 	testTable := []struct {
 		name               string
@@ -153,7 +163,20 @@ func TestService_GetMessages(t *testing.T) {
 			expectedMockArgs: ExpectedMockArgs{UserId1: 1, UserId2: 2},
 			expectedMockReturn: ExpectedMockReturn{
 				Messages: entity.Messages{},
-				Error:    errs.ErrDBInternal,
+				Error1:   errs.ErrDBInternal,
+			},
+		},
+		{
+			name: "Error test case 2",
+			args: Args{UserId1: 1, UserId2: 2},
+			expectedReturn: ExpectedReturn{
+				Messages:  entity.Messages{},
+				ErrorInfo: errs.ErrorInfo{GeneralErr: errs.ErrDBInternal, LocalErr: errs.ErrDBInternal},
+			},
+			expectedMockArgs: ExpectedMockArgs{UserId1: 1, UserId2: 2},
+			expectedMockReturn: ExpectedMockReturn{
+				Messages: entity.Messages{},
+				Error2:   errs.ErrDBInternal,
 			},
 		},
 	}
@@ -201,11 +224,11 @@ func TestService_GetUserChats(t *testing.T) {
 			name: "OK test case 1",
 			args: Args{UserId: 1},
 			expectedReturn: ExpectedReturn{
-				UserChats: entity.UserChats{SubscriptionsUserChats: []entity.UserChat{}, OtherUserChats: []entity.UserChat{}},
+				UserChats: entity.UserChats{Chats: []entity.UserChat{}},
 			},
 			expectedMockArgs: ExpectedMockArgs{UserId: 1},
 			expectedMockReturn: ExpectedMockReturn{
-				UserChats: entity.UserChats{SubscriptionsUserChats: []entity.UserChat{}, OtherUserChats: []entity.UserChat{}},
+				UserChats: entity.UserChats{Chats: []entity.UserChat{}},
 			},
 		},
 		{
@@ -236,4 +259,3 @@ func TestService_GetUserChats(t *testing.T) {
 		})
 	}
 }
-*/

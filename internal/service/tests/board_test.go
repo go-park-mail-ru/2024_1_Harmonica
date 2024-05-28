@@ -1333,6 +1333,67 @@ func TestDeletePinFromBoard(t *testing.T) {
 	}
 }
 
+func TestService_GetUserBoardsWithoutPin(t *testing.T) {
+	type ExpectedReturn struct {
+		Boards    entity.UserBoardsWithoutPin
+		ErrorInfo errs.ErrorInfo
+	}
+	type ExpectedMockReturn struct {
+		Boards entity.UserBoardsWithoutPin
+		Error  error
+	}
+	userId := entity.UserID(2)
+	pinId := entity.PinID(3)
+	mockBehaviour := func(repo *mock_repository.MockIRepository, ctx context.Context, mockReturn ExpectedMockReturn) {
+		repo.EXPECT().GetUserBoardsWithoutPin(ctx, pinId, userId).Return(mockReturn.Boards, mockReturn.Error)
+	}
+	testTable := []struct {
+		name               string
+		expectedReturn     ExpectedReturn
+		expectedMockReturn ExpectedMockReturn
+	}{
+		{
+			name: "OK test case 1",
+			expectedReturn: ExpectedReturn{
+				Boards: entity.UserBoardsWithoutPin{
+					Boards: []entity.UserBoardWithoutPin{
+						{BoardID: 4},
+					},
+				},
+			},
+			expectedMockReturn: ExpectedMockReturn{
+				Boards: entity.UserBoardsWithoutPin{
+					Boards: []entity.UserBoardWithoutPin{
+						{BoardID: 4},
+					},
+				},
+			},
+		},
+		{
+			name: "Error test case 1",
+			expectedReturn: ExpectedReturn{
+				ErrorInfo: errs.ErrorInfo{GeneralErr: errs.ErrDBInternal, LocalErr: errs.ErrDBInternal},
+			},
+			expectedMockReturn: ExpectedMockReturn{
+				Error: errs.ErrDBInternal,
+			},
+		},
+	}
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			repo := mock_repository.NewMockIRepository(ctrl)
+			likeClient := mock_proto.NewMockLikeClient(ctrl)
+			mockBehaviour(repo, context.Background(), testCase.expectedMockReturn)
+			s := service.NewService(repo, likeClient)
+			boards, errInfo := s.GetUserBoardsWithoutPin(context.Background(), pinId, userId)
+			assert.Equal(t, testCase.expectedReturn.Boards, boards)
+			assert.Equal(t, testCase.expectedReturn.ErrorInfo, errInfo)
+		})
+	}
+}
+
 //func TestAuthorContains(t *testing.T) {
 //	authors := []entity.BoardAuthor{
 //		{UserId: entity.UserID(1)},

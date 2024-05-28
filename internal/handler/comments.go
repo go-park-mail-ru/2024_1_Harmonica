@@ -8,7 +8,10 @@ import (
 )
 
 func (h *APIHandler) AddComment(w http.ResponseWriter, r *http.Request) {
-	requestId := r.Context().Value("request_id").(string)
+	requestId, ok := r.Context().Value("request_id").(string)
+	if !ok {
+		requestId = "0"
+	}
 	userId := r.Context().Value("user_id").(entity.UserID)
 	pinId, err := ReadInt64Slug(r, "pin_id")
 	if err != nil {
@@ -78,7 +81,10 @@ func (h *APIHandler) AddComment(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *APIHandler) GetComments(w http.ResponseWriter, r *http.Request) {
-	requestId := r.Context().Value("request_id").(string)
+	requestId, ok := r.Context().Value("request_id").(string)
+	if !ok {
+		requestId = "0"
+	}
 	pinId, err := ReadInt64Slug(r, "pin_id")
 	if err != nil {
 		WriteErrorResponse(w, h.logger, requestId, errs.ErrorInfo{

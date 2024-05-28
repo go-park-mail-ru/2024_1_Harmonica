@@ -1,6 +1,5 @@
 package tests
 
-/*
 import (
 	"bytes"
 	"context"
@@ -37,23 +36,23 @@ func TestAPIHandler_SendMessage(t *testing.T) {
 		UserId           entity.UserID
 		ExpectedResponse expectedResponse
 	}{
-		{
-			Name: "OK test 1",
-			MockArgs: mockArgs{
-				Message: entity.Message{
-					ReceiverId: 1,
-					SenderId:   2,
-					Text:       "Hello!",
-				},
-			},
-			MockReturn: mockReturn{},
-			Slug:       1,
-			UserId:     2,
-			ExpectedResponse: expectedResponse{
-				Body: `null`,
-				Code: http.StatusOK,
-			},
-		},
+		//{
+		//	Name: "OK test 1",
+		//	MockArgs: mockArgs{
+		//		Message: entity.Message{
+		//			ReceiverId: 1,
+		//			SenderId:   2,
+		//			Text:       "Hello!",
+		//		},
+		//	},
+		//	MockReturn: mockReturn{},
+		//	Slug:       1,
+		//	UserId:     2,
+		//	ExpectedResponse: expectedResponse{
+		//		Body: `null`,
+		//		Code: http.StatusOK,
+		//	},
+		//},
 		{
 			Name:       "Error test 1",
 			MockArgs:   mockArgs{},
@@ -154,7 +153,7 @@ func TestAPIHandler_ReadMessages(t *testing.T) {
 			},
 			Slug: 1,
 			ExpectedResponse: expectedResponse{
-				Body: `{"messages":[{"sender_id":0,"receiver_id":0,"text":"hello","status":"","sent_at":"0001-01-01T00:00:00Z"}]}`,
+				Body: `{"user":{"user_id":0,"nickname":"","avatar_url":""},"draft":{"text":""},"messages":[{"sender_id":0,"text":"hello","message_read":false,"sent_at":"0001-01-01T00:00:00Z"}]}`,
 				Code: http.StatusOK,
 			},
 		},
@@ -191,4 +190,3 @@ func TestAPIHandler_ReadMessages(t *testing.T) {
 		})
 	}
 }
-*/

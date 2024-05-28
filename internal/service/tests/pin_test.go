@@ -309,79 +309,78 @@ func TestService_GetPinById(t *testing.T) {
 	}
 }
 
-/*
-	func TestService_CreatePin(t *testing.T) {
-		type ExpectedReturn struct {
-			Pin       entity.PinPageResponse
-			ErrorInfo errs.ErrorInfo
-		}
-		type ExpectedMockReturn struct {
-			Pin    entity.PinPageResponse
-			Error1 error
-			Error2 error
-		}
-		mockBehaviour := func(repo *mock_repository.MockIRepository, ctx context.Context,
-			mockArgs entity.Pin, mockReturn ExpectedMockReturn) {
-			repo.EXPECT().CreatePin(ctx, mockArgs).Return(mockReturn.Pin.PinId, mockReturn.Error1)
-			repo.EXPECT().GetPinById(ctx, mockArgs.PinId).Return(mockReturn.Pin, mockReturn.Error2).MaxTimes(1)
-		}
-		testTable := []struct {
-			name               string
-			args               entity.Pin
-			expectedReturn     ExpectedReturn
-			expectedMockArgs   entity.Pin
-			expectedMockReturn ExpectedMockReturn
-		}{
-			{
-				name: "OK test case 1",
-				args: entity.Pin{PinId: 1},
-				expectedReturn: ExpectedReturn{
-					Pin: entity.PinPageResponse{PinId: 1},
-				},
-				expectedMockArgs: entity.Pin{PinId: 1},
-				expectedMockReturn: ExpectedMockReturn{
-					Pin: entity.PinPageResponse{PinId: 1},
-				},
-			},
-			{
-				name: "Error test case 1",
-				args: entity.Pin{PinId: 1},
-				expectedReturn: ExpectedReturn{
-					ErrorInfo: errs.ErrorInfo{GeneralErr: errs.ErrDBInternal, LocalErr: errs.ErrDBInternal},
-				},
-				expectedMockArgs: entity.Pin{PinId: 1},
-				expectedMockReturn: ExpectedMockReturn{
-					Error1: errs.ErrDBInternal,
-				},
-			},
-			{
-				name: "Error test case 2",
-				args: entity.Pin{PinId: 1},
-				expectedReturn: ExpectedReturn{
-					ErrorInfo: errs.ErrorInfo{GeneralErr: errs.ErrDBInternal, LocalErr: errs.ErrDBInternal},
-				},
-				expectedMockArgs: entity.Pin{PinId: 1},
-				expectedMockReturn: ExpectedMockReturn{
-					Pin:    entity.PinPageResponse{PinId: 1},
-					Error2: errs.ErrDBInternal,
-				},
-			},
-		}
-		for _, testCase := range testTable {
-			t.Run(testCase.name, func(t *testing.T) {
-				ctrl := gomock.NewController(t)
-				defer ctrl.Finish()
-				repo := mock_repository.NewMockIRepository(ctrl)
-				likeClient := mock_proto.NewMockLikeClient(ctrl)
-				mockBehaviour(repo, context.Background(), testCase.expectedMockArgs, testCase.expectedMockReturn)
-				s := service.NewService(repo, likeClient)
-				pin, errInfo := s.CreatePin(context.Background(), testCase.args)
-				assert.Equal(t, testCase.expectedReturn.Pin, pin)
-				assert.Equal(t, testCase.expectedReturn.ErrorInfo, errInfo)
-			})
-		}
+func TestService_CreatePin(t *testing.T) {
+	type ExpectedReturn struct {
+		Pin       entity.PinPageResponse
+		ErrorInfo errs.ErrorInfo
 	}
-*/
+	type ExpectedMockReturn struct {
+		Pin    entity.PinPageResponse
+		Error1 error
+		Error2 error
+	}
+	mockBehaviour := func(repo *mock_repository.MockIRepository, ctx context.Context,
+		mockArgs entity.Pin, mockReturn ExpectedMockReturn) {
+		repo.EXPECT().CreatePin(ctx, mockArgs).Return(mockReturn.Pin.PinId, mockReturn.Error1)
+		repo.EXPECT().GetPinById(ctx, mockArgs.PinId).Return(mockReturn.Pin, mockReturn.Error2).MaxTimes(1)
+	}
+	testTable := []struct {
+		name               string
+		args               entity.Pin
+		expectedReturn     ExpectedReturn
+		expectedMockArgs   entity.Pin
+		expectedMockReturn ExpectedMockReturn
+	}{
+		{
+			name: "OK test case 1",
+			args: entity.Pin{PinId: 1},
+			expectedReturn: ExpectedReturn{
+				Pin: entity.PinPageResponse{PinId: 1},
+			},
+			expectedMockArgs: entity.Pin{PinId: 1},
+			expectedMockReturn: ExpectedMockReturn{
+				Pin: entity.PinPageResponse{PinId: 1},
+			},
+		},
+		{
+			name: "Error test case 1",
+			args: entity.Pin{PinId: 1},
+			expectedReturn: ExpectedReturn{
+				ErrorInfo: errs.ErrorInfo{GeneralErr: errs.ErrDBInternal, LocalErr: errs.ErrDBInternal},
+			},
+			expectedMockArgs: entity.Pin{PinId: 1},
+			expectedMockReturn: ExpectedMockReturn{
+				Error1: errs.ErrDBInternal,
+			},
+		},
+		{
+			name: "Error test case 2",
+			args: entity.Pin{PinId: 1},
+			expectedReturn: ExpectedReturn{
+				ErrorInfo: errs.ErrorInfo{GeneralErr: errs.ErrDBInternal, LocalErr: errs.ErrDBInternal},
+			},
+			expectedMockArgs: entity.Pin{PinId: 1},
+			expectedMockReturn: ExpectedMockReturn{
+				Pin:    entity.PinPageResponse{PinId: 1},
+				Error2: errs.ErrDBInternal,
+			},
+		},
+	}
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			repo := mock_repository.NewMockIRepository(ctrl)
+			likeClient := mock_proto.NewMockLikeClient(ctrl)
+			mockBehaviour(repo, context.Background(), testCase.expectedMockArgs, testCase.expectedMockReturn)
+			s := service.NewService(repo, likeClient)
+			pin, errInfo := s.CreatePin(context.Background(), testCase.args)
+			assert.Equal(t, testCase.expectedReturn.Pin, pin)
+			assert.Equal(t, testCase.expectedReturn.ErrorInfo, errInfo)
+		})
+	}
+}
+
 func TestService_UpdatePin(t *testing.T) {
 	type ExpectedReturn struct {
 		Pin       entity.PinPageResponse
