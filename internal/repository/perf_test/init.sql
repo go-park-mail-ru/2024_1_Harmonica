@@ -84,14 +84,14 @@ CREATE TYPE MESSAGE_STATUS AS ENUM('read', 'unread');
 
 DROP TABLE IF EXISTS public.message;
 CREATE TABLE public.message (
-                                message_id bigint NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-                                sender_id bigint NOT NULL,
-                                receiver_id bigint NOT NULL,
-                                text TEXT NOT NULL,
-                                status MESSAGE_STATUS NOT NULL DEFAULT 'unread',
-                                sent_at timestamptz NULL DEFAULT CURRENT_TIMESTAMP,
-                                FOREIGN KEY(sender_id) REFERENCES public.user(user_id) ON DELETE CASCADE,
-                                FOREIGN KEY(receiver_id) REFERENCES public.user(user_id) ON DELETE CASCADE
+    message_id bigint NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    sender_id bigint NOT NULL,
+    receiver_id bigint NOT NULL,
+    text TEXT NOT NULL,
+    status MESSAGE_STATUS NOT NULL DEFAULT 'unread',
+    sent_at timestamptz NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(sender_id) REFERENCES public.user(user_id) ON DELETE CASCADE,
+    FOREIGN KEY(receiver_id) REFERENCES public.user(user_id) ON DELETE CASCADE
 );
 
 DROP TABLE IF EXISTS public.draft;
