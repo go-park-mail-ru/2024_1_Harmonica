@@ -60,6 +60,7 @@ chmod +x ./post_wrk_test.sh
 Повторим действия, описанные выше, с файлами [get_wrk_test.sh](https://github.com/go-park-mail-ru/2024_1_Harmonica/blob/har-148-add-dbms2/internal/repository/perf_test/get_wrk_test.sh) и [get_wrk_test.lua](https://github.com/go-park-mail-ru/2024_1_Harmonica/blob/har-148-add-dbms2/internal/repository/perf_test/get_wrk_test.lua) соответственно.
 
 Полученный отчет:
+
 <img src="./get_result.jpg" alt="get result" />
 
 ## Улучшения 
