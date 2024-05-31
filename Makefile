@@ -3,9 +3,6 @@ run:
 	go run ./cmd/like/main.go & \
 	go run ./cmd/auth/main.go & \
 	go run ./cmd/main.go &
-
-addUser:
-	go run cmd/addUser/main.go -e "email@email.ru" -n "nickanme123" -p "Passw0rd"
 	
 stop:
 	for port in ':8002', ':8003', ':8004', ':8080' ; do \
