@@ -22,6 +22,8 @@ func NewConnector(conf *config.Config, imageClient image.ImageClient) (*Connecto
 	if err != nil {
 		return &Connector{}, err
 	}
+	db.DB.SetMaxOpenConns(20)
+	db.DB.SetMaxIdleConns(5)
 	return &Connector{db: db, s3: imageClient}, nil
 }
 

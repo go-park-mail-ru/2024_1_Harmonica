@@ -1,0 +1,28 @@
+CREATE ROLE client WITH PASSWORD 'cola_password';
+
+GRANT SELECT, UPDATE, DELETE, INSERT ON TABLE public.board TO client;
+
+GRANT SELECT, UPDATE, DELETE, INSERT ON TABLE public.board_author TO client;
+
+GRANT SELECT, UPDATE, DELETE, INSERT ON TABLE public.board_pin TO client;
+
+GRANT SELECT, UPDATE, DELETE, INSERT ON TABLE public.comment TO client;
+
+GRANT SELECT, UPDATE, DELETE, INSERT ON TABLE public.draft TO client;
+
+GRANT SELECT, UPDATE, DELETE, INSERT ON TABLE public."like" TO client;
+
+GRANT SELECT, UPDATE, DELETE, INSERT ON TABLE public.message TO client;
+
+GRANT SELECT, UPDATE, DELETE, INSERT ON TABLE public.notification TO client;
+
+GRANT SELECT, UPDATE, DELETE, INSERT ON TABLE public.pin TO client;
+
+GRANT SELECT, UPDATE, DELETE, INSERT ON TABLE public.rating TO client;
+
+GRANT SELECT, UPDATE, DELETE, INSERT ON TABLE public.subscribe_on_board TO client;
+
+GRANT SELECT, UPDATE, DELETE, INSERT ON TABLE public.subscribe_on_person TO client;
+
+GRANT SELECT, UPDATE, DELETE, INSERT ON TABLE public."user" TO client;
+

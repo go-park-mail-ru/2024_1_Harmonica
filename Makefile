@@ -3,7 +3,7 @@ run:
 	go run ./cmd/like/main.go & \
 	go run ./cmd/auth/main.go & \
 	go run ./cmd/main.go &
-
+	
 stop:
 	for port in ':8002', ':8003', ':8004', ':8080' ; do \
     	for pid in `lsof -i $$port | awk '{print $$2}'`; do \
