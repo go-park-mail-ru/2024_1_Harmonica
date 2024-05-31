@@ -1,7 +1,7 @@
 # ДЗ3
 
 ## Сущность
-В качестве "основной сущности" нашего приложения мы выбрали пины. В рамках этого тестирования мы загружаем картинку и заполняем данными поля заголовка и описания пина.
+В качестве "основной сущности" нашего приложения мы выбрали пины. В рамках тестирования мы загружаем картинку и заполняем данными поля заголовка и описания пина.
 
 ## Подготовка 
 Для проведения нагрузочного тестирования был выбран инструмент [wrk](https://github.com/wg/wrk).
@@ -11,7 +11,7 @@ brew install wrk
 ```
 
 ### Тестирование POST API Endpoint'а
-Запускается с помощью bash-скрипта `post_wrk_test.sh`, который выполняет следующие действия:
+Запускается с помощью bash-скрипта ([post_wrk_test.sh](https://github.com/go-park-mail-ru/2024_1_Harmonica/blob/har-148-add-dbms2/internal/repository/perf_test/post_wrk_test.sh)), который выполняет следующие действия:
  - получает csrf-токен
  - подставляет csrf-токен в запрос на авторизацию, производит ее и  получает session-токен
  - запускает тестирование
@@ -24,19 +24,19 @@ wrk -t6 -c6 -d150m https://harmoniums.ru \
     -s ./post_wrk_test.lua
 ```
 Параметры тестирования: 6 потоков, 6 HTTP-соединений, длительность - 150 минут. 
-Данные запроса формируются Lua-скриптом `post_wrk_test.lua`, который включает в тело запроса изображение и данные о пине.
+Данные запроса формируются Lua-скриптом ([post_wrk_test.lua](https://github.com/go-park-mail-ru/2024_1_Harmonica/blob/har-148-add-dbms2/internal/repository/perf_test/post_wrk_test.lua)), который включает в тело запроса изображение и данные о пине.
 
 ### Тестирование GET API Endpoint'а
-Запускается с помощью bash-скрипта `post_wrk_test.sh`. В данном случае авторизация уже не нужна.
+Запускается с помощью bash-скрипта ([get_wrk_test.sh](https://github.com/go-park-mail-ru/2024_1_Harmonica/blob/har-148-add-dbms2/internal/repository/perf_test/get_wrk_test.sh)). В данном случае авторизация уже не нужна.
 
 Команда запуска (содержится внтури `post_wrk_test.sh`):
 ```
 wrk -t6 -c6 ?
 ```
-Данные запроса формируются Lua-скриптом `get_wrk_test.lua`.
+Данные запроса формируются Lua-скриптом ([get_wrk_test.lua](https://github.com/go-park-mail-ru/2024_1_Harmonica/blob/har-148-add-dbms2/internal/repository/perf_test/get_wrk_test.lua)).
 
 ## Создание сущности
-Перейдем в директорию `perf_test`, где хранится все необходимое для запуска тестирования.
+Перейдем в директорию ([perf_test](https://github.com/go-park-mail-ru/2024_1_Harmonica/tree/har-148-add-dbms2/internal/repository/perf_test)), где хранится все необходимое для запуска тестирования.
 Сделаем файл `post_wrk_test.sh` исполняемым с помощью команды:
 ```
 chmod +x ./post_wrk_test.sh
@@ -48,7 +48,7 @@ chmod +x ./post_wrk_test.sh
 [//]: # (Сюда вставляем вывод команды)
 
 ## Чтение сущности
-Повторим действия, описанные выше, с файлами `get_wrk_test.sh` и `get_wrk_test.lua` соответственно.
+Повторим действия, описанные выше, с файлами ([get_wrk_test.sh](https://github.com/go-park-mail-ru/2024_1_Harmonica/blob/har-148-add-dbms2/internal/repository/perf_test/get_wrk_test.sh)) и ([get_wrk_test.lua](https://github.com/go-park-mail-ru/2024_1_Harmonica/blob/har-148-add-dbms2/internal/repository/perf_test/get_wrk_test.lua)) соответственно.
 
 [//]: # (Сюда тоже тесты)
 
